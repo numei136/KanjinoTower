@@ -1843,7 +1843,7 @@ function optBody(){
 })();
 
 /* v4.8 title: play button */
-var TM=0;const VER='5.10.12';
+var TM=0;const VER='5.10.15';
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.tw{position:relative;display:inline-block}.ver{position:absolute;right:0;top:100%;margin-top:-2px;font-size:clamp(9px,2vw,13px);opacity:.65;letter-spacing:.05em;font-weight:700}.ttsub{display:inline-block;animation:ttbob 2.8s ease-in-out infinite}@keyframes ttbob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}@media (prefers-reduced-motion:reduce){.ttsub{animation:none}}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
 function titleGo(){TM=1;render()}
 function titleBack(){TM=0;render()}
@@ -2030,14 +2030,22 @@ function demoPick(){const h=G.hand,out=[];h.forEach((id,i)=>{const c=CARDS[id];i
  let inc=0;try{inc=predIn()}catch(e){}const sc=i=>{const c=CARDS[h[i]];let v=Math.random();if(inc>0&&c.blk&&G.blk<inc)v+=3;if(c.dmg)v+=2;if(c.sum||c.sums)v+=1.5;if(c.str||c.en||c.draw)v+=1;return v};out.sort((a,b)=>sc(b)-sc(a));return out[0]}
 function demoNew(){const i=Math.floor(Math.random()*CHARS.length);choose(i);G.floor=1+Math.floor(Math.random()*3);try{const p=[...new Set(pool())].filter(x=>CARDS[x]&&!demoNeeds(CARDS[x]));for(let n=0;n<4&&p.length;n++)G.deck.push(p[Math.floor(Math.random()*p.length)])}catch(e){}
  const r=Math.random();let e,t;if(r<.8){e=POOL[Math.floor(Math.random()*POOL.length)];t='battle'}else{e=ELITE;t='elite'}G.node={t};startBattle(e)}
-function demoTick(){if(!window._demo||!DM)return;try{
- if(!G||G.scr!=='battle'||!G.e){DM.idle=(DM.idle||0)+1;if(DM.idle>=(DM.ms<200?3:3)){DM.idle=0;demoNew()}return}DM.idle=0;
+function demoTick(){if(!window._demo||!DM||DM.pause)return;try{
+ if(!G||G.scr!=='battle'||!G.e){DM.idle=(DM.idle||0)+1;if(DM.idle>=3){DM.idle=0;DM.n=(DM.n||0)+1;if(DM.n>=(DM.nx||(DM.nx=3+Math.floor(Math.random()*2)))){DM.n=0;DM.nx=3+Math.floor(Math.random()*2);demoTip()}else demoNew()}return}DM.idle=0;
+ const dc=[...document.querySelectorAll('#modal .card[onclick^="doDisc"]')];if(dc.length){DM.dw=(DM.dw||0)+1;if(DM.dw>=2){DM.dw=0;const sc=b=>{const c=CARDS[G.hand[+b.dataset.i]];return !c?-1:(demoNeeds(c)?0:1)+(c.dmg?1:0)+(c.blk?1:0)+Math.random()*.5};dc.sort((a,b)=>sc(a)-sc(b));doDisc(+dc[0].dataset.i)}return}DM.dw=0;
  const sig=[G.turn,G.hand.length,G.en,G.busy?1:0,G.e.cur,G.hp].join('|');if(sig===DM.sig){DM.same++}else{DM.sig=sig;DM.same=0}
  if(DM.same>12){DM.same=0;if(document.querySelector('#modal .mbox'))closeDeck();G.busy=false;G.qc=null;if(DM.same2++>2){DM.same2=0;demoNew()}return}
  if(G.busy)return;if(document.querySelector('#modal .mbox')){closeDeck();return}
  if(DM.pend){const p=DM.pend;DM.pend=null;if(p.i<0){endTurn();return}if(G.hand[p.i]===p.id){play(p.i)}return}
  const i=demoPick();if(i>=0){const id=G.hand[i];DM.pend={i,id};demoShow(id,i)}else{DM.pend={i:-1};demoShow(null)}}catch(e){DM.err=(DM.err||0)+1;if(DM.err>20)demoStop()}}
 function demoShow(id,i){document.querySelectorAll('.dcard').forEach(x=>x.remove());document.querySelectorAll('.card.dsel').forEach(x=>x.classList.remove('dsel'));const d=document.createElement('div');d.className='dcard';if(id){const c=CARDS[id];d.innerHTML='<div class="dl">使用：'+c.name+'</div>'+cardEl(id,0,'');const el=document.querySelector('.hand.bh .card[data-i="'+i+'"]');if(el)el.classList.add('dsel')}else d.innerHTML='<div class="dl">ターン終了</div>';document.body.appendChild(d);setTimeout(()=>d.remove(),1700)}
+const DTIPS=[['⚡','カードを使うにはエナジーが要る','毎ターン、エナジーは3。\n使い切ったら「ターン終了」。'],['👁','「次の行動」を見よう','敵が攻撃してくるなら、盾のカードで防ぐ。\n自分のHPバーの赤い部分が、減る予定の量。'],['🔮','秘策と弱点','敵には弱点の属性がある。\n同じ属性の秘策が発動すると、追加ダメージ！'],['🐾','召喚獣は毎ターン戦ってくれる','同じ召喚獣を重ねると合体して、Lvアップ。\n召喚枠は3つまで。'],['✍','手書きで防御','守護者は、漢字を書いて効果を発動できる。\n書いた字によって、効果が変わる。'],['❓','クイズに答えて必殺技','筆順・読み・部首・福笑い。\n正解すると、技がパワーアップ。'],['🎴','勝つとカードが手に入る','報酬のカードで、デッキを育てよう。\n使わないカードは、お店で捨てられる。'],['🗺','塔をのぼろう','地図の道を選んで、戦闘・お店・休憩を進む。\n奥には、手ごわい敵が待っている…。']];
+function demoTip(){if(!DM)return;DM.pause=true;const t=DTIPS[(DM.ti=(DM.ti||0)+1)%DTIPS.length],o=document.getElementById('demoov');if(!o){DM.pause=false;demoNew();return}
+ const d=document.createElement('div');d.id='demotip';d.style.cssText='position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,#2a2218,#0f0c09);color:#f3e6c4;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;transition:opacity .8s;pointer-events:none;padding:20px';
+ d.innerHTML='<div style="font-size:14px;letter-spacing:.3em;color:#c79100;margin-bottom:14px">かんたん解説</div><div style="font-size:72px;line-height:1">'+t[0]+'</div><div style="font-size:28px;font-weight:700;margin:16px 0 10px">'+t[1]+'</div><div style="font-size:18px;line-height:1.8;opacity:.9">'+t[2].replace(/\n/g,'<br>')+'</div>';
+ o.appendChild(d);requestAnimationFrame(()=>requestAnimationFrame(()=>{d.style.opacity='1'}));
+ setTimeout(()=>{d.style.transition='opacity 1.1s';d.style.opacity='0'},DM&&DM.ms<200?900:6200);
+ setTimeout(()=>{d.remove();if(DM){DM.pause=false;demoNew()}},DM&&DM.ms<200?2200:7500)}
 function demoStart(){if(DM)return;if(typeof closeDeck==='function')closeDeck();
  DM={ms:window._demoMs||700,sig:'',same:0,same2:0,idle:0,snap:{ST:JSON.stringify(ST),DEX:JSON.stringify(DEX),ACHS:JSON.stringify(ACHS)}};window._demo=true;
  const o=document.createElement('div');o.id='demoov';o.innerHTML='<span>● デモ再生中</span>';document.body.appendChild(o);
