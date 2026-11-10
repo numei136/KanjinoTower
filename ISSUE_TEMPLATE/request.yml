@@ -1,0 +1,36 @@
+name: 要望・アイデア
+description: こんなカードがほしい、ここを直してほしい、などの要望
+title: "[要望] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ありがとうございます。この内容は、**公開されます**。個人情報は、書かないでください。
+        すべてに、返事や対応ができるとは、限りません。
+  - type: dropdown
+    id: kind
+    attributes:
+      label: どんな要望ですか
+      options:
+        - カード・レリックなどの案
+        - 敵・ボスの案
+        - 遊びやすさ(操作・見やすさ)
+        - バランス(強すぎる・弱すぎる)
+        - 音・BGM・演出
+        - 新しい仕組み・モード
+        - その他
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: 内容
+      description: できるだけ、具体的に書いてください。
+      placeholder: 例)守護者の「不動」が強すぎる。シールドに、上限がほしい。
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: なぜ、そう思いましたか(任意)

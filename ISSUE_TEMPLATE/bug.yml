@@ -1,0 +1,83 @@
+name: 不具合の報告
+description: 動かない、表示がおかしい、保存が消えた、などの報告
+title: "[不具合] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        報告ありがとうございます。この内容は、**公開されます**。
+        名前、メールアドレス、電話番号などの、個人情報は、書かないでください。
+  - type: textarea
+    id: what
+    attributes:
+      label: 何が起きましたか
+      description: 見たままを、書いてください。
+      placeholder: 例)戦闘中に、手札のカードが、押せなくなった。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 起きるまでの手順
+      description: 分かる範囲で、かまいません。
+      placeholder: |
+        1. 剣士で始める
+        2. 2階の戦闘に入る
+        3. 盾のカードを、ドラッグする
+  - type: textarea
+    id: expected
+    attributes:
+      label: 本当は、どうなるはずだと思いましたか
+  - type: dropdown
+    id: scene
+    attributes:
+      label: どの場面ですか
+      options:
+        - タイトル・オプション
+        - キャラ選択
+        - 戦闘
+        - 地図・店・焚き火・イベント
+        - 報酬画面
+        - クイズ(筆順・福笑いなど)
+        - チュートリアル
+        - 保存・続きから
+        - 音・BGM
+        - その他
+  - type: dropdown
+    id: char
+    attributes:
+      label: 使っていたキャラ
+      options:
+        - 剣士
+        - 守護者
+        - 薬師
+        - 術師
+        - 召喚師
+        - 合成師
+        - カスタムモード
+        - 分からない・関係ない
+  - type: dropdown
+    id: device
+    attributes:
+      label: 遊んでいる環境
+      options:
+        - パソコン(Windows)
+        - パソコン(Mac)
+        - スマホ(iPhone)
+        - スマホ(Android)
+        - タブレット
+        - その他
+  - type: input
+    id: browser
+    attributes:
+      label: ブラウザ(分かれば)
+      placeholder: 例)Chrome、Safari
+  - type: input
+    id: version
+    attributes:
+      label: ゲームのバージョン(分かれば)
+      placeholder: 例)ver4.10
+  - type: markdown
+    attributes:
+      value: スクリーンショットがあれば、送信したあとの、コメント欄に、貼り付けてください。
