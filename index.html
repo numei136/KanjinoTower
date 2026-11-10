@@ -1758,21 +1758,27 @@ SFX.block=[['n',0,.035,'hi',.16],[2600,0,.05,'square',.05],[3400,.01,.04,'square
  function stopSynth(){clearInterval(AU.bt);AU.bt=null}
  function stopFile(fade){if(!src)return;const s=src,g=gn,c=AU.ctx;src=null;gn=null;try{const t=c.currentTime;g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(0,t+fade);s.stop(t+fade+.05);setTimeout(()=>{try{g.disconnect()}catch(e){}},(fade+.2)*1000)}catch(e){try{s.stop()}catch(x){}}}
  function playSynth(){stopFile(.4);curU=null;if(AU.bt)return;mode='synth';AU.bt=setInterval(bgmTick,1600);bgmTick()}
- function playFile(buf,u){stopSynth();stopFile(.6);try{const c=AU.ctx,s=c.createBufferSource(),g=c.createGain();s.buffer=buf;s.loop=true;g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(1,c.currentTime+.8);s.connect(g);AU.ch='bgm';try{g.connect(outN())}finally{AU.ch='se'}s.start();src=s;gn=g;mode='file';curU=u}catch(e){playSynth()}}
+ function playFile(buf,u){stopSynth();stopFile(.6);try{const c=AU.ctx,s=c.createBufferSource(),g=c.createGain();s.buffer=buf;s.loop=true;g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(1,c.currentTime+1);s.connect(g);AU.ch='bgm';try{g.connect(outN())}finally{AU.ch='se'}s.start();src=s;gn=g;mode='file';curU=u}catch(e){playSynth()}}
  // 新しい曲を選んで鳴らす(戦闘のはじまりごと・種類が変わるとき)
  function begin(c){const my=++seq;curCat=c;prevCat=c;const f=(nxt[c]&&!bad.has(url(c,nxt[c])))?nxt[c]:pick(c);nxt[c]=null;
   if(!f){playSynth();return}
   const u=url(c,f);last[c]=f;
   if(u===curU&&mode==='file'){ensureNext(c);return}
   getBuf(u).then(b=>{if(my!==seq)return;if(!b){bad.add(u);begin(c);return}playFile(b,u);ensureNext(c)})}
- function wantCat(){if(!G)return null;if(G.scr==='battle'&&G.e){if(typeof BIG!=='undefined'&&BIG.some(b=>b.k===G.e.k))return'finalboss';const t=G.node&&G.node.t;return t==='boss'?'boss':t==='elite'?'elite':'battle'}if(G.scr==='select'||G.scr==='custom')return'title';return null}
+ function wantCat(){if(!G)return null;if(G.scr==='battle'&&G.e){if(typeof BIG!=='undefined'&&BIG.some(b=>b.k===G.e.k))return'finalboss';const t=G.node&&G.node.t;return t==='boss'?'boss':t==='elite'?'elite':'battle'}if(G.scr==='select'||G.scr==='custom')return'title';if(G.scr==='map')return'map';return null}
  function sync(){if(!AU.run||!AU.bgm||!AU.ctx||document.hidden)return;
   if(!LIST){if(!mode)playSynth();loadList().then(()=>{curCat=null;lastE=null;sync()});return}
-  const c=wantCat();
-  if(c===null){if(!curCat)begin(prevCat||'title');return}
+  let c=wantCat();const hasMap=files('map').length>0;if(c==='map'&&!hasMap)c=null;
+  if(c===null){if(hasMap&&['battle','elite','boss','finalboss'].includes(curCat)){seq++;stopSynth();stopFile(1.2);mode=null;curU=null;curCat='quiet';return}if(!curCat)begin(prevCat||'title');return}
   if(G.scr==='battle'&&G.e){if(G.e!==lastE){lastE=G.e;begin(c)}else if(c!==curCat)begin(c);return}
   lastE=null;if(c!==curCat)begin(c)}
  window.bgmSync=sync;
+ window.bgmInfo=function(){const n=c=>LIST&&Array.isArray(LIST[c])?LIST[c].length:0;
+  const l=!LIST?'music.json：読み込み中…':(Object.keys(LIST).length?'music.json：読めた':'music.json：読めない／空');
+  const cnt=['title','battle','elite','boss','finalboss'].map(c=>c+'='+n(c)).join(' ');
+  const m=!AU.run?'BGM：停止中(画面をタップすると始まります)':mode==='file'?'再生中(ファイル)：'+decodeURIComponent(curU||''):mode==='synth'?'再生中(合成音)':'準備中';
+  const b=bad.size?'<br>読めなかった曲：'+[...bad].map(decodeURIComponent).join('、'):'';
+  return l+'<br>曲の数 '+cnt+'<br>'+m+b};
  bgmStart=function(){if(!AU.bgm||!auCtx())return;AU.run=true;curCat=null;lastE=null;sync()};
  bgmStop=function(){AU.run=false;curCat=null;lastE=null;seq++;stopSynth();stopFile(.3);mode=null;curU=null};
  const _r=render;render=function(){const r=_r.apply(this,arguments);try{sync()}catch(e){}return r};
@@ -1782,7 +1788,7 @@ SFX.block=[['n',0,.035,'hi',.16],[2600,0,.05,'square',.05],[3400,.01,.04,'square
  document.addEventListener('visibilitychange',()=>document.hidden?away():back());
  window.addEventListener('pagehide',away);window.addEventListener('pageshow',back);
  // 先読み(起動やタイトルを遅くしないよう、ページが落ち着いてから、1つずつ)
- function pre(){loadList().then(()=>{['title','battle','elite','boss','finalboss'].forEach((c,i)=>setTimeout(()=>ensureNext(c),i*900))})}
+ function pre(){loadList().then(()=>{['title','battle','elite','boss','finalboss','map'].forEach((c,i)=>setTimeout(()=>ensureNext(c),i*900))})}
  const kick=()=>{(window.requestIdleCallback||((f)=>setTimeout(f,1200)))(pre)};
  if(document.readyState==='complete')kick();else window.addEventListener('load',kick);
 })();
@@ -1792,7 +1798,7 @@ function setOt(t){OT=t;optMenu()}
 function optBody(){
  const title=G&&G.scr==='select';
  const tabs=`<div class="otabs"><button class="${OT==='game'?'on':''}" onclick="setOt('game')">ゲーム設定</button><button class="${OT==='vol'?'on':''}" onclick="setOt('vol')">音量調整</button></div>`;
- const vol=`<div class="btns" style="flex-direction:column"><button class="main off" onclick="togAu('on')">効果音：${AU.on?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.se*100)}" oninput="setVol('se',this.value);this.nextElementSibling.textContent=this.value" onchange="volTest()"><span class="vn">${Math.round(AV.se*100)}</span></div><button class="main off" onclick="togAu('bgm')">BGM：${AU.bgm?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.bgm*100)}" oninput="setVol('bgm',this.value);this.nextElementSibling.textContent=this.value"><span class="vn">${Math.round(AV.bgm*100)}</span></div></div>`;
+ const vol=`<div class="btns" style="flex-direction:column"><button class="main off" onclick="togAu('on')">効果音：${AU.on?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.se*100)}" oninput="setVol('se',this.value);this.nextElementSibling.textContent=this.value" onchange="volTest()"><span class="vn">${Math.round(AV.se*100)}</span></div><button class="main off" onclick="togAu('bgm')">BGM：${AU.bgm?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.bgm*100)}" oninput="setVol('bgm',this.value);this.nextElementSibling.textContent=this.value"><span class="vn">${Math.round(AV.bgm*100)}</span></div><p class="stat" style="font-size:11px;opacity:.8;text-align:left;word-break:break-all">${typeof bgmInfo==='function'?bgmInfo():''}</p></div>`;
  const game=`<div class="btns" style="flex-direction:column">${keyPc?`<button class="main off keyb" onclick="keyStart()">${keyCap()?'キー／ボタンを押してください(Escで中止)':'ターン終了ショートカット：'+keyName()}</button>${keyCap()?'':'<small style="opacity:.7;cursor:pointer" onclick="keyReset()">初期(右クリック)に戻す</small>'}`:''}<button class="main off" onclick="togHand()">手札の並べ方：${HL.flat?'広げる(旧版)':'重ねる'}</button>${title?'':'<button class="main off" onclick="optMenu(1)">タイトルに戻る</button>'}${title?'<a class="main off infoa" href="info.html" target="_blank" rel="noopener">ℹ 調整点・利用上の注意</a>':''}<button class="main off" onclick="hwOpen()">🧪 テスト専用：手書き認識テスト</button></div>`;
  return tabs+(OT==='vol'?vol:game)+`<div class="btns" style="margin-top:10px"><button class="main" onclick="closeDeck()">${title?'閉じる':'ゲームに戻る'}</button></div>`}
 
