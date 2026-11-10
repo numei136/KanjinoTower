@@ -1,0 +1,1743 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>漢字の塔</title>
+<style>
+:root{--bg:#f4efe6;--fg:#1d1a16;--card:#fffaf0;--line:#c9bda8;--red:#b3261e;--blue:#2a5d9f;--green:#2f7d4f;--panel:#ebe3d3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17140f;--fg:#efe6d4;--card:#262017;--line:#4a4030;--red:#ff7b6e;--blue:#7fb2f0;--green:#6fcf97;--panel:#211b13}}
+:root[data-theme="dark"]{--bg:#17140f;--fg:#efe6d4;--card:#262017;--line:#4a4030;--red:#ff7b6e;--blue:#7fb2f0;--green:#6fcf97;--panel:#211b13}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;min-height:100vh}
+#app{max-width:760px;margin:0 auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.top{display:flex;justify-content:space-between;font-size:14px;opacity:.8}
+.enemy{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.kanji{font-size:clamp(90px,24vw,150px);line-height:1.05;font-weight:700;transition:transform .15s}
+.kanji.hit{transform:translateX(8px) rotate(3deg);color:var(--red)}
+.enemy{position:relative}
+.kanji.windup{transform:scale(.5);opacity:.7;transition:transform .55s ease-in,opacity .55s}
+.kanji.strike{transform:scale(2.6);color:var(--red);position:relative;z-index:9;pointer-events:none;transition:transform .07s ease-out}
+.kanji.pulse{transform:scale(1.12);transition:transform .2s}
+@keyframes shake{0%,100%{transform:translate(0,0)}20%{transform:translate(-12px,6px)}40%{transform:translate(10px,-8px)}60%{transform:translate(-8px,4px)}80%{transform:translate(6px,-3px)}}
+#app.shake{animation:shake .35s}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-12px) rotate(1.5deg)}}
+.kanji:not(.windup):not(.strike):not(.pulse):not(.hit):not(.flash):not(.recover):not(.poison){animation:float 3.2s ease-in-out infinite}
+@keyframes poison{0%,100%{transform:rotate(0)}15%{transform:rotate(-9deg)}30%{transform:rotate(9deg)}45%{transform:rotate(-7deg)}60%{transform:rotate(7deg)}78%{transform:rotate(-3deg)}}
+.kanji.poison{animation:poison .9s ease-in-out 1;color:#2e9e4f;text-shadow:0 0 18px #2e9e4f88}
+.dmg.p{color:#2e9e4f}
+.kanji.recover{transform:none;transition:transform .55s ease-out,color .55s}
+.kanji.flash{animation:flash .45s steps(1) 1}
+@keyframes flash{0%{opacity:0;transform:translateX(-12px)}15%{opacity:1;color:var(--red);transform:translateX(10px)}30%{opacity:0;transform:translateX(-8px)}45%{opacity:1;color:var(--red);transform:translateX(6px)}60%{opacity:.15;transform:translateX(-3px)}80%{opacity:1;transform:translateX(0)}100%{opacity:1}}
+.dmg{position:absolute;left:50%;top:28%;font-size:44px;font-weight:700;color:var(--red);pointer-events:none;z-index:8;animation:dmgup .8s ease-out forwards}
+@keyframes dmgup{0%{transform:translate(-50%,0) scale(.6);opacity:0}20%{transform:translate(-50%,-10px) scale(1.25);opacity:1}100%{transform:translate(-50%,-70px) scale(1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.kanji{animation:none!important}}
+.bar{height:12px;background:var(--line);border-radius:6px;overflow:hidden;margin:6px auto;max-width:320px}
+.bar i{display:block;height:100%;background:var(--red);transition:width .3s}
+.bar.p i{background:var(--green)}
+.intent{font-size:16px;margin-top:4px}
+.stat{font-size:14px}
+.me{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.hand{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 10px;justify-content:center;flex-wrap:wrap}
+.card{width:104px;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:8px 6px;text-align:center;cursor:pointer;font:inherit;color:inherit}
+.card:hover:not(:disabled){transform:translateY(-6px);border-color:var(--fg)}
+.card:disabled{opacity:.4;cursor:not-allowed}
+.card .c{font-size:12px;text-align:left}
+.card .k{font-size:44px;font-weight:700;line-height:1.1}
+.card .n{font-size:13px;font-weight:700}
+.card .d{font-size:11px;opacity:.85;min-height:30px}
+.card.atk .k{color:var(--red)}.card.def .k{color:var(--blue)}.card.sk .k{color:var(--green)}
+button.main{background:var(--fg);color:var(--bg);border:0;border-radius:8px;padding:10px 18px;font:inherit;font-weight:700;cursor:pointer}
+.log{font-size:13px;min-height:20px;text-align:center;opacity:.85}
+.overlay{text-align:center;padding:20px 8px}
+.overlay h2{font-size:28px;margin:6px 0}
+.pile{font-size:12px;opacity:.7}
+.mapw{position:relative;width:100%;max-width:420px;margin:0 auto}
+.mapw svg{position:absolute;inset:0;width:100%;height:100%}
+.mapw line{stroke:var(--line);stroke-width:2;stroke-dasharray:4 4;vector-effect:non-scaling-stroke}
+.mapw line.on{stroke:var(--fg);stroke-dasharray:none;stroke-width:3}
+.node{position:absolute;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:var(--card);color:var(--fg);font:inherit;font-size:22px;font-weight:700;opacity:.55;cursor:default;padding:0}
+.node.ok{opacity:1;border-color:var(--fg);cursor:pointer;animation:glow 1.2s ease-in-out infinite}
+.node.ok:hover{transform:translate(-50%,-50%) scale(1.15)}
+.node.vis{background:var(--line)}
+.node.elite,.node.boss{color:var(--red)}
+.node.shop{color:var(--blue)}
+.node.rest{color:var(--green)}
+.node.boss{width:58px;height:58px;font-size:30px}
+@keyframes glow{50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--fg) 22%,transparent)}}
+.kanji.sm{font-size:80px}
+.btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0}
+@keyframes deal{from{transform:translate(-200px,80px) rotate(-30deg) scale(.4);opacity:0}to{transform:none;opacity:1}}
+.card.dealt{animation:deal .45s cubic-bezier(.2,.8,.3,1) backwards}
+.intent span{display:inline-block;padding:4px 16px;border-radius:999px;font-weight:700;color:#fff}
+.i-atk{background:#c62828}.i-def{background:#1e66c1}.i-buff{background:#8e44ad}
+.enemy.t-atk{border-color:#c62828;box-shadow:0 0 0 2px #c6282855}
+.enemy.t-def{border-color:#1e66c1;box-shadow:0 0 0 2px #1e66c155}
+.enemy.t-buff{border-color:#8e44ad;box-shadow:0 0 0 2px #8e44ad55}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:12px}
+.mbox{background:var(--bg);border:1px solid var(--line);border-radius:14px;max-width:720px;width:100%;max-height:85vh;overflow:auto;padding:12px}
+.badge{position:absolute;top:-6px;right:-4px;background:var(--fg);color:var(--bg);border-radius:10px;padding:1px 7px;font-size:12px;font-weight:700}
+button.main.off{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.top .main{padding:4px 10px;font-size:13px}
+.mins{display:flex;gap:10px;justify-content:center;margin-top:10px}
+.mn{position:relative;flex:0 0 96px;border:1px solid var(--line);border-radius:10px;padding:4px;background:var(--card);cursor:pointer}
+.mn.sel{outline:3px solid var(--red)}
+.mn.dead{opacity:.35;cursor:default}
+.mn .kanji{font-size:44px}
+.mn .bar{max-width:80px;height:8px}
+.mn .dmg{font-size:26px;top:0}
+.mn.rise{animation:rise .7s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(30px) scale(.5)}to{opacity:1;transform:none}}
+.kanji.lunge{animation:lunge .5s ease-out 1!important}
+@keyframes lunge{30%{transform:scale(2.2) translateY(26px)}}
+.kanji.tsel{filter:drop-shadow(0 0 8px var(--red))}
+.chr{width:150px}.chr .d{min-height:70px}
+button.main:disabled{opacity:.4;cursor:not-allowed}
+.ab small{display:block;font-weight:400;font-size:11px}
+#app{padding-top:54px}
+#optbtn{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:8px;z-index:40;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:20px;cursor:pointer;padding:0}
+.kanji.cast{animation:cast .6s ease-out 1!important}
+@keyframes cast{40%{transform:scale(1.22);filter:drop-shadow(0 0 18px var(--c,#8e44ad))}}
+.sums{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.sm{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:2px 10px;text-align:center;min-width:56px}
+.sm b{font-size:28px;display:block;line-height:1.1}
+.sm small{font-size:11px;opacity:.85}
+.sm.rise{animation:rise .7s ease-out}
+.sm.k火 b{color:#d9542a}.sm.k水 b{color:#2a7bd9}.sm.k土 b{color:#a07a2a}.sm.k木 b{color:#2f9d55}
+.dex{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.dx{width:52px;height:52px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;font:inherit;font-size:28px;font-weight:700;cursor:pointer;padding:0}
+.dx.off{opacity:.35;display:flex;align-items:center;justify-content:center;cursor:default}
+.sm:hover{border-color:var(--fg)}
+.wz{position:absolute;inset:0;pointer-events:none;z-index:10}
+.wz span{position:absolute;transform:translate(-50%,-50%);font-size:36px;font-weight:700;color:#c62828;text-shadow:0 0 10px #c6282888;animation:wzin .45s ease-out backwards}
+.wz.go span{animation:wzgo .35s ease-out forwards}
+@keyframes wzin{from{opacity:0;transform:translate(-50%,-50%) scale(2.2)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes wzgo{to{opacity:0;transform:translate(-50%,-50%) scale(2.6)}}
+.rels{display:flex;gap:6px;flex-wrap:wrap}
+.rl{width:36px;height:36px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;font:inherit;font-size:20px;font-weight:700;cursor:pointer;padding:0}
+.pots{display:flex;gap:8px;justify-content:center}
+.pt{min-width:64px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:4px 8px;font:inherit;font-size:22px;font-weight:700;cursor:pointer}
+.pt small{display:block;font-size:10px;font-weight:400}
+.pt.off{opacity:.35;cursor:default;display:flex;align-items:center;justify-content:center}
+.sm small{display:block}
+.sm small.act{font-size:10px;opacity:.75}
+.bar{position:relative}
+.bar i{position:relative;z-index:1}
+.bar u{position:absolute;left:0;top:0;height:100%;background:#f5a623;opacity:.6;border-radius:6px}
+.sm.go{animation:smgo .5s ease-out}
+@keyframes smgo{35%{transform:translateY(-10px) scale(1.12)}}
+.en{width:104px;height:64px;border:2px solid var(--line);border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:6px}
+.en b{font-size:36px;margin:0 4px}
+.en.zero{border-color:#c62828;color:#c62828;animation:enz 1s ease-in-out infinite}
+@keyframes enz{50%{background:#c6282833}}
+.en.over{border-color:#e6a800;color:#b8860b;box-shadow:0 0 14px #e6a800aa}
+.sm.k炎 b{color:#e8431f}
+.kanji.rage{color:#c62828;text-shadow:0 0 18px #c62828}
+.phb{position:fixed;left:0;right:0;top:35%;text-align:center;font-size:clamp(28px,8vw,56px);font-weight:700;color:#fff;background:linear-gradient(90deg,transparent,rgba(198,40,40,.85),transparent);padding:14px;z-index:60;animation:phin 1.3s ease-out forwards;pointer-events:none}
+@keyframes phin{0%{opacity:0;transform:scale(2)}15%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+.achs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.ac{border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px;opacity:.5;min-width:140px}
+.ac.on{opacity:1;border-color:#e6a800}
+.ac small{display:block;font-size:11px;opacity:.8}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:999px;z-index:80;font-weight:700}
+.enemy{padding-bottom:46px}
+.dkb{position:absolute;right:8px;bottom:8px;padding:5px 10px;font-size:12px}
+.enemy{padding-bottom:34px}
+.enemy button.dkb{padding:3px 8px;font-size:11px;border-radius:6px;bottom:6px;right:6px}
+.pots{justify-content:flex-start}
+.pt{min-width:56px;padding:3px 8px;font-size:18px}
+.row2{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.row2 .pots{flex:0 0 auto}
+.row2 .sums{flex:1;justify-content:center}
+.top{opacity:1}
+.gold{font-size:20px;font-weight:700;color:#d99a00;background:rgba(230,168,0,.15);border:1px solid #e6a800;border-radius:999px;padding:2px 14px}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px}
+.row2 .pots{grid-column:1;justify-self:start}
+.row2 .sums{grid-column:2;justify-self:center;flex:none}
+@media (max-width:560px){.row2{grid-template-columns:1fr}.row2 .pots,.row2 .sums{grid-column:1}.row2 .sums{justify-self:center}}
+.dmg{color:#ffd21f;-webkit-text-stroke:1.5px #5a3d00;paint-order:stroke fill}
+.dmg.p{color:#2e9e4f;-webkit-text-stroke:1px #0d3d1c}
+.bar.sh{box-shadow:0 0 0 2px #2a7bd9}
+.bar.sh i{background:#2a7bd9}
+.bar .shn{position:absolute;left:6px;top:50%;transform:translateY(-50%);z-index:3;font-style:normal;font-size:13px;font-weight:700;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
+.enemy .bar{height:18px;max-width:340px}
+.enemy .bar .shn{font-size:12px}
+.card.ru{border-color:#2a7bd9}
+.card.rr{border-color:#e6a800;box-shadow:0 0 8px #e6a80088}
+.rt{float:right;color:#e6a800;font-size:12px}
+.card.ru .rt{color:#2a7bd9}
+.rwb{text-align:left;font-size:16px}
+.mbox .hand,.overlay .hand{flex-wrap:wrap;justify-content:center}
+button,.card,.node{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+@media (hover:none){.card:hover:not(:disabled){transform:none}}
+@media (max-width:560px){
+#app{padding:8px;padding-top:50px;gap:8px}
+.kanji{font-size:clamp(72px,24vw,110px)}
+.enemy{padding:10px 8px 34px}
+.enemy .bar{height:16px}
+.card{width:88px;padding:6px 4px}
+.card .k{font-size:36px}
+.card .d{font-size:10px}
+.hand.bh{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:12px}
+.hand.bh>*:first-child{margin-left:auto}
+.hand.bh>*:last-child{margin-right:auto}
+.hand.bh .card{flex:0 0 88px;scroll-snap-align:center}
+.me{flex-direction:column;align-items:stretch;gap:6px}
+.me .bar.p{width:100%!important}
+button.main{padding:12px 14px;min-height:44px}
+.top .main{min-height:0;padding:6px 10px}
+.mn{flex:0 0 78px}
+.mn .kanji{font-size:36px}
+.sm{min-width:50px}
+.en{width:92px;height:56px}
+.rl{width:34px;height:34px}
+.modal{padding:6px}
+}
+@media (max-width:560px){
+.enemy{position:sticky;top:48px;z-index:20}
+body.sc .enemy .kanji{font-size:56px}
+body.sc .enemy .log{display:none}
+body.sc .enemy{padding-top:6px}
+}
+@media (max-width:560px){
+.me{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;align-items:stretch}
+.me>div:first-child{display:contents}
+.me .en{grid-column:1;grid-row:1;margin:0;width:auto;min-width:84px;height:auto;min-height:56px;padding:0 8px}
+.me .ab{grid-column:2;grid-row:1}
+.me>button:last-child{grid-column:3;grid-row:1}
+.me .bar.p{grid-column:1/-1;grid-row:2}
+.me .stat{grid-column:1/-1;grid-row:3}
+.me button.main{padding:6px 4px;font-size:14px;min-height:56px}
+.me .ab small{font-size:9px}
+.enemy button.dkb{font-size:9px;padding:2px 6px;top:6px;bottom:auto;right:6px}
+.hand.bh .card{width:72px;flex:0 0 72px;padding:5px 3px}
+.hand.bh .card .k{font-size:30px}
+.hand.bh .card .n{font-size:11px}
+.hand.bh .card .d{font-size:9px;min-height:24px}
+.hand.bh .card .c{font-size:10px}
+}
+.hpn{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;z-index:3;font-size:12px;font-weight:700;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000;pointer-events:none}
+@media (max-width:560px){
+.row2{display:flex;flex-direction:column;flex-wrap:nowrap;align-items:center;gap:4px}
+.row2 .sums{order:1;width:100%;justify-content:center}
+.row2 .pots{order:2;width:100%;justify-content:center}
+.row2 .pots,.row2 .sums{flex:0 0 auto;gap:4px}
+.pt{min-width:48px;max-width:56px;padding:2px 4px;font-size:16px}
+.pt small{font-size:8px;line-height:1.1;white-space:normal}
+.sm{min-width:46px;padding:2px 4px}
+.sm b{font-size:22px}
+.sm small{font-size:9px}
+.sm small.act{font-size:8px}
+.enemy .hpn{font-size:11px}
+}
+.hw{position:relative}
+.ar{display:none;position:absolute;top:50%;transform:translateY(-50%);z-index:5;width:28px;height:48px;line-height:48px;text-align:center;font-size:20px;color:#fff;background:rgba(0,0,0,.5);border-radius:8px;pointer-events:none;animation:arp 1s ease-in-out infinite}
+.ar.l{left:0}
+.ar.r{right:0}
+.hw.ml .ar.l,.hw.mr .ar.r{display:block}
+@keyframes arp{50%{opacity:.45}}
+.fz{position:absolute;pointer-events:none;z-index:15}
+.fz span{position:absolute;inset:0;display:block;text-align:center;font-weight:700;white-space:nowrap;animation:shat .9s cubic-bezier(.3,.6,.5,1) forwards}
+@keyframes shat{to{transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.5);opacity:0}}
+.bangf{position:fixed;inset:0;background:#fff;opacity:.7;pointer-events:none;z-index:70;animation:bf .35s ease-out forwards}
+@keyframes bf{to{opacity:0}}
+.fg{display:grid;gap:6px;justify-content:center;margin:10px auto}
+.fg.lr{grid-template-columns:repeat(2,72px)}
+.fg.tb{grid-template-columns:72px}
+.fg.tri{grid-template-columns:repeat(2,72px)}
+.fg.tri .fs:first-child{grid-column:1/-1;justify-self:center}
+.fs{width:72px;height:72px;font:inherit;font-size:40px;font-weight:700;border:2px dashed var(--line);border-radius:10px;background:var(--card);color:var(--fg);cursor:pointer;padding:0}
+.fb{font-size:26px;min-width:52px;padding:8px 12px}
+.dx.on{border-color:#e6a800;box-shadow:0 0 8px #e6a80088}
+.cl{max-height:380px;overflow:auto;border:1px solid var(--line);border-radius:10px;text-align:left;margin:8px 0}
+.cr{display:flex;align-items:center;gap:8px;padding:4px 8px;border-bottom:1px solid var(--line)}
+.cr .ck{font-size:26px;width:34px;text-align:center}
+.cr.r1 .ck{color:#2a7bd9}
+.cr.r2 .ck{color:#e6a800}
+.cr .cn{flex:1;font-size:14px}
+.cr small{display:block;font-size:11px;opacity:.8}
+.cr button{width:34px;height:34px;font-size:18px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;cursor:pointer;padding:0}
+.cr .cc{width:22px;text-align:center;font-weight:700}
+.rlb.on{border-color:#e6a800;background:rgba(230,168,0,.15)}
+.rlb small{display:block;font-size:10px;font-weight:400}
+.ty{font-size:9px;font-weight:700;color:#fff;border-radius:4px;padding:1px 0;margin-bottom:3px;letter-spacing:.05em}
+.card.ta .ty{background:#c62828}
+.card.ts .ty{background:#1e66c1}
+.card.tm .ty{background:#8e44ad}
+.card.ta{background-image:linear-gradient(rgba(198,40,40,.10),rgba(198,40,40,.10))}
+.card.ts{background-image:linear-gradient(rgba(30,102,193,.10),rgba(30,102,193,.10))}
+.card.tm{background-image:linear-gradient(rgba(142,68,173,.14),rgba(142,68,173,.14))}
+.card.tm .k{color:#8e44ad}
+.hand.bh .card .ty{font-size:8px}
+.warn{font-size:13px;font-weight:700;color:#e6a800;margin-top:2px}
+.warn.hot{color:#ff5a4a;animation:wb .8s ease-in-out infinite}
+.warn.done{color:#c62828}
+@keyframes wb{50%{opacity:.4}}
+.bar .nt{position:absolute;left:50%;top:0;bottom:0;width:2px;background:#fff;opacity:.85;z-index:2;text-decoration:none}
+.phb{animation-duration:2.4s}
+.kanji.windup.long{transition:transform 1.3s ease-in,opacity 1.3s}
+.fg.bt{grid-template-columns:repeat(2,72px)}
+.fg.bt .fs:nth-child(3){grid-column:1/-1;justify-self:center}
+.fg.lr3{grid-template-columns:repeat(3,72px)}
+.sm{position:relative}
+.sm .lv{position:absolute;top:-6px;right:-4px;font-style:normal;font-size:10px;background:#e6a800;color:#000;border-radius:8px;padding:0 5px;font-weight:700}
+.sm.k城 b{color:#2a7bd9}
+.sm.k衣 b{color:#2f9d55}
+.sm.k燎 b{color:#e8431f}
+.hbar{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.hbar .pots{gap:3px;flex:0 1 auto}
+.hbar .pt{min-width:40px;max-width:50px;padding:1px 3px;font-size:15px;line-height:1.1}
+.hbar .pt small{font-size:7px;line-height:1.1;white-space:normal}
+.hbar .sbtn{white-space:nowrap;margin-left:auto;flex:0 0 auto}
+.hbar .sbtn{padding:3px 10px;font-size:12px;min-height:0}
+.pv{font-size:10px;font-weight:700;color:#e6a800;margin-top:2px}
+button.main.rlb.on{border:2px solid #e6a800;background:rgba(230,168,0,.25);color:var(--fg);box-shadow:0 0 8px #e6a80088}
+.ghost{position:fixed;z-index:90;pointer-events:none;opacity:.92;transform:translate(-50%,-60%) scale(1.05);box-shadow:0 8px 20px rgba(0,0,0,.4);border-radius:10px}
+.ghost .card{margin:0!important;pointer-events:none}
+.ghp{width:64px;height:64px;font-size:40px;font-weight:700;background:var(--card);border:2px solid #e6a800;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--fg)}
+.insb{position:fixed;z-index:85;width:5px;border-radius:3px;pointer-events:none}
+.sums{min-height:56px;min-width:56px}
+.sums.dz{outline:2px dashed #e6a800;outline-offset:4px;border-radius:10px}
+.card[data-sm="1"],.fb,.fs{touch-action:none}
+.fs.hot{border-color:#e6a800;background:rgba(230,168,0,.2)}
+.hand.bh{overflow:visible;flex-wrap:nowrap;justify-content:center;padding-top:34px;gap:0}
+.hand.bh .card{margin-left:-52px;transition:transform .15s,box-shadow .15s;transform-origin:bottom center;position:relative;touch-action:pan-x}
+.hand.bh .card:first-child{margin-left:0}
+.hand.bh .card:hover,.hand.bh .card.sel{transform:translateY(-16px) scale(1.3);z-index:30;box-shadow:0 10px 24px rgba(0,0,0,.45)}
+.enemy.dz2{outline:3px dashed #e6a800;outline-offset:3px}
+@media (max-width:560px){.hand.bh{overflow-x:auto;justify-content:flex-start}.hand.bh .card{margin-left:-36px}.hand.bh .card:first-child{margin-left:auto}}
+#hw{position:fixed;inset:0;z-index:100;background:var(--bg);color:var(--fg);overflow:auto;padding:12px 12px 60px;padding-top:calc(12px + env(safe-area-inset-top,0px));text-align:center}
+#hw .hwh{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+#hw h2{font-size:18px;margin:4px 0}
+#hw h3{margin:18px 0 6px}
+#hw canvas{background:#fff;border:2px solid var(--line);border-radius:10px;touch-action:none;display:block;margin:8px auto}
+#hw .hwbox{max-width:420px;margin:8px auto;text-align:left;font-size:14px}
+#hw .hwbig{font-size:80px;text-align:center;line-height:1.1}
+#hw .hwt2{width:100%;border-collapse:collapse;margin:6px 0}
+#hw .hwt2 td{padding:2px 6px;border-bottom:1px solid var(--line)}
+#hw .hwbar{height:10px;background:var(--line);border-radius:5px;overflow:hidden;min-width:120px}
+#hw .hwbar i{display:block;height:100%;background:#e6a800}
+#hw .hwt{font-size:22px;min-width:52px}
+#hw .hwt.on{border-color:#e6a800;background:rgba(230,168,0,.25)}
+#hw textarea{width:100%;max-width:420px;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;font-size:12px;padding:6px}
+#hw .hwfi{position:absolute;opacity:0;width:1px;height:1px;overflow:hidden}
+#hw label.hwlab{cursor:pointer;display:inline-block}
+.hand.bh{padding-top:14px}
+.hand.bh .card{margin-left:-34px}
+.hand.bh .card:first-child{margin-left:0}
+.hand.bh .card:hover,.hand.bh .card.sel{transform:translateY(-12px) scale(1.25)}
+@media (max-width:560px){.hand.bh{padding-top:30px}.hand.bh .card{margin-left:-20px}.hand.bh .card:first-child{margin-left:auto}.hand.bh .card:hover,.hand.bh .card.sel{transform:translateY(-8px) scale(1.15)}}
+#hd canvas{background:#fff;border:2px solid var(--line);border-radius:10px;touch-action:none;display:block;margin:8px auto}
+.secs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.sec{border:1px solid #2f9d55;background:rgba(47,157,85,.12);border-radius:10px;padding:2px 10px;font-weight:700}
+.sec small{display:block;font-size:10px;font-weight:400}
+.card.tp .ty{background:#d4a017;color:#222}
+.card.tp{background-image:linear-gradient(rgba(212,160,23,.16),rgba(212,160,23,.16))}
+.card.tp .k{color:#d4a017}
+.card.te .ty{background:#2f9d55}
+.card.te{background-image:linear-gradient(rgba(47,157,85,.12),rgba(47,157,85,.12))}
+.card.te .k{color:#2f9d55}
+.cfb{max-width:520px;margin:6px auto;text-align:left;font-size:13px}
+.cfb>div{margin:4px 0}
+button.main.cf{padding:3px 10px;font-size:12px;min-height:0}
+button.main.cf.on{border:2px solid #e6a800;background:rgba(230,168,0,.25);color:var(--fg)}
+.cq{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:13px;margin-right:6px}
+#tutbtn{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:56px;z-index:40;height:40px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:14px;font-weight:700;padding:0 14px;cursor:pointer}
+.tutl{position:fixed;z-index:70}
+.tblk{background:transparent;touch-action:none}
+.tdim{inset:0;background:rgba(0,0,0,.7);pointer-events:none}
+.thole{border:2px solid #e6a800;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.72),0 0 14px 2px #e6a800;pointer-events:none;animation:thp 1.2s ease-in-out infinite;z-index:69}
+@keyframes thp{50%{box-shadow:0 0 0 9999px rgba(0,0,0,.72),0 0 24px 6px #ffd54a}}
+.tbub{left:50%;transform:translateX(-50%);width:min(340px,92vw);background:var(--card);color:var(--fg);border:2px solid #e6a800;border-radius:14px;padding:12px 14px;z-index:72;box-shadow:0 8px 24px rgba(0,0,0,.5);text-align:left}
+.tbub .tn{font-size:11px;opacity:.7;margin-bottom:4px}
+.tbub .tt{font-size:14px;line-height:1.55;margin-bottom:10px}
+.tbub .tb{display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.tbub .tb button{padding:6px 14px;font-size:13px;min-height:0}
+.tbub .tha{margin-right:auto;font-weight:700;color:#e6a800;font-size:13px}
+.tskip.tmap{right:auto;left:10px}
+.tskip{right:10px;bottom:10px;z-index:72;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer}
+
+.hh0{--hc:#e64a19}.hh1{--hc:#1565c0}.hh2{--hc:#2e9d55}.hh3{--hc:#8e24aa}.hh4{--hc:#00897b}.hh5{--hc:#c79100}
+.card{position:relative}
+.card[class*=" hh"]{border-color:var(--hc)!important;box-shadow:inset 0 0 0 2px var(--hc)}
+.hb{position:absolute;left:3px;bottom:3px;font-style:normal;font-size:10px;font-weight:700;line-height:15px;width:15px;height:15px;text-align:center;border-radius:50%;color:#fff;background:var(--hc);z-index:1}
+body.hero .me .ab{border:2px solid var(--hc)}
+body.hero .me .bar.p{box-shadow:0 0 0 2px var(--hc)}
+body.hero .me .stat{color:var(--hc);font-weight:700}
+
+.cr[class*=" hh"]{border-left:6px solid var(--hc)}
+.hb2{font-style:normal;font-size:11px;font-weight:700;line-height:18px;width:18px;height:18px;text-align:center;border-radius:50%;color:#fff;background:var(--hc);flex:0 0 18px;margin-right:4px}
+
+/* v3.8 */
+.card{position:relative}
+.card .ty{position:absolute;top:0;left:0;right:0;margin:0;border-radius:8px 8px 0 0;padding:2px 6px;text-align:left;font-size:9px;line-height:1.3}
+.card .c{margin-top:14px}
+.me{display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:stretch;width:100%;max-width:720px;margin-left:auto;margin-right:auto}
+.me>div:first-child{display:contents}
+.me .en{grid-column:1;grid-row:1;margin:0;width:auto;min-width:84px;height:auto;min-height:56px;padding:0 8px}
+.me .ab{grid-column:2;grid-row:1}
+.me>button:last-child{grid-column:3;grid-row:1;min-width:104px}
+.me .bar.p{grid-column:1/-1;grid-row:2;width:100%!important;max-width:none}
+.me .stat{grid-column:1/-1;grid-row:3}
+.me button.main{min-height:56px}
+.bar.sh i{background:var(--red)}
+.bar.p.sh i{background:var(--green)}
+.bar .shd{position:absolute;top:0;height:100%;z-index:2;background:linear-gradient(#8cc7ff,#2a7bd9);border-left:1px solid rgba(255,255,255,.7);transition:left .3s,width .3s;pointer-events:none}
+.hw{min-height:210px;container-type:inline-size}
+@media (max-width:560px){.hw{min-height:178px}}
+body.hflat .hand.bh{overflow:visible;flex-wrap:nowrap;justify-content:center;gap:3px;padding-left:0;padding-right:0}
+body.hflat .hand.bh .card{margin-left:0!important;margin-right:0!important;flex:1 1 0;min-width:0;max-width:104px;width:auto;padding:4px 1px}
+body.hflat .hand.bh .card .k{font-size:clamp(16px,calc(100cqw / var(--n,5) * .46),44px)}
+body.hflat .hand.bh .card .n{font-size:clamp(7px,calc(100cqw / var(--n,5) * .14),13px);white-space:nowrap;overflow:hidden}
+body.hflat .hand.bh .card .d{font-size:clamp(6px,calc(100cqw / var(--n,5) * .105),11px);min-height:0}
+body.hflat .hand.bh .card .c,body.hflat .hand.bh .card .ty{font-size:clamp(6px,calc(100cqw / var(--n,5) * .11),11px)}
+body.hflat .hand.bh .card .ty{padding:1px 3px}
+
+/* v3.9 */
+.card{height:184px;overflow:hidden}
+.card .d{line-height:1.2}
+@media (max-width:560px){.card{height:180px}.hand.bh .card{height:172px}}
+body.hflat .hand.bh .card{height:auto;aspect-ratio:104/184}
+.sec{cursor:help}
+#tip{position:fixed;z-index:120;max-width:230px;background:var(--panel,#222);color:var(--fg);border:1px solid #e6a800;border-radius:8px;padding:6px 9px;font-size:12px;line-height:1.5;box-shadow:0 4px 14px rgba(0,0,0,.35);pointer-events:none;display:none;text-align:left}
+#tip b{color:#e6a800}
+.vol{display:flex;align-items:center;gap:8px;justify-content:center;font-size:13px}
+.vol input[type=range]{flex:1;max-width:170px}
+.keyb{font-weight:700}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<button id="optbtn" onclick="optMenu()" aria-label="オプション">⚙</button>
+<script>
+const CARDS={
+斬:{n:'斬',name:'斬撃',cost:1,t:'atk',d:'6ダメージ',dmg:6},
+盾:{n:'盾',name:'防御',cost:1,t:'def',d:'ブロック5',blk:5},
+連:{n:'連',name:'連撃',cost:1,t:'atk',d:'3ダメージ×2',dmg:3,hits:2},
+炎:{n:'炎',name:'業火',cost:2,t:'atk',d:'14ダメージ',dmg:14},
+毒:{n:'毒',name:'毒霧',cost:1,t:'sk',d:'毒を4与える',poi:4},
+力:{n:'力',name:'鍛錬',cost:1,t:'sk',d:'筋力+2',str:2},
+癒:{n:'癒',name:'治癒',cost:2,t:'sk',d:'HP7回復',heal:7},
+禅:{n:'禅',name:'静心',cost:0,t:'sk',d:'2枚引く',draw:2},
+壁:{n:'壁',name:'鉄壁',cost:2,t:'def',d:'ブロック12',blk:12},
+雷:{n:'雷',name:'落雷',cost:0,t:'atk',d:'3ダメージ',dmg:3}
+};
+const ENEMIES=[
+{k:'鬼',name:'鬼',hp:42,acts:[{t:'atk',v:7},{t:'atk',v:7},{t:'def',v:8},{t:'atk',v:12}]},
+{k:'蛇',name:'蛇',hp:52,acts:[{t:'atk',v:5,n:2},{t:'def',v:6},{t:'atk',v:11},{t:'buff',v:2}]},
+{k:'龍',name:'龍',hp:84,acts:[{t:'atk',v:12},{t:'atk',v:6,n:2},{t:'buff',v:3},{t:'atk',v:20},{t:'def',v:12}]}
+];
+const REWARDS=['連','炎','毒','力','癒','禅','壁','雷','斬','盾'];
+const POOL=[ENEMIES[0],ENEMIES[1],{k:'狼',name:'狼',hp:34,acts:[{t:'atk',v:4,n:2},{t:'atk',v:4,n:2},{t:'atk',v:9}]},{k:'骸',name:'骸',hp:48,acts:[{t:'def',v:10},{t:'atk',v:9},{t:'buff',v:2},{t:'atk',v:13}]}];
+const ELITE={k:'魔',name:'魔',hp:62,acts:[{t:'atk',v:10},{t:'buff',v:2},{t:'atk',v:7,n:2},{t:'def',v:10},{t:'atk',v:16}]};
+const BOSS=ENEMIES[2];
+CARDS['呪']={n:'呪',name:'呪い',cost:9,t:'sk',d:'使えない'};
+CARDS['火']={n:'火',name:'召火',cost:1,t:'sk',d:'召喚：毎ターン4ダメージ(3T)',sum:'火'};
+CARDS['水']={n:'水',name:'召水',cost:1,t:'sk',d:'召喚：毎ターン🛡4(3T)',sum:'水'};
+CARDS['土']={n:'土',name:'召土',cost:1,t:'sk',d:'召喚：攻撃を肩代わり(HP14)',sum:'土'};
+CARDS['木']={n:'木',name:'召木',cost:1,t:'sk',d:'召喚：毎ターンHP2回復(4T)',sum:'木'};
+const SUMS={
+火:{left:3,d:'毎ターン敵に4ダメージ',act:()=>hitEnemy(4)},
+水:{left:3,d:'毎ターンブロック4',act:()=>{G.blk+=4}},
+土:{hp:14,left:99,taunt:1,d:'攻撃を肩代わりする'},
+木:{left:4,d:'毎ターンHP2回復',act:()=>{G.hp=Math.min(G.max,G.hp+2)}},
+鬼:{left:2,d:'毎ターン敵に7ダメージ',act:()=>hitEnemy(7)},
+蛇:{left:3,d:'毎ターン敵に毒2',act:()=>{G.e.poi+=2}},
+狼:{left:3,d:'毎ターン3ダメージ×2',act:()=>{hitEnemy(3);hitEnemy(3)}},
+骸:{hp:12,left:99,taunt:1,d:'攻撃を肩代わりする'},
+魔:{left:3,d:'毎ターン1枚多くカードを引く',act:()=>drawN(1)},
+蘇:{left:3,d:'毎ターンブロック3・HP3回復',act:()=>{G.blk+=3;G.hp=Math.min(G.max,G.hp+3)}},
+龍:{left:2,d:'毎ターン敵に12ダメージ',act:()=>hitEnemy(12)}
+};
+const DEXLIST=['鬼','蛇','狼','骸','魔','蘇','龍','炎','氷','雷','闇','獅','神','滅'];
+CARDS['鬼']={n:'鬼',name:'鬼使役',cost:2,t:'sk',d:'召喚：毎ターン7ダメージ(2T)',sum:'鬼'};
+CARDS['蛇']={n:'蛇',name:'蛇使役',cost:1,t:'sk',d:'召喚：毎ターン敵に毒2(3T)',sum:'蛇'};
+CARDS['狼']={n:'狼',name:'狼使役',cost:1,t:'sk',d:'召喚：毎ターン3×2ダメージ(3T)',sum:'狼'};
+CARDS['骸']={n:'骸',name:'骸使役',cost:1,t:'sk',d:'召喚：攻撃を肩代わり(HP12)',sum:'骸'};
+CARDS['魔']={n:'魔',name:'魔使役',cost:2,t:'sk',d:'召喚：毎ターン+1ドロー(3T)',sum:'魔'};
+CARDS['蘇']={n:'蘇',name:'蘇使役',cost:1,t:'sk',d:'召喚：毎ターン🛡3・HP3(3T)',sum:'蘇'};
+CARDS['龍']={n:'龍',name:'龍使役',cost:3,t:'sk',d:'召喚：毎ターン12ダメージ(2T)',sum:'龍'};
+let DEX=[];try{DEX=JSON.parse(localStorage.getItem('kanjiDex')||'[]')}catch(e){}
+function unlock(k){if(!DEX.includes(k)){DEX.push(k);try{localStorage.setItem('kanjiDex',JSON.stringify(DEX))}catch(e){}}}
+
+REWARDS.push('火','水','土','木');
+ENEMIES[0].acts=[{t:'atk',v:7,nm:'金棒'},{t:'buff',v:2,nm:'咆哮'},{t:'atk',v:11,nm:'鬼神乱舞'},{t:'def',v:8,nm:'角守り'}];
+ENEMIES[1].acts=[{t:'pois',v:5,p:3,nm:'毒牙'},{t:'def',v:6,nm:'とぐろ'},{t:'atk',v:5,n:2,nm:'絞殺'},{t:'pois',v:7,p:4,nm:'猛毒牙突'}];
+ENEMIES[2].acts=[{t:'atk',v:12,nm:'爪撃'},{t:'atk',v:6,n:2,nm:'炎息'},{t:'buff',v:3,nm:'竜の咆哮'},{t:'atk',v:20,nm:'天地鳴動逆鱗滅殺'},{t:'def',v:12,nm:'鱗の守り'}];
+POOL[2].acts=[{t:'atk',v:4,n:2,nm:'連爪'},{t:'buff',v:1,nm:'遠吠え'},{t:'atk',v:9,nm:'咬砕'}];
+POOL[3].acts=[{t:'def',v:10,nm:'骨の盾'},{t:'atk',v:9,nm:'骨砕'},{t:'buff',v:2,nm:'怨念'},{t:'atk',v:13,nm:'亡者之腕'}];
+ELITE.acts=[{t:'curse',v:6,nm:'呪詛'},{t:'buff',v:2,nm:'魔力集中'},{t:'atk',v:7,n:2,nm:'魔弾'},{t:'def',v:10,nm:'結界'},{t:'curse',v:12,nm:'極大呪詛'}];
+POOL.push({k:'蘇',name:'蘇',hp:44,mins:2,acts:[{t:'atk',v:6,nm:'呪言'},{t:'revive',nm:'蘇生'},{t:'def',v:6,nm:'冥府の壁'},{t:'revive',nm:'蘇生'}]});
+const CHARS=[
+{k:'剣',name:'剣士',hp:65,deck:'斬斬斬斬斬盾盾盾連連',ab:'一閃',d:'次の攻撃カードのダメージ2倍',cost:1},
+{k:'盾',name:'守護者',hp:80,deck:'斬斬斬盾盾盾盾盾壁禅',ab:'手書き防御',d:'次の敵の攻撃を、漢字を書いて防御（成功でダメージ半減）',cost:1},
+{k:'薬',name:'薬師',hp:60,deck:'斬斬斬斬盾盾盾毒癒禅',ab:'調合',d:'敵に毒2・HP3回復（2回使うと次ターン休止）',cost:1},
+{k:'術',name:'術師',hp:55,deck:'斬斬盾盾盾炎炎雷雷禅',ab:'集中',d:'HPを3失いエナジー+2',cost:0},
+{k:'召',name:'召喚師',hp:58,deck:'斬斬斬盾盾盾盾火火禅',ab:'号令',d:'召喚獣が全員すぐ行動する',cost:1},
+{k:'合',name:'合成師',hp:60,deck:'日月女子田力山石夕夕',ab:'合成',d:'手札の2枚を合体させ新しい漢字カードにする',cost:1}
+];
+const ICON={battle:'戦',elite:'強',event:'？',shop:'店',rest:'休',boss:'龍'};
+const EVENTS=[
+{k:'泉',t:'澄んだ泉がある。',o:[['飲む (HP+15)',()=>{G.hp=Math.min(G.max,G.hp+15);return'力がみなぎった。'}],['立ち去る',()=>'何もせず先へ進んだ。']]},
+{k:'碑',t:'怪しい石碑が光っている。',o:[['触れる (HP-8 / 💰+50)',()=>{G.hp=Math.max(1,G.hp-8);G.gold+=50;return'金貨が湧き出た。'}],['無視する',()=>'触れずに通り過ぎた。']]},
+{k:'賢',t:'賢者が札を差し出してきた。',o:[['受け取る (ランダムなカード)',()=>{const id=REWARDS[Math.floor(Math.random()*REWARDS.length)];G.deck.push(id);return CARDS[id].name+'を手に入れた。'}],['断る',()=>'一礼して別れた。']]},
+{k:'賭',t:'賭け師が勝負を持ちかけてくる。',o:[['賭ける (💰30 → 半々で💰80)',()=>{if(G.gold<30)return'金が足りない。';G.gold-=30;if(Math.random()<.5){G.gold+=80;return'勝った！ 💰80を得た。'}return'負けた…'}],['断る',()=>'賭けには乗らなかった。']]}
+];
+let G;
+const $=s=>document.querySelector(s);
+const sh=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function newGame(){G={scr:'select'};render()}
+function choose(i){const c=CHARS[i];G={hp:c.hp,max:c.hp,gold:30,deck:[...c.deck],ch:c,rel:[],pots:[],beaten:[],floor:1,pt:0,ts:Date.now(),elK:0,scr:'map',row:-1,col:-1};genMap();render()}
+function genMap(){
+const R=8,C=4,m=[];
+for(let r=0;r<R;r++){m.push([]);
+if(r===R-1){m[r].push({r,c:1.5,t:'boss',to:[]});continue}
+for(let c=0;c<C;c++){
+let t='battle';
+if(r===R-2)t='rest';
+else if(r>0){const x=Math.random();t=x<.45?'battle':x<.6?'elite':x<.78?'event':x<.9?'shop':'rest';if(t==='elite'&&r<3)t='battle'}
+m[r].push({r,c,t,to:[]});
+}}
+for(let r=0;r<R-1;r++)for(const n of m[r]){
+if(r===R-2){n.to=[0];continue}
+for(let d=-1;d<=1;d++){const k=n.c+d;if(k<0||k>=C)continue;if(d===0||Math.random()<.5)n.to.push(k)}
+}
+let es=m.flat().filter(n=>n.t==='elite').length;
+while(es<2){const cs=m.flat().filter(n=>n.r>=3&&n.r<=5&&n.t!=='elite'),fr=cs.filter(n=>!m.flat().some(x=>x.t==='elite'&&x.r===n.r)),c=fr.length?fr:cs;c[Math.floor(Math.random()*c.length)].t='elite';es++}
+G.map=m;m[R-1][0].b=pickBoss();
+}
+function goNode(i){
+const r=G.row+1,n=G.map[r][i];G.row=r;G.col=i;G.node=n;n.vis=true;G.msg='';G.evr=null;
+const t=n.t;
+if(t==='battle')startBattle(POOL[Math.floor(Math.random()*POOL.length)]);
+else if(t==='elite')startBattle(ELITE);
+else if(t==='boss')startBattle(n.b);
+else if(t==='shop'){G.stock=pickCards(3).map(id=>({id,p:cp(id)}));G.srel=randRel();G.srelP=has('財')?88:110;G.srelSold=false;G.spot=sh([...POTK]).slice(0,2).map(k=>({k,p:25+Math.floor(Math.random()*10)}));G.scr='shop';render()}
+else if(t==='rest'){G.scr='rest';render()}
+else{G.ev=EVENTS[Math.floor(Math.random()*EVENTS.length)];G.scr='event';render()}
+}
+function toMap(){G.evr=null;G.msg='';G.scr='map';render()}
+function rest(k){if(k){G.max+=6;G.hp+=6}else G.hp=Math.min(G.max,G.hp+Math.ceil(G.max*(has('盃')?.5:.3)));toMap()}
+function evPick(i){G.evr=G.ev.o[i][1]();render()}
+function buy(i){const o=G.stock[i];if(G.gold<o.p){G.msg='💰が足りない';return render()}G.gold-=o.p;G.deck.push(o.id);o.sold=true;G.msg=CARDS[o.id].name+'を購入した';render()}
+function removeMode(){if(G.gold<50){G.msg='💰が足りない';return render()}if(G.deck.length<=5){G.msg='これ以上減らせない';return render()}G.scr='remove';render()}
+function del(i){G.gold-=50;G.msg=CARDS[G.deck[i]].name+'を削除した';G.deck.splice(i,1);G.scr='shop';render()}
+function startBattle(e){
+G.fx=null;G.pfx=null;
+G.e={...e,maxhp:Math.round(e.hp*(1+.3*(G.floor-1))),cur:Math.round(e.hp*(1+.3*(G.floor-1))),blk:0,str:G.floor-1,poi:0,i:0,mins:Array.from({length:e.mins||0},()=>({k:'屍',cur:10,max:10,v:4,blk:0}))};G.t=e.mins?0:-1;G.fxT=null;G.ppoi=0;G.dbl=false;G.used=false;G.uses=0;G.lock=false;G.sums=[];G.nextBuff=0;G.sub=0;G.nextBlk=0;G.nextFx=null;G.hwDef=false;G.hwHalf=false;G.sec=[];
+G.str=0;G.blk=0;G.draw=sh([...G.deck]);G.hand=[];G.disc=[];G.turn=0;G.log='';G.scr='battle';
+startTurn();
+}
+function drawN(n){
+for(let i=0;i<n;i++){
+if(!G.draw.length){if(!G.disc.length)return;G.draw=sh(G.disc);G.disc=[]}
+if(G.hand.length<10){G.hand.push(G.draw.pop());G.anim=(G.anim||0)+1}else G.disc.push(G.draw.pop());
+}}
+function startTurn(){
+G.turn++;G.en=3;G.blk=0;G.used=false;G.sub=0;G.hwHalf=false;G.blk+=(G.nextBlk||0)+(G.nextFx?G.nextFx.blk:0);if(G.nextFx&&G.nextFx.draw)drawN(G.nextFx.draw);G.nextBlk=0;G.nextFx=null;secFire('turn');if((G.uses||0)>=2){G.lock=true;G.uses=0}else G.lock=false;
+if(G.turn===1){if(has('印'))G.blk+=8;if(has('力'))G.str+=1}
+if(G.ppoi>0){G.hp-=G.ppoi;G.log+='／毒'+G.ppoi+'ダメージ';G.ppoi--;if(G.hp<=0){G.hp=0;G.scr='lose';return render()}}
+if(G.e.poi>0){G.e.cur-=G.e.poi;G.pfx=G.e.poi;G.e.poi--;if(G.e.cur<=0){return winSoon()}}
+if(sumTurn())return;
+drawN(5+(has('筆')?1:0));secFire('hand');render();
+}
+function hitEnemy(d){
+const T=tgt();G.fxT=G.t;d+=G.str;if(G.dbl)d*=2;if(G.pwk>0)d=Math.floor(d*.75);if(T===G.e&&G.e.vul>0)d=Math.ceil(d*1.5);let r=Math.max(0,d-T.blk);T.blk=Math.max(0,T.blk-d);T.cur-=r;
+G.fx=(G.fx||0)+r;
+}
+function play(i){
+if(G.busy)return;
+const id=G.hand[i],c=CARDS[id];sfx(c.dmg?'hit':c.blk?'block':c.heal?'heal':(c.sum||c.sums)?'summon':'play');
+if(c.cost>G.en)return;
+G.en-=c.cost;G.hand.splice(i,1);G.disc.push(id);
+if(c.dmg){if((c.hits||1)>1)multiHit(c.dmg,c.hits,G.dbl);else hitEnemy(c.dmg)}
+if(c.dmg)G.dbl=false;if(c.dmg)secFire('atk');
+if(c.blk)G.blk+=c.blk;
+if(c.poi)G.e.poi+=c.poi;
+if(c.str)G.str+=c.str;
+if(c.heal)G.hp=Math.min(G.max,G.hp+c.heal);
+if(c.sum)summon(c.sum,id);
+if(c.quiz){G.busy=true;openQuiz(c)}
+if(c.sums)c.sums.forEach(k=>summon(k));if(c.bash)hitEnemy(G.blk);if(c.poiX)G.e.poi*=2;if(c.en)G.en+=c.en;if(c.self)G.hp=Math.max(1,G.hp-c.self);
+if(c.recall){runSums(()=>{if(G.e.cur<=0)winSoon();else render()});(G.sums||[]).forEach(s=>{if(s.left<99)s.left++})}
+if(c.sac){if((G.sums||[]).length){G.busy=true;openSac(c.sac)}else G.log='犠牲にする召喚獣がいない'}
+if(c.sacAll)sacAll();if(c.sub)G.sub=(G.sub||0)+1;
+if(c.sec){G.sec=G.sec||[];if(G.sec.length>=3){const o=G.sec.shift();if(o.held)G.disc.push(o.id)}const di=G.disc.lastIndexOf(id);if(di>=0)G.disc.splice(di,1);G.sec.push({...c.sec,id,held:1});toast('🔮 '+c.sec.e+'の秘策をセット')}
+if(c.nextBlk)G.nextBlk=(G.nextBlk||0)+c.nextBlk;if(c.later){G.nextFx=G.nextFx||{blk:0,draw:0};G.nextFx.blk+=c.later.blk||0;G.nextFx.draw+=c.later.draw||0}
+if(c.disc&&G.hand.length&&G.e.cur>0){G.busy=true;openDisc(c.disc)}
+if(c.draw)drawN(c.draw);
+G.log=c.name+'を使った';secFire('hand');
+if(G.e.cur<=0)return winSoon();
+render();
+}
+function curAct(e){let a=e.acts[e.i%e.acts.length];if(a.t==='revive'&&!(e.mins||[]).some(x=>x.cur<=0))a={t:'atk',v:8,nm:'怨念の爪'};return a}
+function endTurn2(){
+if(G.busy)return;G.busy=true;
+G.disc.push(...G.hand);G.hand=[];
+const e=G.e,a=curAct(e);e.i++;e.blk=0;
+const g=G;const k=$('.kanji'),atk=['atk','pois','curse'].includes(a.t);
+k.classList.add(atk?'windup':'cast');k.style.setProperty('--c',a.t==='def'?'#1e66c1':'#8e44ad');const wz=atk?mkWz(a.nm):null;if(a.sp)k.classList.add('long');
+setTimeout(()=>{
+if(g!==G)return;
+if(atk){
+k.classList.remove('windup');k.classList.add('strike');
+if(wz){wz.classList.add('go');setTimeout(()=>wz.remove(),400)}sfx('big');
+setTimeout(()=>{k.classList.remove('strike');k.classList.add('recover')},250);
+const ap=$('#app');ap.classList.remove('shake');void ap.offsetWidth;ap.classList.add('shake');setTimeout(()=>ap.classList.remove('shake'),400);
+const dm=Math.ceil((a.v+e.str)*(G.hwHalf?.5:1)*(e.wk>0?.75:1));hurt(dm);for(let h=1;h<(a.n||1);h++)setTimeout(()=>{if(g!==G)return;hurt(dm);refreshPBar();mhitS(h)},h*500);if(a.t==='pois')G.ppoi=(G.ppoi||0)+a.p;if(a.t==='curse')G.disc.push('呪');G.log=e.name+'の'+a.nm+'！';
+}else if(a.t==='def'){e.blk+=a.v;G.log=e.name+'の'+a.nm+'！'}
+else if(a.t==='revive'){G.log=revive(e)}
+else{e.str+=a.v;G.log=e.name+'の'+a.nm+'！'}
+G.log+=minAct();refreshPBar();
+setTimeout(()=>{
+if(g!==G)return;
+stTick(a);G.busy=false;
+if(G.hp<=0){G.hp=0;G.scr='lose';return render()}
+startTurn();
+},atk?(a.sp?1500:850)+((a.n||1)-1)*500:450);
+},atk?(a.sp?1400:600):250);
+}
+function win(){
+sfx('win');G.nw=!DEX.includes(G.e.k);unlock(G.e.k);achWin();G.beaten=G.beaten||[];if(!G.beaten.includes(G.e.k))G.beaten.push(G.e.k);
+if(G.node.t==='boss'){G.nrel=null;G.rw=[{t:'gold',v:60+Math.floor(Math.random()*30)+(has('金')?10:0)}];const r=randRel();if(r)G.rw.push({t:'rel',k:r});G.rw.push({t:'card',o:[...new Set([...rareCards(3),...(CARDS[G.e.k]?[G.e.k]:[])])]});G.bossNext=G.floor===3?'clear':'floorclear';if(G.floor===3){G.clearT=fmtT(playMs());if(playMs()<1800000)ach('speed');ach('clear');clearSave()}G.scr='reward';return render()}
+if(has('酒'))G.hp=Math.min(G.max,G.hp+4);G.rw=[];if(G.node.t==='elite'){const r=randRel();if(r)G.rw.push({t:'rel',k:r})}
+if(Math.random()<.4)G.rw.push({t:'pot',k:POTK[Math.floor(Math.random()*POTK.length)]});
+G.got=(G.node.t==='elite'?35:12+Math.floor(Math.random()*12))+(has('金')?10:0);G.rw.unshift({t:'gold',v:G.got});
+G.rw.push({t:'card',o:[...new Set([...pickCards(3),...(CARDS[G.e.k]?[G.e.k]:[])])]});G.scr='reward';render();
+}
+function pick(id){if(id)G.deck.push(id);toMap()}
+function cardEl(id,i,click){
+const c=CARDS[id];const n0=G.hand.length-(G.anim||0),dl=click&&click.startsWith('play')&&i>=n0;
+return `<button class="card ${c.t} r${rar(id)} t${ct(c)}${dl?' dealt':''}" data-id="${id}" data-i="${i}" data-sm="${click&&click.startsWith('play')&&c.sum?1:0}"${dl?` style="animation-delay:${((i-n0)*.09).toFixed(2)}s"`:''} ${click?`onclick="${click}"`:''} ${click&&click.startsWith('play')&&c.cost>G.en?'disabled':''}><div class="ty">${CTN[ct(c)]}</div><div class="c">${c.cost}<span class="rt">${rar(id)==='r'?'★':rar(id)==='u'?'◆':''}</span></div><div class="k">${c.n}</div><div class="n">${c.name}</div><div class="d">${c.d}</div>${pvHtml(c,click)}</button>`;
+}
+function intent(){
+const e=G.e,a=curAct(e);
+if(['atk','pois','curse'].includes(a.t))return `<span class="i-atk">⚔ ${a.nm} ${Math.ceil(Math.ceil((a.v+e.str)*(e.wk>0?.75:1))*(G.pvul>0?1.5:1))}${a.n?'×'+a.n:''}${a.t==='pois'?' ☠毒'+a.p:''}${a.t==='curse'?' 呪札':''}</span>`;
+if(a.t==='def')return `<span class="i-def">🛡 ${a.nm} ${a.v}</span>`;
+if(a.t==='revive')return `<span class="i-buff">✝ ${a.nm}</span>`;
+return `<span class="i-buff">✦ ${a.nm} 筋力+${a.v}</span>`;
+}
+function viewOther(){
+const A=$('#app'),s=G.scr;
+const head=relHtml()+`<div class="top"><span>HP ${G.hp}/${G.max}</span><span class="gold">💰${G.gold}</span><button class="main off" onclick="mapPeek()">🗺 地図</button><button class="main off" onclick="showDeck('deck')">📚 デッキ ${G.deck.length}枚</button></div>`;
+if(s==='map'){
+const m=G.map,R=m.length,rh=62,H=R*rh,y=r=>(R-1-r)*rh+rh/2;
+const avail=G.row<0?m[0].map((_,i)=>i):m[G.row][G.col].to;
+let ln='',nd='';
+m.forEach((row,r)=>row.forEach((n,i)=>{
+n.to.forEach(j=>{const q=m[r+1][j];ln+=`<line x1="${(n.c+.5)*100}" y1="${y(r)}" x2="${(q.c+.5)*100}" y2="${y(r+1)}" class="${G.row===r&&G.col===i?'on':''}"/>`});
+const ok=r===G.row+1&&avail.includes(i);
+nd+=`<button class="node ${n.t}${ok?' ok':''}${n.vis?' vis':''}" style="left:${(n.c+.5)*25}%;top:${y(r)}px" ${ok?`onclick="goNode(${i})"`:'disabled'}>${n.b?n.b.k:ICON[n.t]}</button>`;
+}));
+A.innerHTML=head+`<div class="mapw" style="height:${H}px"><svg viewBox="0 0 400 ${H}" preserveAspectRatio="none">${ln}</svg>${nd}</div><div class="log">光る印から進む先を選ぶ　戦=敵 ／ 強=強敵 ／ ？=イベント ／ 店 ／ 休=焚き火</div>`;return}
+if(s==='shop'){A.innerHTML=head+`<div class="overlay"><div class="kanji sm">店</div><h2>商店</h2><div class="hand">${G.stock.map((o,i)=>o.sold?'':`<div>${cardEl(o.id,0,'buy('+i+')')}<div class="stat">💰${o.p}</div></div>`).join('')}</div><div class="btns">${G.srel&&!G.srelSold?`<button class="main off" onclick="buyRel()">🏺 ${G.srel} ${RELICS[G.srel].name}（${RELICS[G.srel].d}）💰${G.srelP}</button>`:''}${G.spot.map((o,i)=>o.sold?'':`<button class="main off" onclick="buyPot(${i})">🧪 ${o.k}（${POTS[o.k].d}）💰${o.p}</button>`).join('')}</div><div class="log">${G.msg||''}</div><div class="btns"><button class="main" onclick="removeMode()">カード削除 (💰50)</button><button class="main" onclick="toMap()">店を出る</button></div></div>`;return}
+if(s==='remove'){A.innerHTML=head+`<div class="overlay"><h2>削除するカードを選ぶ</h2><div class="hand">${G.deck.map((id,i)=>cardEl(id,0,'del('+i+')')).join('')}</div><button class="main" onclick="G.scr='shop';render()">戻る</button></div>`;return}
+if(s==='rest'){A.innerHTML=head+`<div class="overlay"><div class="kanji sm">休</div><h2>焚き火</h2><p>ひと休みして体勢を整える。</p><div class="btns"><button class="main" onclick="rest(0)">休む (HP30%回復)</button><button class="main" onclick="rest(1)">鍛える (最大HP+6)</button><button class="main" onclick="restUpMenu()">カード強化</button>${G.ch.k==='合'?`<button class="main" onclick="restFuseMenu()">合成する (デッキの2枚を合体)</button>`:''}</div></div>`;return}
+const v=G.ev;
+A.innerHTML=head+`<div class="overlay"><div class="kanji sm">${v.k}</div><p>${v.t}</p>${G.evr?`<h2>${G.evr}</h2><button class="main" onclick="toMap()">進む</button>`:`<div class="btns">${v.o.map((o,i)=>`<button class="main" onclick="evPick(${i})">${o[0]}</button>`).join('')}</div>`}</div>`;
+}
+function render(){
+if(G.busy)return;
+const A=$('#app');tick();if(['map','shop','rest','event','reward','floorclear'].includes(G.scr))save();
+if(G.scr==='custom'){customView();return}
+if(G.scr==='select'){selectView();return}
+if(['map','shop','remove','rest','event'].includes(G.scr))return viewOther();
+if(G.scr==='reward'){rewardView();return}
+if(G.scr==='cardpick'){pickView();return}
+if(G.scr==='floorclear'){A.innerHTML=`<div class="overlay"><div class="kanji">${G.e.k}</div><h2>第${G.floor}階層クリア！</h2><p>ボス「${G.e.k}」を倒した。HPを30%回復して次の階層へ。</p>${G.nw?`<p>🆕 図鑑に「${G.e.k}」が追加された！</p>`:''}${G.nrel?`<p>🏺 レリック「${G.nrel}」を入手！</p>`:''}<button class="main" onclick="nextFloor()">次の階層へ</button></div>`;return}
+if(G.scr==='lose'){sfx('lose');clearSave();A.innerHTML=`<div class="overlay"><div class="kanji">敗</div><h2>敗北…</h2><p>${G.e.name}に倒された。</p><button class="main" onclick="newGame()">もう一度</button></div>`;return}
+if(G.scr==='clear'){A.innerHTML=`<div class="overlay"><div class="kanji">勝</div><h2>塔を制覇！</h2><p>大ボス「${G.e.k}」を打ち倒した！<br>塔を制覇した。エンドレスモードが解放された。</p><p>⏱ クリアタイム：${G.clearT}</p><p><button class="main off" onclick="shareRes()">結果をシェアする</button></p>${G.nw?`<p>🆕 図鑑に「${G.e.k}」が追加された！</p>`:''}${G.nrel?`<p>🏺 レリック「${G.nrel}」を入手！</p>`:''}<p><button class="main" onclick="nextFloor()">エンドレスモードへ</button></p><button class="main" onclick="newGame()">もう一度</button></div>`;return}
+if(G.scr==='reward'){A.innerHTML=`<div class="overlay"><div class="kanji">${G.e.k}</div><h2>撃破！</h2><p>💰${G.got}を獲得。カードを1枚選ぶ。</p>${G.nw?`<p>🆕 図鑑に「${G.e.k}」が追加された！</p>`:''}${CARDS[G.e.k]?`<p>倒した「${G.e.k}」を使役できる。</p>`:''}${G.nrel?`<p>🏺 レリック「${G.nrel}」を入手！(${RELICS[G.nrel].d})</p>`:''}${G.npot?`<p>🧪 ポーション「${G.npot}」を入手！</p>`:''}<div class="hand">${G.opts.map(id=>cardEl(id,0,`pick('${id}')`)).join('')}</div><button class="main" onclick="pick()">選ばない</button></div>`;return}
+const e=G.e;tgt();
+A.innerHTML=`
+<div class="top"><span>第${G.floor}階${G.floor>3?'(∞)':''} ${G.row+1}/${G.map.length}${G.custom?' [カスタム]':''}</span><span class="gold">💰${G.gold}</span><button class="main off" onclick="mapPeek()">🗺 地図</button><span>ターン ${G.turn}</span></div>
+${relHtml()}<div class="enemy t-${curAct(e).t}">
+<div class="kanji${G.t<0&&(e.mins||[]).some(x=>x.cur>0)?' tsel':''}${e.ph2?' rage':''}" onclick="G.t=-1;render()" style="cursor:pointer">${e.k}</div>
+<div class="bar${e.blk?' sh':''}">${barS(e.tp||(e.tp={}),e.cur,e.maxhp,e.blk)}<em class="shn">${e.blk?'🛡'+e.blk:''}</em><b class="hpn">${Math.max(0,e.cur)}/${e.maxhp}</b>${bossNotch(e)}</div>${bossWarn(e)}
+<div class="stat">${e.blk?` ／ 🛡${e.blk}`:''}${e.poi?` ／ ☠毒${e.poi}`:''}${e.str?` ／ 筋力+${e.str}`:''}</div>
+<div class="intent">次の行動: ${intent()}</div><div class="log">${G.log}</div>${minsHtml()}<button class="main off dkb" onclick="showDeck('deck')">📚 デッキ確認 (山札${G.draw.length} ／ 捨て札${G.disc.length} ／ 保留${holdN()})</button>
+</div>
+<div class="row2">${sumsHtml()}</div>${secHtml()}
+<div class="hbar">${potsHtml()}<button class="main off sbtn" onclick="sortHand()">↕ 並び替え：${['なし','コスト順','種類順'][G.sm||0]}</button></div><div class="hw"><div class="hand bh">${G.hand.map((id,i)=>cardEl(id,i,`play(${i})`)).join('')}</div><span class="ar l">◀</span><span class="ar r">▶</span></div>
+<div class="me">
+<div>${enHtml()}<div class="bar p${G.blk?' sh':''}" style="margin:0;width:220px;height:20px">${barS(G.tpP||(G.tpP={}),G.hp,G.max,G.blk)}<em class="shn">${G.blk?'🛡'+G.blk:''}</em><b class="hpn">${G.hp}/${G.max}</b></div>
+<div class="stat">${G.ch.k}${G.ppoi?` ／ ☠毒${G.ppoi}`:''}${G.dbl?' ／ ✦一閃':''}${G.regen?` ／ 💚継続回復${G.regen.v}×${G.regen.t}T`:''}${G.pwN&&G.pwN.length?' ／ ✨'+G.pwN.join('・'):''}${G.blk?` ／ 🛡${G.blk}`:''}${G.str?` ／ 筋力+${G.str}`:''}</div></div>
+
+<button class="main ab" onclick="useAb()" ${abOff()||G.ch.cost>G.en?'disabled':''}>${G.ch.k} ${G.ch.ab}${abLabel()}<small>${G.ch.d}／コスト${G.ch.cost}</small></button>
+
+<button class="main" onclick="endTurn()">ターン終了</button>
+</div>`;
+if(G.fx!=null){const k=G.fxT>=0?$('.mn'+G.fxT+' .mk'):$('.kanji');k.classList.add('flash');setTimeout(()=>k.classList.remove('flash'),450);
+const s=document.createElement('span');s.className='dmg';s.textContent=G.fx>0?'-'+G.fx:'ブロック';(G.fxT>=0?$('.mn'+G.fxT):$('.enemy')).appendChild(s);setTimeout(()=>s.remove(),800);G.fx=null}
+if(G.pfx){const k=$('.kanji');k.classList.add('poison');setTimeout(()=>k.classList.remove('poison'),900);const s=document.createElement('span');s.className='dmg p';s.textContent='☠-'+G.pfx;$('.enemy').appendChild(s);setTimeout(()=>s.remove(),900);G.pfx=null}
+G.anim=0;(G.e.mins||[]).forEach(x=>x.rv=0);(G.sums||[]).forEach(s=>{s.rv=0;s.act=0});animTrails();handArr();
+}
+function showDeck(k){
+const src=k==='draw'?G.draw:k==='disc'?G.disc:G.deck;
+const ids=[...src].sort(),cnt={};ids.forEach(i=>cnt[i]=(cnt[i]||0)+1);
+const tabs=(G.scr==='battle'?[['deck','デッキ全体'],['draw','山札'],['disc','捨て札']]:[['deck','デッキ全体']]).map(([x,l])=>`<button class="main${x===k?'':' off'}" onclick="showDeck('${x}')">${l}</button>`).join('');
+$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox"><div class="btns">${tabs}<button class="main off" onclick="closeDeck()">✕ 閉じる</button></div><div class="stat" style="text-align:center">${ids.length}枚${k==='draw'?'（順不同）':''}</div><div class="hand">${Object.keys(cnt).map(id=>`<div style="position:relative">${cardEl(id,0,'')}${cnt[id]>1?`<span class="badge">×${cnt[id]}</span>`:''}</div>`).join('')}</div></div></div>`;
+}
+function closeDeck(){$('#modal').innerHTML=''}
+function optMenu(c){
+$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:340px;text-align:center"><h2>オプション</h2>${c?`<p>タイトルに戻りますか？<br>進行状況は、直前のマップ画面まで自動で保存されています。</p><div class="btns"><button class="main" onclick="closeDeck();newGame()">タイトルへ</button><button class="main off" onclick="optMenu()">やめる</button></div>`:`<div class="btns" style="flex-direction:column"><button class="main" onclick="closeDeck()">ゲームに戻る</button><button class="main off" onclick="togAu('on')">効果音：${AU.on?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.se*100)}" oninput="setVol('se',this.value)" onchange="volTest()"></div><button class="main off" onclick="togAu('bgm')">BGM：${AU.bgm?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.bgm*100)}" oninput="setVol('bgm',this.value)"></div>${keyPc?`<button class="main off keyb" onclick="keyStart()">${keyCap()?'キー／ボタンを押してください(Escで中止)':'ターン終了ショートカット：'+keyName()}</button>${keyCap()?'':'<small style="opacity:.7;cursor:pointer" onclick="keyReset()">初期(右クリック)に戻す</small>'}`:''}<button class="main off" onclick="togHand()">手札の並べ方：${HL.flat?'広げる(旧版)':'重ねる'}</button><button class="main off" onclick="optMenu(1)">タイトルに戻る</button><button class="main off" onclick="hwOpen()">🧪 テスト専用：手書き認識テスト</button></div>`}</div></div>`}
+function sumInfo(i){const s=G.sums[i];if(!s)return;const d=SUMS[s.k];$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:320px;text-align:center"><div class="kanji sm">${s.k}</div><h2>${s.k}の召喚獣</h2><p>${d.d}</p><p class="stat">${d.hp?'HP '+s.hp+'／'+d.hp:'残り '+s.left+' ターン'}</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
+function dexInfo(k){const c=CARDS[k]||{name:k+'の記録',cost:'-'},d=SUMS[k]||{d:'倒した強敵の記録'};$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:320px;text-align:center"><div class="kanji sm">${k}</div><h2>${c.name}</h2><p>コスト${c.cost}／${d.d}</p><p class="stat">${CARDS[k]?'倒した敵の漢字。その挑戦のあいだ、報酬や店に使役カードが並ぶ。':'倒した強敵の漢字。'}</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
+const BOSSES=[ENEMIES[2],
+{k:'炎',name:'炎',hp:90,acts:[{t:'atk',v:13,nm:'炎柱'},{t:'curse',v:7,nm:'灼熱地獄'},{t:'buff',v:2,nm:'燃焼'},{t:'atk',v:8,n:2,nm:'火炎乱舞'},{t:'def',v:10,nm:'炎壁'}]},
+{k:'氷',name:'氷',hp:95,acts:[{t:'def',v:14,nm:'氷壁'},{t:'atk',v:9,n:2,nm:'氷槍'},{t:'curse',v:6,nm:'凍結'},{t:'atk',v:18,nm:'絶対零度'},{t:'buff',v:2,nm:'冷気'}]},
+{k:'雷',name:'雷',hp:85,acts:[{t:'atk',v:5,n:3,nm:'雷撃'},{t:'buff',v:2,nm:'帯電'},{t:'atk',v:22,nm:'天雷落下'},{t:'def',v:8,nm:'雷鳴'}]},
+{k:'闇',name:'闇',hp:100,acts:[{t:'pois',v:6,p:4,nm:'闇喰'},{t:'curse',v:6,nm:'暗黒呪縛'},{t:'buff',v:3,nm:'闇纏'},{t:'atk',v:17,nm:'常闇断罪'},{t:'def',v:10,nm:'闇幕'}]},
+{k:'獅',name:'獅',hp:95,acts:[{t:'atk',v:12,nm:'爪牙'},{t:'buff',v:2,nm:'獅子吼'},{t:'atk',v:7,n:2,nm:'連牙'},{t:'atk',v:20,nm:'百獣之王'},{t:'def',v:10,nm:'鬣盾'}]}];
+const BIG=[
+{k:'神',name:'神',hp:120,acts:[{t:'atk',v:14,nm:'神罰'},{t:'atk',v:8,n:3,nm:'三連神撃'},{t:'buff',v:3,nm:'神威'},{t:'curse',v:10,nm:'天罰呪縛'},{t:'atk',v:30,nm:'天地創造滅亡終焉'},{t:'def',v:20,nm:'絶対防壁'}]},
+{k:'滅',name:'滅',hp:125,acts:[{t:'atk',v:12,n:2,nm:'滅殺'},{t:'pois',v:10,p:5,nm:'滅毒猛襲'},{t:'buff',v:4,nm:'滅気'},{t:'curse',v:12,nm:'滅亡呪縛'},{t:'atk',v:28,nm:'万物滅尽終焉破壊'},{t:'def',v:18,nm:'虚無障壁'}]}];
+function pickBoss(){const f=G.floor;if(f===3)return BIG[Math.floor(Math.random()*BIG.length)];G.ub=G.ub||[];let c=BOSSES.filter(b=>!G.ub.includes(b.k));if(!c.length){G.ub=[];c=BOSSES}const b=f>3&&Math.random()<.3?BIG[Math.floor(Math.random()*BIG.length)]:c[Math.floor(Math.random()*c.length)];G.ub.push(b.k);return b}
+function nextFloor(){G.floor++;if(G.floor>=5)ach('floor5');G.hp=Math.min(G.max,G.hp+Math.ceil(G.max*.3));genMap();G.row=-1;G.col=-1;G.scr='map';render()}
+const ORD=[['「左」の1画目は？',['横','左はらい','縦']],['「右」の1画目は？',['左はらい','横','縦']],['「十」の1画目は？',['横','縦']],['「川」の1画目は？',['左の縦線','中の縦線','右の縦線']],['「三」の1画目は？',['一番上の横','真ん中の横','一番下の横']],['「山」の1画目は？',['真ん中の縦','左の縦','右の縦']],['「火」の1画目は？',['左の点','右の点','左はらい']],['「力」の1画目は？',['折れて跳ねる画','左はらい']],['「上」の最後に書く画は？',['長い横','短い横','縦']],['「田」の最後に書く画は？',['下の横','中の縦','右の縦']],['「大」の1画目は？',['横','左はらい','右はらい']],['「木」の最後に書く画は？',['右はらい','縦','横']],['「人」の1画目は？',['左はらい','右はらい']],['「月」の1画目は？',['左の縦（はらい）','横','右の縦折れ']],['「口」の最後に書く画は？',['下の横','右の縦','左の縦']],['「小」の1画目は？',['真ん中の縦','左の点','右の点']],['「水」の1画目は？',['真ん中の縦（はね）','左の点','横']]];
+const KC={山:3,川:3,口:3,日:4,月:4,木:4,火:4,水:4,田:5,目:5,足:7,金:8,学:8,校:10,森:12,花:7,左:5,右:5,力:2,人:2,雨:8,空:8,貝:7,林:8,休:6,赤:7,男:7,生:5,本:5,先:6,年:6,見:7,気:6,波:8,駅:14,館:16,勝:12,速:10,炭:9,苦:8,漢:13,薬:16};
+function mkQuiz(){
+if(Math.random()<.55){const r=ORD[Math.floor(Math.random()*ORD.length)],o=sh([...r[1]]);return{q:r[0],o,a:o.indexOf(r[1][0])}}
+const ks=Object.keys(KC),k=ks[Math.floor(Math.random()*ks.length)],n=KC[k],s=new Set([n]);while(s.size<4){const x=n+Math.floor(Math.random()*7)-3;if(x>0)s.add(x)}
+const o=sh([...s]).map(x=>x+'画');return{q:`「${k}」は全部で何画？`,o,a:o.indexOf(n+'画')}}
+function openQuiz(){G.qz=mkQuiz();$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:360px;text-align:center"><h2>必殺・筆順クイズ</h2><p>${G.qz.q}</p><div class="btns" style="flex-direction:column">${G.qz.o.map((t,i)=>`<button class="main off" onclick="ansQuiz(${i})">${t}</button>`).join('')}</div></div></div>`}
+function ansQuiz(i){const Q=G.qz,ok=i===Q.a;let t;sfx(ok?'ok':'ng');if(ok){ST.quiz=(ST.quiz||0)+1;try{localStorage.setItem('kanjiStat',JSON.stringify(ST))}catch(e){}if(ST.quiz>=5)ach('quiz5')}
+if(ok){G.blk+=12;const b=Math.floor(Math.random()*4);if(b===0){hitEnemy(10);t='追加効果：敵に10ダメージ！'}if(b===1){G.str+=1;t='追加効果：筋力+1！'}if(b===2){drawN(2);t='追加効果：2枚ドロー！'}if(b===3){G.en+=1;t='追加効果：エナジー+1！'}t='ブロック12を得た。'+t}
+else{G.blk+=3;t='ブロック3だけ得た…'}
+$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:360px;text-align:center"><h2>${ok?'⭕ 正解！':'❌ ざんねん…'}</h2><p>答え：${Q.o[Q.a]}</p><p>${t}</p><button class="main" onclick="closeQuiz()">続ける</button></div></div>`}
+function closeQuiz(){closeDeck();G.busy=false;if(G.e.cur<=0)return winSoon();render()}
+CARDS['書']={n:'書',name:'必殺・筆順',cost:2,t:'atk',d:'筆順クイズ。正解でブロック12＋追加効果',quiz:1};
+REWARDS.push('書');
+[['日','日光',1,'atk','6ダメージ',{dmg:6}],['月','月光',1,'def','ブロック6',{blk:6}],['女','女',1,'def','ブロック5',{blk:5}],['子','子',0,'sk','1枚引く',{draw:1}],['田','田',1,'atk','4ダメージ',{dmg:4}],['山','山',1,'def','ブロック6',{blk:6}],['石','石',1,'atk','5ダメージ',{dmg:5}],['夕','夕',1,'atk','3ダメージ',{dmg:3}],['明','明',1,'sk','ブロック8・2枚引く',{blk:8,draw:2}],['好','好',1,'sk','HP6回復・ブロック6',{heal:6,blk:6}],['男','男',2,'atk','14ダメージ',{dmg:14}],['岩','岩',2,'def','ブロック18',{blk:18}],['多','多',1,'atk','4ダメージ×3',{dmg:4,hits:3}]].forEach(([k,name,cost,t,d,p])=>CARDS[k]={n:k,name,cost,t,d,...p});
+const FUSE={};[['日','月','明'],['女','子','好'],['田','力','男'],['山','石','岩'],['夕','夕','多'],['火','火','炎']].forEach(([a,b,r])=>FUSE[[a,b].sort().join('')]=r);
+function fuseMenu(){const h=G.hand,seen={},o=[];for(let i=0;i<h.length;i++)for(let j=i+1;j<h.length;j++){const key=[h[i],h[j]].sort().join(''),r=FUSE[key];if(r&&!seen[key]){seen[key]=1;o.push([i,j,r])}}
+const rec=Object.entries(FUSE).map(([k,r])=>[...k].join('＋')+'→'+r).join('　');
+$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:380px;text-align:center"><h2>合成</h2>${o.length?`<div class="btns" style="flex-direction:column">${o.map(([i,j,r])=>`<button class="main off" onclick="doFuse(${i},${j},'${r}')">${h[i]}＋${h[j]}→${r}（${CARDS[r].name}：${CARDS[r].d}）</button>`).join('')}</div>`:'<p>今の手札では合成できない。</p>'}<p class="stat">レシピ：${rec}</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
+function doFuse(i,j,r){closeDeck();if(G.busy||G.used||G.en<1)return;ach('fuse');G.hand.splice(j,1);G.hand.splice(i,1);G.hand.push(r);G.en-=1;G.used=true;G.anim=1;G.log='合成！'+r+'が生まれた';render()}
+[['刃','居合',1,'atk','10ダメージ',{dmg:10}],['閃','二刀',2,'atk','8ダメージ×2',{dmg:8,hits:2}],['気','剣気',1,'atk','5ダメージ・筋力+1',{dmg:5,str:1}],
+['城','城塵',2,'def','ブロック10・HP5回復',{blk:10,heal:5}],['撃','盾打ち',1,'atk','今のブロック分のダメージ',{bash:1}],['誓','守りの誓い',0,'def','ブロック4',{blk:4}],
+['丸','毒薬',1,'sk','毒3・HP3回復',{poi:3,heal:3}],['煎','煎じ薬',2,'sk','敵の毒を2倍にする',{poiX:1}],['霊','霊薬',2,'sk','HP12回復・2枚引く',{heal:12,draw:2}],
+['詠','詠唱',0,'sk','HP2を失いエナジー+1',{self:2,en:1}],['嵐','大魔法',3,'atk','25ダメージ',{dmg:25}],['星','流星',2,'atk','6ダメージ×3',{dmg:6,hits:3}],
+['贄','生贄',0,'def','召喚獣を1体犠牲にしてブロックを得る',{sac:1}],['集','総召喚',2,'sk','火と水を同時に召喚',{sums:['火','水']}],['還','送還',1,'sk','召喚獣が全員行動・持続+1',{recall:1}]].forEach(([k,name,cost,t,d,p])=>CARDS[k]={n:k,name,cost,t,d,...p});
+const CHC={剣:['刃','閃','気'],盾:['城','撃','誓'],薬:['丸','煎','霊'],術:['詠','嵐','星'],召:['贄','集','還'],合:['日','月','女','子','田','山','石','夕']};
+function pool(){const u=CHC[G.ch.k]||[],b=(G.beaten||[]).filter(k=>CARDS[k]);return [...REWARDS,...b,...u,...(u.length<=4?u:[])]}
+Object.entries({火:'⚔4',水:'🛡4',土:'肩代わり',木:'Ⅵ2',鬼:'⚔7',蛇:'☠2',狼:'⚔3×2',骸:'肩代わり',魔:'＋1枚',蘇:'🛡3Ⅵ3',龍:'⚔12'}).forEach(([k,s])=>SUMS[k].s=s);
+function sacV(s){return SUMS[s.k].taunt?6+s.hp:6+s.left*3}
+function openSac(){$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:360px;text-align:center"><h2>生贄</h2><p>犠牲にする召喚獣を選ぶ</p><div class="btns" style="flex-direction:column">${G.sums.map((s,i)=>`<button class="main off" onclick="doSac(${i})">${s.k}（${SUMS[s.k].taunt?'HP'+s.hp:'あと'+s.left+'T'}）→ブロック${sacV(s)}</button>`).join('')}</div></div></div>`}
+function doSac(i){const s=G.sums.splice(i,1)[0],b=sacV(s);G.blk+=b;G.log=s.k+'を犠牲にしてブロック'+b;closeDeck();G.busy=false;render()}
+function restFuseMenu(){const h=G.deck,seen={},o=[];for(let i=0;i<h.length;i++)for(let j=i+1;j<h.length;j++){const key=[h[i],h[j]].sort().join(''),r=FUSE[key];if(r&&!seen[key]){seen[key]=1;o.push([i,j,r])}}
+const rec=Object.entries(FUSE).map(([k,r])=>[...k].join('＋')+'→'+r).join('　');
+$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:380px;text-align:center"><h2>合成</h2><p>デッキの2枚を合体させて、新しい漢字カードにする（デッキに残る）</p>${o.length?`<div class="btns" style="flex-direction:column">${o.map(([i,j,r])=>`<button class="main off" onclick="doRestFuse(${i},${j},'${r}')">${h[i]}＋${h[j]}→${r}（${CARDS[r].name}：${CARDS[r].d}）</button>`).join('')}</div>`:'<p>今のデッキには合成できる組み合わせがない。</p>'}<p class="stat">レシピ：${rec}</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
+function doRestFuse(i,j,r){ach('fuse');G.deck.splice(j,1);G.deck.splice(i,1);G.deck.push(r);$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:340px;text-align:center"><h2>合成成功！</h2><div class="hand">${cardEl(r,0,'')}</div><button class="main" onclick="closeDeck();toMap()">進む</button></div></div>`}
+function trail(o,cur){const now=Date.now();let s=cur,d=0;
+if(o.t0!=null){const p=Math.min(1,Math.max(0,(now-o.t0-350)/1000)),w=o.s0-(o.s0-o.c0)*p;s=Math.max(cur,w);d=cur<o.c0?.35:0}
+o.s0=s;o.c0=cur;o.t0=now-(d?0:350);return{s,d}}
+function barHtml(o,cur){cur=Math.max(0,Math.min(100,cur));const t=trail(o,cur);return `<u style="width:${t.s}%;transition:none" data-to="${cur}" data-d="${t.d}"></u><i style="width:${cur}%"></i>`}
+function animTrails(){document.querySelectorAll('.bar u').forEach(u=>{void u.offsetWidth;u.style.transition=`width 1s ease-out ${u.dataset.d}s`;u.style.width=u.dataset.to+'%'})}
+function refreshPBar(){const b=document.querySelector('.bar.p');if(b){b.className='bar p'+(G.blk?' sh':'');b.innerHTML=barS(G.tpP||(G.tpP={}),G.hp,G.max,G.blk)+'<em class="shn">'+(G.blk?'🛡'+G.blk:'')+'</em><b class="hpn">'+G.hp+'/'+G.max+'</b>';animTrails()}}
+function upCard(id){if(id.endsWith('+'))return null;const u=id+'+';if(CARDS[u])return u;const c=CARDS[id],n={...c},p=[];
+if(c.dmg){const b=c.hits>1?2:3;n.dmg+=b;p.push('ダメージ+'+b)}
+if(c.blk){n.blk+=3;p.push('ブロック+3')}
+if(c.heal){n.heal+=3;p.push('回復+3')}
+if(c.poi){n.poi+=2;p.push('毒+2')}
+if(c.draw){n.draw+=1;p.push('ドロー+1')}
+if(c.str){n.str+=1;p.push('筋力+1')}
+if(c.en){n.en+=1;p.push('エナジー+1')}
+if(!p.length){if(c.cost<1)return null;n.cost=c.cost-1;p.push('コスト-1')}
+n.name=c.name+'+';n.up=p.join('・');n.d=c.d+'／強化:'+n.up;CARDS[u]=n;return u}
+function restUpMenu(){const ids=[...new Set(G.deck)].filter(id=>upCard(id));
+$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="text-align:center"><h2>カード強化</h2><p>強化するカードを1枚選ぶ</p>${ids.length?`<div class="hand">${ids.map(id=>`<div style="text-align:center">${cardEl(id,0,`doUp('${id}')`)}<div class="stat">→ ${CARDS[upCard(id)].up}</div></div>`).join('')}</div>`:'<p>強化できるカードがない。</p>'}<div class="btns"><button class="main off" onclick="closeDeck()">閉じる</button></div></div></div>`}
+function doUp(id){const u=upCard(id);G.deck[G.deck.indexOf(id)]=u;$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:340px;text-align:center"><h2>強化成功！</h2><div class="hand">${cardEl(u,0,'')}</div><button class="main" onclick="closeDeck();toMap()">進む</button></div></div>`}
+const AU={on:true,bgm:true,ctx:null,bt:null};
+try{const s=JSON.parse(localStorage.getItem('kanjiSet')||'{}');if(s.on===false)AU.on=false;if(s.bgm===false)AU.bgm=false}catch(e){}
+function auCtx(){if(!AU.ctx){try{AU.ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();return AU.ctx}
+function tone(f,t0,d,type,v){const c=AU.ctx;if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type=type||'square';o.frequency.value=f;g.gain.setValueAtTime(v||.08,c.currentTime+t0);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+t0+d);o.connect(g);g.connect(outN());o.start(c.currentTime+t0);o.stop(c.currentTime+t0+d+.02)}
+const SFX={play:[[520,0,.06,'triangle']],hit:[[180,0,.1,'sawtooth',.1],[90,.03,.14,'square',.08]],block:[[700,0,.08,'square',.05],[500,.05,.1,'square',.05]],heal:[[500,0,.1,'sine'],[650,.08,.1,'sine'],[800,.16,.14,'sine']],summon:[[400,0,.1,'triangle'],[600,.08,.1,'triangle'],[900,.16,.15,'triangle']],ok:[[660,0,.1,'square'],[880,.1,.18,'square']],ng:[[200,0,.25,'sawtooth']],evolve:[[300,0,.1,'triangle'],[450,.1,.1,'triangle'],[600,.2,.1,'triangle'],[900,.3,.3,'triangle']],win:[[523,0,.12,'square'],[659,.12,.12,'square'],[784,.24,.12,'square'],[1046,.36,.3,'square']],lose:[[300,0,.3,'sawtooth'],[200,.3,.3,'sawtooth'],[120,.6,.5,'sawtooth']],phase:[[80,0,.5,'sawtooth',.14],[160,.1,.5,'square',.1],[320,.2,.4,'triangle',.1]],big:[[60,0,.35,'sawtooth',.16],[40,.05,.4,'square',.14]]};
+function sfx(n,o){if(!AU.on||!auCtx())return;(SFX[n]||[]).forEach(([f,t,d,ty,v])=>f==='b'?boom(t+(o||0)):f==='n'?nz(t+(o||0),d,v,ty==='hi'):tone(f,t+(o||0),d,ty,v))}
+function bgmTick(){if(!AU.bgm||!AU.ctx)return;const boss=G&&G.scr==='battle'&&G.node&&G.node.t==='boss',P=boss?[110,130.8,146.8,164.8,196,220,261.6,293.7]:[220,261.6,293.7,329.6,392,440],n=boss?8:4,g=boss?.2:.4;for(let i=0;i<n;i++)tone(P[Math.floor(Math.random()*P.length)],i*g,g*1.6,'triangle',.025);tone(boss?55:110,0,1.5,'sine',.04)}
+function bgmStart(){if(!AU.bgm||!auCtx()||AU.bt)return;AU.bt=setInterval(bgmTick,1600);bgmTick()}
+function bgmStop(){clearInterval(AU.bt);AU.bt=null}
+function togAu(k){AU[k]=!AU[k];try{localStorage.setItem('kanjiSet',JSON.stringify({on:AU.on,bgm:AU.bgm}))}catch(e){}if(k==='bgm'){AU.bgm?bgmStart():bgmStop()}optMenu()}
+document.addEventListener('pointerdown',()=>{auCtx();bgmStart()});
+function enHtml(){return`<div class="en${G.en<=0?' zero':G.en>3?' over':''}">⚡<b>${G.en}</b>/3</div>`}
+SUMS['炎']={left:4,d:'毎ターン敵に10ダメージ(火3体が進化)',act:()=>hitEnemy(10),s:'⚔10'};
+function evolve(k){if(k!=='火'){if(G.sums.filter(s=>s.k===k).length>=3){G.blk+=5;G.log=k+'が3体そろい、シールド5を得た！';sfx('block');toast('🛡 '+k+'が3体そろった！シールド+5')}return}const f=G.sums.filter(s=>s.k==='火');if(f.length>=3){G.sums=G.sums.filter(s=>s.k!=='火').concat([{k:'炎',hp:0,left:SUMS['炎'].left+(has('鍵')?1:0),rv:1}]);G.log='火が3体そろい、炎に進化した！';sfx('evolve');ach('evolve')}}
+const PH2={龍:'龍神覚醒',炎:'業火覚醒',氷:'永久凍土',雷:'雷神降臨',闇:'常闇覚醒',獅:'百獣覚醒',神:'神威覚醒',滅:'終焉覚醒'};
+function phase(e){e.acts=[{t:'atk',v:10,n:2,nm:PH2[e.k],sp:1}].concat(e.acts.map(a=>['atk','pois','curse'].includes(a.t)?{...a,v:Math.round(a.v*1.25)}:a));e.i=0;e.str+=1;sfx('phase');const b=document.createElement('div');b.className='phb';b.textContent='⚠ 必殺技発動！　'+PH2[e.k];document.body.appendChild(b);setTimeout(()=>b.remove(),2400);const k=$('.kanji');if(k)k.classList.add('rage');const ap=$('#app');ap.classList.remove('shake');void ap.offsetWidth;ap.classList.add('shake');setTimeout(()=>ap.classList.remove('shake'),400)}
+function endTurn(){if(G.busy)return;const e=G.e;if(!e.ph2&&PH2[e.k]&&e.cur<=e.maxhp/2){e.ph2=1;G.busy=true;phase(e);const g=G;setTimeout(()=>{if(g!==G)return;G.busy=false;endTurn3()},2600)}else endTurn3()}
+function tick(){if(G.ts!=null){G.pt=(G.pt||0)+Math.min(Date.now()-G.ts,60000);G.ts=Date.now()}}
+function playMs(){tick();return G.pt||0}
+function fmtT(ms){const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return (h?h+'時間':'')+m+'分'+r+'秒'}
+function save(){try{localStorage.setItem('kanjiSave',JSON.stringify(G))}catch(e){}}
+function clearSave(){try{localStorage.removeItem('kanjiSave')}catch(e){}}
+function saveInfo(){try{const s=JSON.parse(localStorage.getItem('kanjiSave'));return s?`第${s.floor}階 ${s.ch.name} HP${s.hp}/${s.max}`:''}catch(e){return ''}}
+function loadGame(){try{G=JSON.parse(localStorage.getItem('kanjiSave'));[G.deck,G.hand,G.draw,G.disc].forEach(a=>(a||[]).forEach(id=>{if(id.endsWith('+'))upCard(id.slice(0,-1))}));G.busy=false;G.ts=Date.now();render()}catch(e){newGame()}}
+function contHtml(){const s=saveInfo();return s?`<p><button class="main" onclick="loadGame()">▶ 続きから（${s}）</button></p>`:''}
+function shareRes(){const t=`漢字の塔を全クリア！\nキャラ：${G.ch.name}／タイム：${G.clearT}／大ボス「${G.e.k}」撃破`,u=location.href;if(navigator.share){navigator.share({title:'漢字の塔',text:t,url:u}).catch(()=>{})}else{try{navigator.clipboard.writeText(t+'\n'+u);toast('結果をコピーしました')}catch(e){toast('コピーできませんでした')}}}
+function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
+const ACH=[{id:'dragon',name:'龍殺し',d:'龍を倒す'},{id:'elite3',name:'強敵ハンター',d:'1回の挑戦で強敵を3体倒す'},{id:'clear',name:'塔の制覇者',d:'大ボスを倒して全クリアする'},{id:'speed',name:'風の旅人',d:'30分以内に全クリアする'},{id:'allboss',name:'ボスコレクター',d:'通常ボス6種をすべて倒す'},{id:'dex',name:'図鑑コンプリート',d:'図鑑の敵14種をすべて倒す'},{id:'quiz5',name:'書き取り名人',d:'筆順クイズに通算5回正解する'},{id:'evolve',name:'進化の炎',d:'火を3体そろえて炎に進化させる'},{id:'fuse',name:'合成の達人',d:'カードを合成する'},{id:'rel5',name:'レリック収集家',d:'1回の挑戦でレリックを5個集める'},{id:'floor5',name:'終わりなき塔',d:'エンドレスで第5階に到達する'}];
+let ACHS=[],ST={};try{ACHS=JSON.parse(localStorage.getItem('kanjiAch')||'[]');ST=JSON.parse(localStorage.getItem('kanjiStat')||'{}')}catch(e){}
+function ach(id){if(ACHS.includes(id))return;ACHS.push(id);try{localStorage.setItem('kanjiAch',JSON.stringify(ACHS))}catch(e){}const a=ACH.find(x=>x.id===id);toast('🏆 実績解除：'+a.name);sfx('ok')}
+function achWin(){if(G.e.k==='龍')ach('dragon');if(G.node.t==='elite'){G.elK=(G.elK||0)+1;if(G.elK>=3)ach('elite3')}if(BOSSES.every(b=>DEX.includes(b.k)))ach('allboss');if(DEXLIST.every(k=>DEX.includes(k)))ach('dex')}
+function achHtml(){const n=ACH.filter(a=>ACHS.includes(a.id)).length;return`<h3>実績 ${n}/${ACH.length}</h3><div class="achs">${ACH.map(a=>ACHS.includes(a.id)?`<div class="ac on">🏆 ${a.name}<small>${a.d}</small></div>`:`<div class="ac">🔒 ？？？<small>${a.d}</small></div>`).join('')}</div>`}
+EVENTS.push(
+{k:'鏡',t:'古びた鏡が置かれている。',o:[['覗き込む (最大HP+4 か HP-6)',()=>Math.random()<.5?(G.max+=4,G.hp+=4,'力が湧いた。最大HP+4'):(G.hp=Math.max(1,G.hp-6),'鏡から冷気が走った。HP-6')],['立ち去る',()=>'見なかったことにした。']]},
+{k:'井',t:'深い井戸がある。',o:[['💰10を投げ入れる',()=>{if(G.gold<10)return'金が足りない。';G.gold-=10;const r=Math.random()<.35?randRel():null;if(r){gainRel(r);return'井戸から「'+r+'」が現れた！'}return'何も起こらなかった…'}],['覗くだけ',()=>'底は見えなかった。']]},
+{k:'市',t:'旅の商人が露店を出している。',o:[['💰40でカードを買う',()=>{if(G.gold<40)return'金が足りない。';G.gold-=40;const p=pool(),id=p[Math.floor(Math.random()*p.length)];G.deck.push(id);return CARDS[id].name+'を手に入れた。'}],['冷やかす',()=>'何も買わなかった。']]},
+{k:'修',t:'修行僧が手伝いを求めている。',o:[['手伝う (HP-6 / カード1枚強化)',()=>{const c=[...new Set(G.deck)].filter(id=>upCard(id));if(!c.length)return'強化できるカードがなかった。';const id=c[Math.floor(Math.random()*c.length)],u=upCard(id);G.hp=Math.max(1,G.hp-6);G.deck[G.deck.indexOf(id)]=u;return CARDS[u].name+'に強化された！'}],['断る',()=>'一礼して別れた。']]},
+{k:'猫',t:'痩せた猫が足元に寄ってきた。',o:[['撫でる (💰+20)',()=>{G.gold+=20;return'猫が小判をくわえてきた。💰+20'}],['追い払う',()=>'猫は去っていった。']]},
+{k:'祠',t:'小さな祠がある。',o:[['祈る (最大HP+5)',()=>{G.max+=5;G.hp+=5;return'心が静まった。最大HP+5'}],['💰30を供える (HP全回復)',()=>{if(G.gold<30)return'金が足りない。';G.gold-=30;G.hp=G.max;return'体が軽くなった。HP全回復'}]]},
+{k:'盗',t:'盗賊が道をふさいだ。',o:[['戦う (HP-10 / 💰+60)',()=>{G.hp=Math.max(1,G.hp-10);G.gold+=60;return'盗賊を追い払い、金を奪った。'}],['金を渡す (💰-30)',()=>{const m=Math.min(30,G.gold);G.gold-=m;return'💰'+m+'を渡して通してもらった。'}]]},
+{k:'薬',t:'薬草売りが薬を並べている。',o:[['💰25でポーションを買う',()=>{if(G.gold<25)return'金が足りない。';if(G.pots.length>=potMax())return'ポーションがいっぱいだ。';G.gold-=25;const p=POTK[Math.floor(Math.random()*POTK.length)];G.pots.push(p);return'ポーション「'+p+'」を買った。'}],['立ち去る',()=>'何も買わなかった。']]}
+);
+Object.assign(SFX,{fire:[[240,0,.18,'sawtooth',.08],[480,.04,.12,'triangle',.05]],bite:[[900,0,.05,'square',.06],[600,.04,.08,'square',.05]]});
+function nz(t0,d,v,hi){const c=AU.ctx;if(!c)return;const n=Math.floor(c.sampleRate*d),b=c.createBuffer(1,n,c.sampleRate),a=b.getChannelData(0);for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*(1-i/n);const s=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();f.type=hi?'highpass':'lowpass';f.frequency.value=hi?3500:600;s.buffer=b;g.gain.value=v||.1;s.connect(f);f.connect(g);g.connect(outN());s.start(c.currentTime+t0)}
+Object.assign(SFX,{s_fire:[[70,0,.35,'sawtooth',.16],[140,.02,.3,'square',.1],[55,.05,.4,'sine',.18],['n',0,.25,'',.2]],s_big:[[45,0,.5,'sawtooth',.2],[90,.02,.4,'square',.14],[35,.04,.6,'sine',.22],['n',0,.35,'',.28]],s_bite:[[110,0,.2,'sawtooth',.15],[70,.03,.25,'square',.12],[50,.05,.3,'sine',.16],['n',0,.15,'',.18]],s_block:[[90,0,.3,'square',.12],[60,.03,.35,'sine',.16]],s_heal:[[200,0,.3,'sine',.12],[260,.1,.3,'sine',.1],[130,0,.4,'sine',.1]],s_play:[[100,0,.25,'triangle',.12],[65,.03,.3,'sine',.14]]});
+const SUMSND={火:'s_fire',炎:'s_big',鬼:'s_big',龍:'s_big',蛇:'s_bite',狼:'s_bite',水:'s_block',蘇:'s_block',木:'s_heal',魔:'s_play'};
+function runSums(done){const g=G,list=[...(G.sums||[])];G.busy=true;
+const step=i=>{if(g!==G)return;if(i>=list.length||G.e.cur<=0){G.busy=false;done();return}
+const s=list[i],f=SUMS[s.k].act;
+if(f&&G.sums.includes(s)){f();s.act=1;sfx(SUMSND[s.k]||'s_play');G.busy=false;render();G.busy=true;setTimeout(()=>step(i+1),650)}else step(i+1)};
+setTimeout(()=>step(0),150)}
+function winSoon(){const g=G;sfx('final');G.busy=false;render();G.busy=true;setTimeout(()=>{if(g===G)shatter()},350);setTimeout(()=>{if(g!==G)return;G.busy=false;win()},1800)}
+const RAR={};'斬盾連毒禅雷癒火水土木日月女子田山石夕刃誓丸詠星蛇狼骸'.split('').forEach(k=>RAR[k]='c');'炎力壁書城撃気煎集還贄閃霊鬼蘇好明'.split('').forEach(k=>RAR[k]='u');'嵐龍魔男岩多'.split('').forEach(k=>RAR[k]='r');
+function rar(id){return RAR[id.replace('+','')]||'c'}
+function cp(id){const r=rar(id);return (r==='r'?100:r==='u'?60:40)+Math.floor(Math.random()*20)}
+function pickCards(n){let p=pool().filter(k=>CARDS[k]);const out=[];while(out.length<n&&p.length){const w=p.map(k=>({c:60,u:30,r:10})[rar(k)]||60);let x=Math.random()*w.reduce((a,b)=>a+b,0),i=0;for(;i<w.length;i++){x-=w[i];if(x<=0)break}const k=p[Math.min(i,p.length-1)];out.push(k);p=p.filter(z=>z!==k)}return out}
+function multiHit(d,n,dbl){const g=G;G.busy=true;let i=0;const step=()=>{if(g!==G)return;if(i>=n||G.e.cur<=0){G.busy=false;if(G.e.cur<=0)winSoon();else render();return}i++;const o=G.dbl;G.dbl=dbl;hitEnemy(d);G.dbl=o;sfx('hit');G.busy=false;render();G.busy=true;setTimeout(step,i<n?450:650)};setTimeout(step,80)}
+Object.assign(SFX,{final:[['n',0,.09,'',.22],['n',.1,.09,'',.24],['n',.2,.09,'',.26],['n',.32,.22,'hi',.3],[2200,.32,.12,'sawtooth',.1],[1400,.4,.15,'sawtooth',.08],[80,.34,.35,'sine',.2]]});
+function rewardView(){const rw=G.rw||[];
+const lab=r=>r.t==='gold'?`💰 ${r.v}ゴールド`:r.t==='pot'?`🧪 ポーション「${r.k}」（${POTS[r.k].d}）`:r.t==='rel'?`🏺 レリック「${r.k} ${RELICS[r.k].name}」（${RELICS[r.k].d}）`:'🃏 カードを1枚選ぶ';
+$('#app').innerHTML=`<div class="overlay"><div class="kanji">${G.e.k}</div><h2>撃破！</h2>${G.nw?`<p>🆕 図鑑に「${G.e.k}」が追加された！</p>`:''}${CARDS[G.e.k]?`<p>倒した「${G.e.k}」を使役できる。</p>`:''}<div class="btns" style="flex-direction:column;align-items:stretch;max-width:420px;margin:12px auto">${rw.map((r,i)=>`<button class="main off rwb" onclick="claim(${i})">${lab(r)}</button>`).join('')}</div><div class="log">${G.msg||''}</div><button class="main" onclick="leaveRw()">進む</button></div>`}
+function claim(i){const r=G.rw[i];G.msg='';
+if(r.t==='gold'){G.gold+=r.v;sfx('ok');G.rw.splice(i,1)}
+else if(r.t==='pot'){if(G.pots.length>=potMax()){G.msg='ポーションがいっぱいで受け取れない';return render()}G.pots.push(r.k);G.rw.splice(i,1)}
+else if(r.t==='rel'){gainRel(r.k);G.rw.splice(i,1)}
+else{G.scr='cardpick';G.cpi=i;return render()}
+render()}
+function pickView(){const r=G.rw[G.cpi];$('#app').innerHTML=`<div class="overlay"><h2>カードを1枚選ぶ</h2><div class="hand">${r.o.map(id=>cardEl(id,0,`takeCard('${id}')`)).join('')}</div><div class="btns"><button class="main off" onclick="G.scr='reward';render()">戻る</button></div></div>`}
+function takeCard(id){G.deck.push(id);G.rw.splice(G.cpi,1);G.scr='reward';render()}
+function skipCard(){G.rw.splice(G.cpi,1);G.scr='reward';render()}
+function leaveRw(){G.rw=[];if(G.bossNext){const s=G.bossNext;G.bossNext=null;G.scr=s;render()}else toMap()}
+if(window.addEventListener)window.addEventListener('scroll',()=>{const y=window.scrollY;if(y>120)document.body.classList.add('sc');else if(y<20)document.body.classList.remove('sc')},{passive:true});
+function boom(t0){const c=AU.ctx;if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.setValueAtTime(180,c.currentTime+t0);o.frequency.exponentialRampToValueAtTime(28,c.currentTime+t0+.6);g.gain.setValueAtTime(.5,c.currentTime+t0);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+t0+.7);o.connect(g);g.connect(outN());o.start(c.currentTime+t0);o.stop(c.currentTime+t0+.75)}
+Object.assign(SFX,{final:[['n',0,.09,'',.22],['n',.1,.09,'',.24],['n',.2,.09,'',.26],['n',.3,.16,'hi',.3],[2200,.3,.1,'sawtooth',.1],['b',.36],['n',.36,.6,'',.55],['n',.38,.4,'hi',.3],[60,.36,.5,'sawtooth',.2]]});
+function handArr(){const h=document.querySelector('.hand.bh');if(!h||!h.parentNode||!h.parentNode.classList)return;const w=h.parentNode,f=()=>{w.classList.toggle('ml',h.scrollLeft>8);w.classList.toggle('mr',h.scrollLeft+h.clientWidth<h.scrollWidth-8)};h.onscroll=f;f()}
+function shatter(){const k=document.querySelector('.enemy .kanji');if(!k||!k.parentNode)return;const cs=getComputedStyle(k),en=k.parentNode;
+const d=document.createElement('div');d.className='fz';d.style.cssText=`left:${k.offsetLeft}px;top:${k.offsetTop}px;width:${k.offsetWidth}px;height:${k.offsetHeight}px;font-size:${cs.fontSize};line-height:${cs.lineHeight};font-family:${cs.fontFamily};color:${cs.color}`;
+let h='';for(let j=0;j<4;j++)for(let i=0;i<5;i++){const dx=(i-2)*70+(Math.random()*40-20),dy=(j-1.5)*40+Math.random()*80+30,rot=Math.random()*360-180;h+=`<span style="clip-path:inset(${j*25}% ${100-(i+1)*20}% ${100-(j+1)*25}% ${i*20}%);--dx:${dx}px;--dy:${dy}px;--rot:${rot}deg;animation-delay:${Math.random()*.08}s">${k.textContent}</span>`}
+d.innerHTML=h;en.appendChild(d);k.style.visibility='hidden';
+const f=document.createElement('div');f.className='bangf';document.body.appendChild(f);setTimeout(()=>f.remove(),400);
+const ap=document.getElementById('app');ap.classList.remove('shake');void ap.offsetWidth;ap.classList.add('shake');setTimeout(()=>ap.classList.remove('shake'),400)}
+function rareCards(n){const p=[...new Set(['男','岩','多','嵐'].concat((G.beaten||[]).filter(k=>RAR[k]==='r'&&CARDS[k])))];return sh(p).slice(0,n)}
+function rnd(n){return Math.floor(Math.random()*n)}
+Object.assign(CARDS,{
+書:{n:'書',name:'必殺・筆順',cost:2,t:'atk',d:'筆順・画数クイズ。正解でブロック12＋追加効果',quiz:'ord',ok:{blk:12,bonus:1},ng:{blk:3}},
+福:{n:'福',name:'必殺・福笑い',cost:2,t:'atk',d:'パーツを組んで漢字を完成。正解、20ダメージ＋ブロック6',quiz:'fuku',ok:{dmg:20,blk:6},ng:{dmg:5}},
+読:{n:'読',name:'必殺・読み',cost:1,t:'sk',d:'読みクイズ。正解で3枚ドロー＋エナジー+1',quiz:'read',ok:{draw:3,en:1},ng:{draw:1}},
+部:{n:'部',name:'必殺・部首',cost:1,t:'atk',d:'部首クイズ。正解、12ダメージ＋HP6回復',quiz:'rad',ok:{dmg:12,heal:6},ng:{dmg:4}},
+極:{n:'極',name:'必殺・居合斬り',cost:2,t:'atk',d:'筆順クイズ。正解で35ダメージ',quiz:'ord',ok:{dmg:35},ng:{dmg:12}},
+鉄:{n:'鉄',name:'必殺・不動の構え',cost:2,t:'def',d:'読みクイズ。正解でブロック25',quiz:'read',ok:{blk:25},ng:{blk:8}},
+妙:{n:'妙',name:'必殺・万能薬',cost:2,t:'sk',d:'部首クイズ。正解でHP15回復＋敵に毒6',quiz:'rad',ok:{heal:15,poi:6},ng:{heal:5}},
+奥:{n:'奥',name:'必殺・奥義詠唱',cost:3,t:'atk',d:'福笑いクイズ。正解で40ダメージ',quiz:'fuku',ok:{dmg:40},ng:{dmg:10}},
+契:{n:'契',name:'必殺・契約',cost:2,t:'sk',d:'読みクイズ。正解で火・水・土を同時に召喚',quiz:'read',ok:{sums:['火','水','土']},ng:{sums:['火']}},
+創:{n:'創',name:'必殺・創字',cost:2,t:'sk',d:'福笑いクイズ。正解で合成カード2枚を手札に',quiz:'fuku',ok:{gen:2},ng:{gen:1}}});
+CHC.剣.push('極');CHC.盾.push('鉄');CHC.薬.push('妙');CHC.術.push('奥');CHC.召.push('契');CHC.合.push('創');
+REWARDS.push('福','読','部');
+'福部'.split('').forEach(k=>RAR[k]='u');RAR['読']='c';'極鉄妙奥契創'.split('').forEach(k=>RAR[k]='r');
+ORD.push(['「日」の1画目は？',['左の縦','上の横','真ん中の横']],['「口」の1画目は？',['左の縦','上の横','下の横']],['「中」の最後に書く画は？',['真ん中の縦','下の横','左の縦']],['「十」の最後に書く画は？',['縦','横']],['「千」の1画目は？',['左はらい','横','縦']],['「八」の1画目は？',['左はらい','右はらい']],['「方」の1画目は？',['上の点','横','左はらい']],['「文」の1画目は？',['上の点','横','左はらい']],['「子」の1画目は？',['曲がっていく画','縦','横']],['「生」の1画目は？',['左はらい','横','縦']],['「手」の1画目は？',['左はらい','横','縦']]);
+Object.assign(KC,{犬:4,竹:6,虫:6,糸:6,耳:6,文:4,天:4,夕:3,千:3,円:4,小:3,大:3,中:4,上:3,下:3,十:2,九:2,八:2,三:3,二:2,雲:12,風:9,海:9,道:12,星:9,馬:10,魚:11,鳥:11,牛:4,雪:11,池:6,肉:6,米:6,音:9,島:10});
+const RD={山:'やま',川:'かわ',水:'みず',空:'そら',花:'はな',森:'もり',林:'はやし',犬:'いぬ',雨:'あめ',石:'いし',糸:'いと',竹:'たけ',虫:'むし',足:'あし',耳:'みみ',目:'め',手:'て',口:'くち',男:'おとこ',女:'おんな',田:'た',村:'むら',町:'まち',赤:'あか',青:'あお',白:'しろ',星:'ほし',海:'うみ',道:'みち',馬:'うま',魚:'さかな',鳥:'とり',牛:'うし',雲:'くも',風:'かぜ',駅:'えき',島:'しま',音:'おと',雪:'ゆき',池:'いけ',肉:'にく',米:'こめ',力:'ちから'};
+function mkRead(){const ks=Object.keys(RD),k=ks[rnd(ks.length)],s=new Set([RD[k]]);while(s.size<4)s.add(RD[ks[rnd(ks.length)]]);const o=sh([...s]);return{q:`「${k}」の読みは？`,o,a:o.indexOf(RD[k])}}
+const RADS={休:'にんべん',林:'きへん',花:'くさかんむり',池:'さんずい',話:'ごんべん',空:'あなかんむり',絵:'いとへん',銀:'かねへん',時:'ひへん',好:'おんなへん',町:'たへん',道:'しんにょう',思:'こころ',校:'きへん',海:'さんずい',草:'くさかんむり',線:'いとへん',村:'きへん',明:'ひへん'};
+function mkRad(){const ks=Object.keys(RADS),k=ks[rnd(ks.length)],all=[...new Set(Object.values(RADS))],s=new Set([RADS[k]]);while(s.size<4)s.add(all[rnd(all.length)]);const o=sh([...s]);return{q:`「${k}」の部首は？`,o,a:o.indexOf(RADS[k])}}
+const PARTS=['亻','木','日','月','女','子','田','力','山','石','艹','化','氵','也','寺','交','言','舌','穴','工','心','火','口','青','丁','寸','早','金','糸','王'];
+const FUKU=[{k:'休',h:'人（にんべん）が木にもたれて、やすむ',l:'lr',p:['亻','木']},{k:'林',h:'木が2本ならんで、はやし',l:'lr',p:['木','木']},{k:'明',h:'日と月で、あかるい',l:'lr',p:['日','月']},{k:'好',h:'女の人と子どもで、すき',l:'lr',p:['女','子']},{k:'男',h:'田んぼで力をだす人',l:'tb',p:['田','力']},{k:'岩',h:'山のような大きな石',l:'tb',p:['山','石']},{k:'花',h:'くさかんむりに「化」で、はな',l:'tb',p:['艹','化']},{k:'草',h:'くさかんむりに「早」で、くさ',l:'tb',p:['艹','早']},{k:'池',h:'さんずいに「也」で、いけ',l:'lr',p:['氵','也']},{k:'時',h:'日と「寺」で、とき',l:'lr',p:['日','寺']},{k:'校',h:'木と「交」で、学校',l:'lr',p:['木','交']},{k:'話',h:'「言」と「舌」で、はなす',l:'lr',p:['言','舌']},{k:'空',h:'あなかんむりに「工」で、そら',l:'tb',p:['穴','工']},{k:'思',h:'田の下に心で、おもう',l:'tb',p:['田','心']},{k:'炎',h:'火が上下に重なって、ほのお',l:'tb',p:['火','火']},{k:'森',h:'木が3本で、もり',l:'tri',p:['木','木','木']},{k:'品',h:'口が3つ',l:'tri',p:['口','口','口']},{k:'晴',h:'日と「青」で、はれ',l:'lr',p:['日','青']},{k:'町',h:'田と「丁」で、まち',l:'lr',p:['田','丁']},{k:'村',h:'木と「寸」で、むら',l:'lr',p:['木','寸']}];
+function mkFuku(){const p=FUKU[rnd(FUKU.length)],dec=sh(PARTS.filter(x=>!p.p.includes(x))).slice(0,10-p.p.length);return{p,bank:sh([...p.p,...dec].map(c=>({c,u:0}))),slot:Array(p.p.length).fill(null)}}
+function fukuView(){const f=G.fk,p=f.p,sl=f.slot.map((c,i)=>`<button class="fs" onclick="fukuClr(${i})">${c?c.c:'＋'}</button>`).join('');
+$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:380px;text-align:center"><h2>必殺・福笑い</h2><p>パーツを並べて漢字を完成させよう</p><p class="stat">よみがな：${FR[p.k]}</p><div class="fg ${p.l}">${sl}</div><div class="btns">${f.bank.map((b,i)=>`<button class="main off fb" ${b.u?'disabled':''} onclick="fukuPut(${i})">${b.c}</button>`).join('')}</div><div class="btns"><button class="main off" onclick="fukuReset()">やり直す</button><button class="main" ${f.slot.every(x=>x)?'':'disabled'} onclick="fukuDone()">完成！</button></div></div></div>`}
+function fukuPut(i){const f=G.fk,b=f.bank[i];if(b.u)return;const s=f.slot.findIndex(x=>!x);if(s<0)return;f.slot[s]=b;b.u=1;fukuView()}
+function fukuClr(i){const f=G.fk,c=f.slot[i];if(!c)return;c.u=0;f.slot[i]=null;fukuView()}
+function fukuReset(){const f=G.fk;f.slot=f.slot.map(()=>null);f.bank.forEach(b=>b.u=0);fukuView()}
+function fukuDone(){const f=G.fk,ok=f.p.p.every((c,i)=>f.slot[i].c===c);finishQuiz(ok,f.p.k)}
+function openQuiz(c){G.qc=c;const t=c.quiz;if(t==='fuku'){G.fk=mkFuku();fukuView();return}
+G.qz=t==='read'?mkRead():t==='rad'?mkRad():mkQuiz();
+const title={ord:'必殺・筆順クイズ',read:'必殺・読みクイズ',rad:'必殺・部首クイズ'}[t]||'必殺クイズ';
+$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:360px;text-align:center"><h2>${title}</h2><p>${G.qz.q}</p><div class="btns" style="flex-direction:column">${G.qz.o.map((x,i)=>`<button class="main off" onclick="ansQuiz(${i})">${x}</button>`).join('')}</div></div></div>`}
+function ansQuiz(i){const Q=G.qz;finishQuiz(i===Q.a,Q.o[Q.a])}
+function applyFx(o){const t=[];
+if(o.dmg){hitEnemy(o.dmg);t.push('敵に'+o.dmg+'ダメージ')}
+if(o.blk){G.blk+=o.blk;t.push('ブロック'+o.blk)}
+if(o.heal){G.hp=Math.min(G.max,G.hp+o.heal);t.push('HP'+o.heal+'回復')}
+if(o.poi){G.e.poi+=o.poi;t.push('敵に毒'+o.poi)}
+if(o.draw){drawN(o.draw);t.push(o.draw+'枚ドロー')}
+if(o.en){G.en+=o.en;t.push('エナジー+'+o.en)}
+if(o.str){G.str+=o.str;t.push('筋力+'+o.str)}
+if(o.sums){o.sums.forEach(k=>summon(k));t.push(o.sums.map(dn).join('・')+'を召喚')}
+if(o.gen){const rs=Object.values(FUSE);for(let i=0;i<o.gen&&G.hand.length<10;i++){G.hand.push(rs[rnd(rs.length)]);G.anim=(G.anim||0)+1}t.push('合成カード'+o.gen+'枚を手札に加えた')}
+if(o.bonus){const b=rnd(4);if(b===0){hitEnemy(10);t.push('追加効果：敵に10ダメージ！')}if(b===1){G.str+=1;t.push('追加効果：筋力+1！')}if(b===2){drawN(2);t.push('追加効果：2枚ドロー！')}if(b===3){G.en+=1;t.push('追加効果：エナジー+1！')}}
+return t.join('、')||'効果なし'}
+function finishQuiz(ok,ans){const c=G.qc;sfx(ok?'ok':'ng');
+if(ok&&!G.custom){ST.quiz=(ST.quiz||0)+1;try{localStorage.setItem('kanjiStat',JSON.stringify(ST))}catch(e){}if(ST.quiz>=5)ach('quiz5')}
+const t=applyFx(ok?c.ok:c.ng);
+$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:360px;text-align:center"><h2>${ok?'⭕ 正解！':'❌ ざんねん…'}</h2><p>答え：${ans}</p><p>${t}</p><button class="main" onclick="closeQuiz()">続ける</button></div></div>`}
+function rareCards(n){const p=[...new Set(['男','岩','多','嵐'].concat((CHC[G.ch.k]||[]).filter(k=>RAR[k]==='r'),(G.beaten||[]).filter(k=>RAR[k]==='r'&&CARDS[k])))];return sh(p).slice(0,n)}
+function ach(id){if(G.custom||ACHS.includes(id))return;ACHS.push(id);try{localStorage.setItem('kanjiAch',JSON.stringify(ACHS))}catch(e){}const a=ACH.find(x=>x.id===id);toast('🏆 実績解除：'+a.name);sfx('ok')}
+function unlock(k){if(G.custom){G.nw=false;return}if(!DEX.includes(k)){DEX.push(k);try{localStorage.setItem('kanjiDex',JSON.stringify(DEX))}catch(e){}}}
+function save(){try{localStorage.setItem(G.custom?'kanjiSaveC':'kanjiSave',JSON.stringify(G))}catch(e){}}
+function clearSave(){try{localStorage.removeItem(G.custom?'kanjiSaveC':'kanjiSave')}catch(e){}}
+function saveInfo(c){try{const s=JSON.parse(localStorage.getItem(c?'kanjiSaveC':'kanjiSave'));return s?`第${s.floor}階 ${s.ch.name} HP${s.hp}/${s.max}`:''}catch(e){return ''}}
+function loadGame(c){try{G=JSON.parse(localStorage.getItem(c?'kanjiSaveC':'kanjiSave'));[G.deck,G.hand,G.draw,G.disc].forEach(a=>(a||[]).forEach(id=>{if(id.endsWith('+'))upCard(id.slice(0,-1))}));G.busy=false;G.ts=Date.now();render()}catch(e){newGame()}}
+function contHtml(){const a=saveInfo(),b=saveInfo(1);return (a?`<p><button class="main" onclick="loadGame()">▶ 続きから（${a}）</button></p>`:'')+(b?`<p><button class="main off" onclick="loadGame(1)">▶ カスタムの続きから（${b}）</button></p>`:'')}
+let CU={ch:0,deck:{},rel:[]};
+const RO={c:0,u:1,r:2};
+function cnt(s){const o={};[...s].forEach(k=>o[k]=(o[k]||0)+1);return o}
+function cuN(){return Object.values(CU.deck).reduce((a,b)=>a+b,0)}
+function customOpen(){CU={ch:0,deck:cnt(CHARS[0].deck),rel:[]};G={scr:'custom'};render()}
+function cuChar(i){CU.ch=i;CU.deck=cnt(CHARS[i].deck);customView()}
+function cuReset(){CU.deck=cnt(CHARS[CU.ch].deck);customView()}
+function cuClear(){CU.deck={};customView()}
+function cuAdd(k,d){const cur=CU.deck[k]||0,mx=rar(k)==='r'?2:4;if(d>0&&(cur>=mx||cuN()>=30))return;if(d<0&&cur<=0)return;CU.deck[k]=cur+d;customView()}
+function cuRel(k){const i=CU.rel.indexOf(k);if(i>=0)CU.rel.splice(i,1);else if(CU.rel.length<3)CU.rel.push(k);customView()}
+function customStart(){const c=CHARS[CU.ch];G={hp:c.hp,max:c.hp,gold:30,deck:Object.entries(CU.deck).flatMap(([k,n])=>Array(n).fill(k)),ch:c,rel:[],pots:[],beaten:[],floor:1,pt:0,ts:Date.now(),elK:0,custom:true,scr:'map',row:-1,col:-1};CU.rel.forEach(k=>gainRel(k));genMap();render()}
+function customView(){const n=cuN(),sc=document.querySelector('.cl'),y=sc?sc.scrollTop:0;
+const ids=Object.keys(CARDS).filter(k=>!k.endsWith('+')&&k!=='呪'&&CARDS[k].cost<9&&!CARDS[k].cc).sort((a,b)=>(RO[rar(a)]-RO[rar(b)])||(CARDS[a].cost-CARDS[b].cost));
+$('#app').innerHTML=`<div class="overlay"><h2>🛠 カスタムモード</h2><p class="stat">開始時のデッキとレリックを自分で決められます。実績・図鑑・記録は解除されません（保存は別枠）。</p>
+<h3>キャラ</h3><div class="dex">${CHARS.map((c,i)=>`<button class="dx${CU.ch===i?' on':''}" onclick="cuChar(${i})">${c.k}</button>`).join('')}</div><p class="stat">${CHARS[CU.ch].name}：HP${CHARS[CU.ch].hp}／能力「${CHARS[CU.ch].ab}」${CHARS[CU.ch].d}</p>
+${cuRelHtml()}
+<h3>デッキ（${n}枚：5〜30枚、同じカードは4枚まで、レアは2枚まで）</h3><div class="btns"><button class="main off" onclick="cuReset()">キャラの初期デッキに戻す</button><button class="main off" onclick="cuClear()">すべて外す</button></div>
+<div class="cl">${ids.map(k=>{const x=CARDS[k],r=rar(k);return`<div class="cr r${RO[r]}"><b class="ck">${k}</b><span class="cn">${x.name}${r==='r'?' ★':r==='u'?' ◆':''}<small>コスト${x.cost}・${x.d}</small></span><button onclick="cuAdd('${k}',-1)">−</button><span class="cc">${CU.deck[k]||0}</span><button onclick="cuAdd('${k}',1)">＋</button></div>`}).join('')}</div>
+<div class="btns"><button class="main" ${n>=5&&n<=30?'':'disabled'} onclick="customStart()">この構成でスタート</button><button class="main off" onclick="newGame()">タイトルへ</button></div></div>`;
+const s2=document.querySelector('.cl');if(s2)s2.scrollTop=y}
+const FR={休:'やすむ',林:'はやし',明:'あかるい',好:'すき',男:'おとこ',岩:'いわ',花:'はな',草:'くさ',池:'いけ',時:'とき',校:'こう',話:'はなす',空:'そら',思:'おもう',炎:'ほのお',森:'もり',品:'しな',晴:'はれ',町:'まち',村:'むら'};
+const CTN={a:'アタック',s:'スキル',m:'召喚'};
+function ct(c){return (c.sum||c.sums||c.sac||c.recall||(c.ok&&c.ok.sums))?'m':c.t==='atk'?'a':'s'}
+function bossNotch(e){return PH2[e.k]&&!e.ph2?'<s class="nt"></s>':''}
+function bossWarn(e){if(!PH2[e.k])return'';if(e.ph2)return'<div class="warn done">🔥 必殺技は発動済み</div>';const r=Math.max(0,e.cur-Math.floor(e.maxhp/2));return r>0?`<div class="warn">⚠ 必殺技「${PH2[e.k]}」まで 残り${r}HP</div>`:`<div class="warn hot">⚠ 次のターン、必殺技「${PH2[e.k]}」が来る！</div>`}
+const WZP={2:[[12,50],[88,50]],4:[[12,18],[88,18],[12,82],[88,82]],8:[[12,18],[50,12],[88,18],[12,50],[88,50],[12,82],[50,88],[88,82]]};
+function mkWz(nm){const cs=[...nm],n=cs.length>=8?8:cs.length>=4?4:2,d=document.createElement('div');d.className='wz';d.innerHTML=cs.slice(0,n).map((c,i)=>`<span style="left:${WZP[n][i][0]}%;top:${WZP[n][i][1]}%;animation-delay:${i*.06}s">${c}</span>`).join('');$('.enemy').appendChild(d);return d}
+const RELICS={印:{name:'守りの印',d:'各戦闘の最初のターン、ブロック+8'},筆:{name:'名筆',d:'毎ターン、カードを1枚多く引く'},酒:{name:'薬酒',d:'戦闘に勝つたびHP4回復'},力:{name:'力の石',d:'戦闘開始時、筋力+1'},金:{name:'黄金',d:'戦闘の報酬ゴールド+10'},鍵:{name:'召喚の鍵',d:'召喚獣の持続ターン+1'},鎧:{name:'鉄の鎧',d:'最大HP+10(入手時)'},瓶:{name:'大瓶',d:'ポーションを持てる数+1'}};
+const POTS={赤:{d:'HP15回復'},爆:{d:'敵に15ダメージ'},守:{d:'ブロック12'},速:{d:'エナジー+2'},毒:{d:'敵に毒6'}};
+const POTK=Object.keys(POTS);
+function has(k){return (G.rel||[]).includes(k)}
+function potMax(){return 3+(has('瓶')?1:0)}
+function randRel(){const c=Object.keys(RELICS).filter(k=>!G.rel.includes(k));return c.length?c[Math.floor(Math.random()*c.length)]:null}
+function gainRel(k){G.rel.push(k);if(G.rel.length>=5)ach('rel5');if(k==='鎧'){G.max+=10;G.hp+=10}}
+function relHtml(){return (G.rel&&G.rel.length)?`<div class="rels">${G.rel.map(k=>`<button class="rl" onclick="relInfo('${k}')">${k}</button>`).join('')}</div>`:''}
+function relInfo(k){const r=RELICS[k];$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:320px;text-align:center"><div class="kanji sm">${k}</div><h2>${r.name}</h2><p>${r.d}</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
+function potsHtml(){const m=potMax();let h='';for(let i=0;i<m;i++){const p=G.pots[i];h+=p?`<button class="pt" onclick="usePot(${i})">${p}<small>${POTS[p].d}</small></button>`:`<span class="pt off">・</span>`}return`<div class="pots">${h}</div>`}
+function usePot(i){if(G.busy)return;const p=G.pots[i];if(!p)return;G.pots.splice(i,1);
+if(p==='赤')G.hp=Math.min(G.max,G.hp+15);
+if(p==='爆'){const dd=G.dbl;G.dbl=false;hitEnemy(15);G.dbl=dd}
+if(p==='守')G.blk+=12;
+if(p==='速')G.en+=2;
+if(p==='毒')G.e.poi+=6;
+G.log='ポーション「'+p+'」を使った';
+if(G.e.cur<=0)return winSoon();
+render()}
+function buyRel(){if(G.gold<G.srelP){G.msg='💰が足りない';return render()}G.gold-=G.srelP;gainRel(G.srel);G.srelSold=true;G.msg=RELICS[G.srel].name+'を購入した';render()}
+function buyPot(i){const o=G.spot[i];if(G.gold<o.p){G.msg='💰が足りない';return render()}if(G.pots.length>=potMax()){G.msg='ポーションがいっぱい';return render()}G.gold-=o.p;G.pots.push(o.k);o.sold=true;G.msg='ポーション「'+o.k+'」を購入した';render()}
+function abOff(){return G.ch.k==='薬'?(G.lock||(G.uses||0)>=2):G.used}
+function abLabel(){if(G.ch.k!=='薬')return G.used?'（使用済）':'';return G.lock?'（休止中）':(G.uses||0)>=2?'（次ターン休止）':'（'+(G.uses||0)+'/2）'}
+function hurt(d){let r=Math.max(0,d-G.blk);G.blk=Math.max(0,G.blk-d);const w=(G.sums||[]).find(s=>SUMS[s.k].taunt);if(w&&r>0){w.hp-=r;if(w.hp<=0)G.sums.splice(G.sums.indexOf(w),1)}else G.hp-=r}
+function summon(k){G.sums=G.sums||[];if(G.sums.length>=3)G.sums.shift();const d=SUMS[k];G.sums.push({k,hp:d.hp||0,left:d.left+(has('鍵')&&d.left<99?1:0),rv:1});evolve(k)}
+function sumAct(){(G.sums||[]).forEach((s,i)=>{const f=SUMS[s.k].act;if(f){f();s.act=1;sfx(SUMSND[s.k]||'play',i*.18)}})}
+function sumTurn(){if(!G.sums||!G.sums.length)return false;runSums(()=>{G.sums.forEach(s=>s.left--);G.sums=G.sums.filter(s=>{if(s.left>0)return true;sumGone(s);return false});if(G.e.cur<=0)return winSoon();drawN(5+(has('筆')?1:0));secFire('hand');render()});return true}
+function sumsHtml(){const s=G.sums||[];if(!s.length)return'';return`<div class="sums">${s.map((x,i)=>`<div class="sm k${x.k}${x.rv?' rise':''}${x.act?' go':''}" onclick="sumInfo(${i})" style="cursor:pointer"><b>${x.k}</b><small class="act">${SUMS[x.k].s}</small><small>${SUMS[x.k].hp?'HP'+x.hp:'あと'+x.left+'T'}</small></div>`).join('')}</div>`}
+function tgt(){const m=G.e.mins||[];let t=G.t>=0?m[G.t]:G.e;if(!t||t.cur<=0){G.t=m.findIndex(x=>x.cur>0);t=G.t>=0?m[G.t]:G.e}return t}
+function revive(e){const d=(e.mins||[]).filter(x=>x.cur<=0);if(!d.length){e.blk+=8;return e.name+'の蘇生…しかし倒れた者はいない。守りを固めた'}d.forEach(x=>{x.cur=x.max;x.skip=true;x.rv=1});return e.name+'の蘇生！'+d[0].k+'が起き上がった'}
+function minAct(){const m=G.e.mins||[];let n=0,sh=0;m.forEach((x,i)=>{if(x.cur>0&&!x.skip){x.i=x.i||0;if(x.i%3===2){G.e.blk+=5;sh++}else{hurt(x.v);n++}x.i++;const el=document.querySelector('.mn'+i+' .mk');if(el)el.classList.add('lunge')}x.skip=false});return (n?'／'+m[0].k+'の攻撃'+(n>1?'×'+n:''):'')+(sh?'／'+m[0].k+'が'+G.e.k+'にシールド':'')}
+function minsHtml(){const m=G.e.mins||[];if(!m.length)return'';
+return `<div class="mins">${m.map((x,i)=>`<div class="mn mn${i}${G.t===i&&x.cur>0?' sel':''}${x.cur<=0?' dead':''}${x.rv?' rise':''}" ${x.cur>0?`onclick="G.t=${i};render()"`:''}><div class="kanji mk">${x.k}</div><div class="bar">${barHtml(x.tp||(x.tp={}),x.cur/x.max*100)}</div><div class="stat">${x.cur>0?`HP${x.cur}${x.blk?' 🛡'+x.blk:''} ${(x.i||0)%3===2?'🛡→本体+5':'⚔'+x.v}`:'💀 倒れている'}</div></div>`).join('')}</div>`}
+function useAb(){
+if(G.busy||abOff()||G.ch.cost>G.en)return;
+const k=G.ch.k;if(k==='術'&&G.hp<=3)return;
+if(k==='合'){fuseMenu();return}
+G.en-=G.ch.cost;G.used=true;G.uses=(G.uses||0)+1;
+if(k==='剣'){G.dbl=true;G.log='一閃！次の攻撃が2倍'}
+if(k==='盾'){G.log='攻防一体！漢字を書こう';render();hwDefend(()=>{render()});return}
+if(k==='薬'){G.e.poi+=2;G.hp=Math.min(G.max,G.hp+3);G.log='調合！毒2を与えた'}
+if(k==='術'){G.hp-=3;G.en+=2;G.log='集中！エナジー+2'}
+if(k==='召'){G.log='号令！召喚獣が順に動いた';runSums(()=>{if(G.e.cur<=0)winSoon();else render()});return}
+render();
+}
+function selectView(){$('#app').innerHTML=`<div class="overlay"><h2>漢字の塔</h2>${contHtml()}<p><button class="main off" onclick="customOpen()">🛠 カスタムモード（実績は解除されない）</button></p><p>戦う漢字を選ぶ</p><div class="hand">${CHARS.map((c,i)=>`<button class="card sk chr" onclick="choose(${i})"><div class="k">${c.k}</div><div class="n">${c.name}</div><div class="d">HP${c.hp}<br>能力「${c.ab}」<br>${c.d}</div></button>`).join('')}</div><h3>倒した文字 ${DEX.length}/${DEXLIST.length}</h3><div class="dex">${DEXLIST.map(k=>DEX.includes(k)?`<button class="dx" onclick="dexInfo('${k}')">${k}</button>`:`<span class="dx off">？</span>`).join('')}</div>${achHtml()}</div>`}
+/* ---- v2.1 ---- */
+const SUMN={火:'剣',水:'盾',木:'布',炎:'大剣',城:'大盾',衣:'法衣',燎:'火剣'};
+function dn(k){return SUMN[k]||k}
+Object.assign(CARDS['火'],{n:'剣',name:'召剣',d:'召喚：毎ターン敵に4ダメージ(3T)'});
+Object.assign(CARDS['水'],{n:'盾',name:'召盾',d:'召喚：毎ターンブロック4(3T)'});
+Object.assign(CARDS['木'],{n:'布',name:'召布',d:'召喚：毎ターンHP2回復(4T)'});
+CARDS['集'].d='剣と盾を同時に召喚';CARDS['契'].d='読みクイズ。正解で剣・盾・土を同時に召喚';
+Object.assign(CARDS,{
+焔:{n:'火',name:'火炎',cost:1,t:'atk',d:'5ダメージ・敵に毒1',dmg:5,poi:1},
+燎:{n:'燎',name:'火剣',cost:2,t:'sk',d:'召喚：毎ターン敵に6ダメージ・毒1(4T)',sum:'燎'},
+殉:{n:'殉',name:'殉教の供物',cost:1,t:'atk',d:'召喚獣を1体犠牲に。強さに応じたダメージ',sac:'dmg'},
+祈:{n:'祈',name:'祈りの供物',cost:1,t:'sk',d:'召喚獣を1体犠牲に。HPを回復',sac:'heal'},
+捧:{n:'捧',name:'捧げもの',cost:0,t:'sk',d:'召喚獣を1体犠牲に。2枚引き・エナジー+1',sac:'draw'},
+焼:{n:'焼',name:'全生贄',cost:2,t:'atk',d:'召喚獣を全員犠牲に。1体ごとにブロックとダメージ',sacAll:1},
+代:{n:'代',name:'身代わり',cost:1,t:'sk',d:'次の敵の攻撃' + '1発を、召喚獣' + '1体が肩代わり',sub:1},
+盟:{n:'盟',name:'盟約の供物',cost:1,t:'sk',d:'召喚獣を1体犠牲に。次の召喚の持続+2',sac:'buff'},
+覇:{n:'覇',name:'覇気',cost:2,t:'sk',d:'筋力+3',str:3},
+宝:{n:'宝',name:'秘宝',cost:1,t:'sk',d:'3枚引く・エナジー+1',draw:3,en:1}});
+'焔祈盟'.split('').forEach(k=>RAR[k]='c');'燎殉捧代'.split('').forEach(k=>RAR[k]='u');'焼覇宝'.split('').forEach(k=>RAR[k]='r');
+CHC.召.push('殉','祈','捧','焼','代','盟');CHC.合.push('焔');REWARDS.push('覇','宝');
+delete FUSE[['火','火'].sort().join('')];FUSE[['火','焔'].sort().join('')]='燎';
+CARDS['福'].fl=[1,2];CARDS['奥'].fl=[2,3];CARDS['創'].fl=[2,3];
+const MM=s=>1+.5*((s.lv||1)-1);
+SUMS['火'].act=s=>hitEnemy(Math.round(4*MM(s)));
+SUMS['水'].act=s=>{G.blk+=Math.round(4*MM(s))};
+SUMS['木'].act=s=>{G.hp=Math.min(G.max,G.hp+Math.round(2*MM(s)))};
+SUMS['鬼'].act=s=>hitEnemy(Math.round(7*MM(s)));
+SUMS['蛇'].act=s=>{G.e.poi+=Math.round(2*MM(s))};
+SUMS['狼'].act=s=>{const v=Math.round(3*MM(s));hitEnemy(v);hitEnemy(v)};
+SUMS['魔'].act=s=>drawN(Math.round(MM(s)));
+SUMS['蘇'].act=s=>{G.blk+=Math.round(3*MM(s));G.hp=Math.min(G.max,G.hp+Math.round(3*MM(s)))};
+SUMS['龍'].act=s=>hitEnemy(Math.round(12*MM(s)));
+SUMS['炎'].act=s=>hitEnemy(Math.round(10*MM(s)));SUMS['炎'].d='毎ターン敵に10ダメージ(剣が合体して進化)';
+SUMS['城']={left:4,d:'毎ターンブロック10(大盾)',act:s=>{G.blk+=Math.round(10*MM(s))},s:'🛡10'};
+SUMS['衣']={left:5,d:'毎ターンHP5回復(法衣)',act:s=>{G.hp=Math.min(G.max,G.hp+Math.round(5*MM(s)))},s:'Ⅵ5'};
+SUMS['燎']={left:4,d:'毎ターン敵に6ダメージ・毒1(火剣)',act:s=>{hitEnemy(Math.round(6*MM(s)));G.e.poi+=1},s:'⚔6☠1'};
+Object.assign(SUMSND,{炎:'s_big',城:'s_block',衣:'s_heal',燎:'s_fire'});
+const EVO={火:'炎',水:'城',木:'衣'};
+RELICS['枠']={name:'召喚陣',d:'召喚枠+1（召喚師専用）',ch:'召'};
+RELICS['供']={name:'供物の香',d:'犠牲にするたびブロック+2（召喚師専用）',ch:'召'};
+function slotMax(){return 3+(has('枠')?1:0)}
+function randRel(){const c=Object.keys(RELICS).filter(k=>!G.rel.includes(k)&&(!RELICS[k].ch||RELICS[k].ch===G.ch.k));return c.length?c[rnd(c.length)]:null}
+function cuChar(i){CU.ch=i;CU.deck=cnt(CHARS[i].deck);CU.rel=CU.rel.filter(k=>!RELICS[k].ch||RELICS[k].ch===CHARS[i].k);customView()}
+function ct(c){return (c.sum||c.sums||c.sac||c.sacAll||c.sub||c.recall||(c.ok&&c.ok.sums))?'m':c.t==='atk'?'a':'s'}
+function mergeCheck(f){if(f.lv<3)return;f.lv=3;const ev=EVO[f.k];
+if(ev){f.k=ev;f.lv=1;f.hp=0;f.left=SUMS[ev].left+(has('鍵')?1:0);f.rv=1;G.log=dn(ev)+'に進化した！';sfx('evolve');toast('✨ '+dn(ev)+'に進化！');if(ev==='炎')ach('evolve')}
+else{G.blk+=5;G.log=dn(f.k)+'が合体！シールド5';sfx('block');toast('🛡 '+dn(f.k)+'が合体！シールド+5')}}
+function summon(k){G.sums=G.sums||[];const d=SUMS[k],buff=G.nextBuff||0;G.nextBuff=0;const left=d.left>=99?99:d.left+(has('鍵')?1:0)+buff,f=G.sums[0];
+if(f&&f.k===k){f.lv=(f.lv||1)+1;f.left=Math.max(f.left,left);if(d.hp)f.hp+=d.hp;f.rv=1;mergeCheck(f);return}
+if(G.sums.length>=slotMax()){G.sumFail=1;G.log='召喚枠がいっぱいで、召喚獣は出なかった';toast('召喚枠がいっぱい！');return}
+G.sums.unshift({k,hp:d.hp||0,left,lv:1,rv:1})}
+function hurt(d){if(G.sub>0&&(G.sums||[]).length&&d>0){G.sub--;const s=G.sums.pop();G.log='身代わり！'+dn(s.k)+'が攻撃を肩代わりした';toast('🛡 身代わり！'+dn(s.k)+'が犠牲に');if(has('供'))G.blk+=2;return}
+let r=Math.max(0,d-G.blk);G.blk=Math.max(0,G.blk-d);const w=(G.sums||[]).find(s=>SUMS[s.k].taunt);if(w&&r>0){w.hp-=r;if(w.hp<=0)G.sums.splice(G.sums.indexOf(w),1)}else G.hp-=r}
+function sumAct(){(G.sums||[]).forEach((s,i)=>{const f=SUMS[s.k].act;if(f){f(s);s.act=1;sfx(SUMSND[s.k]||'s_play',i*.18)}})}
+function runSums(done){const g=G,list=[...(G.sums||[])];G.busy=true;
+const step=i=>{if(g!==G)return;if(i>=list.length||G.e.cur<=0){G.busy=false;done();return}
+const s=list[i],f=SUMS[s.k].act;
+if(f&&G.sums.includes(s)){f(s);s.act=1;sfx(SUMSND[s.k]||'s_play');G.busy=false;render();G.busy=true;setTimeout(()=>step(i+1),650)}else step(i+1)};
+setTimeout(()=>step(0),150)}
+function sumsHtml(){const s=G.sums||[];if(!s.length)return'';return`<div class="sums">${s.map((x,i)=>`<div class="sm k${x.k}${x.rv?' rise':''}${x.act?' go':''}" onclick="sumInfo(${i})" style="cursor:pointer"><b>${dn(x.k)}</b>${(x.lv||1)>1?`<i class="lv">Lv${x.lv}</i>`:''}<small class="act">${SUMS[x.k].s}</small><small>${SUMS[x.k].hp?'HP'+x.hp:'あと'+x.left+'T'}</small></div>`).join('')}</div>`}
+function sumInfo(i){const s=G.sums[i];if(!s)return;const d=SUMS[s.k];$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:320px;text-align:center"><div class="kanji sm">${dn(s.k)}</div><h2>${dn(s.k)}（Lv${s.lv||1}）</h2><p>${d.d}</p><p class="stat">${d.hp?'HP '+s.hp:'残り '+s.left+' ターン'}</p><p class="stat">同じ召喚獣をいちばん左に出すと合体してLvアップ（Lv3で進化・シールド）</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
+function sacV(s){return SUMS[s.k].taunt?6+s.hp:Math.round((6+s.left*3)*MM(s))}
+function sacOut(m,s){const v=sacV(s);return m==='dmg'?'敵に'+Math.round(v*1.5)+'ダメージ':m==='heal'?'HP'+Math.round(v*.6)+'回復':m==='draw'?'2枚引く・エナジー+1':m==='buff'?'次の召喚の持続+2':'ブロック'+v}
+function openSac(mode){G.sacMode=mode===1?'blk':mode;$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:360px;text-align:center"><h2>犠牲</h2><p>犠牲にする召喚獣を選ぶ</p><div class="btns" style="flex-direction:column">${G.sums.map((s,i)=>`<button class="main off" onclick="doSac(${i})">${dn(s.k)}（${SUMS[s.k].taunt?'HP'+s.hp:'あと'+s.left+'T'}）→${sacOut(G.sacMode,s)}</button>`).join('')}</div></div></div>`}
+function doSac(i){const s=G.sums.splice(i,1)[0],m=G.sacMode,v=sacV(s);let t;
+if(m==='dmg'){hitEnemy(Math.round(v*1.5));t='敵にダメージ'}else if(m==='heal'){G.hp=Math.min(G.max,G.hp+Math.round(v*.6));t='HP回復'}else if(m==='draw'){drawN(2);G.en+=1;t='2枚ドロー'}else if(m==='buff'){G.nextBuff=(G.nextBuff||0)+2;t='次の召喚の持続+2'}else{G.blk+=v;t='ブロック'+v}
+if(has('供'))G.blk+=2;G.log=dn(s.k)+'を犠牲にした（'+t+'）';sfx('block');closeDeck();G.busy=false;if(G.e.cur<=0)return winSoon();render()}
+function sacAll(){const n=(G.sums||[]).length;if(!n){G.log='犠牲にする召喚獣がいない';return}let b=0,d=0;G.sums.forEach(s=>{const v=sacV(s);b+=Math.round(v/2);d+=Math.round(v/2);if(has('供'))b+=2});G.sums=[];G.blk+=b;if(d)hitEnemy(d);G.log='全員を犠牲に！ブロック'+b+'・ダメージ'+d}
+function rareCards(n){const f=G.ch.k==='合'?['男','岩','多']:[];const p=[...new Set(['嵐','覇','宝',...f].concat((CHC[G.ch.k]||[]).filter(k=>RAR[k]==='r'),(G.beaten||[]).filter(k=>RAR[k]==='r'&&CARDS[k])))];return sh(p).slice(0,n)}
+function bossWarn(e){if(!PH2[e.k])return'';const nm=PH2[e.k],dm=(10+e.str+(e.ph2?0:1))+'ダメージ×2回';if(e.ph2)return`<div class="warn done">🔥 必殺技「${nm}」発動済み</div>`;const r=Math.max(0,e.cur-Math.floor(e.maxhp/2));return r>0?`<div class="warn">⚠ 必殺技「${nm}」（${dm}）まで 残り${r}HP</div>`:`<div class="warn hot">⚠ 次のターン、必殺技「${nm}」（${dm}）が来る！</div>`}
+function mhitS(i){if(!AU.on||!auCtx())return;tone(160+i*70,0,.09,'sawtooth',.1);tone(90,.02,.13,'square',.08);nz(0,.08,.12,true)}
+function multiHit(d,n,dbl){const g=G;G.busy=true;let i=0;const step=()=>{if(g!==G)return;if(i>=n||G.e.cur<=0){G.busy=false;if(G.e.cur<=0)winSoon();else render();return}i++;const o=G.dbl;G.dbl=dbl;hitEnemy(d);G.dbl=o;mhitS(i-1);G.busy=false;render();G.busy=true;setTimeout(step,i<n?(n>3?380:650):800)};setTimeout(step,120)}
+function bgmTick(){if(!AU.bgm||!AU.ctx)return;const sc=G&&G.scr==='battle'?(G.node&&G.node.t==='boss'?'boss':'battle'):'calm';
+if(sc==='calm'){const P=[220,261.6,293.7,329.6,392,440];for(let i=0;i<4;i++)tone(P[rnd(6)],i*.4,.64,'triangle',.025);tone(110,0,1.5,'sine',.04);return}
+if(sc==='battle'){const P=[196,233.1,261.6,293.7,349.2,392];for(let i=0;i<8;i++){tone(110,i*.2,.15,'triangle',.05);if(i%2)tone(P[rnd(6)],i*.2,.18,'square',.02)}for(let j=0;j<4;j++)nz(j*.4,.05,.04,true);return}
+const P=[110,130.8,146.8,174.6,196,233.1];for(let i=0;i<8;i++){const t=i*.2;if(i%2===0)tone(55,t,.18,'sine',.16);tone(P[rnd(6)]*(i%4===3?2:1),t,.16,'sawtooth',.03);if(i%4===3)nz(t,.1,.07,true)}}
+SFX.pop=[[330,0,.05,'sine',.07],[200,.04,.08,'sine',.06]];
+let POPT=null;
+document.addEventListener('pointerover',e=>{if(e.pointerType==='mouse'&&AU.ctx){const t=e.target.closest&&e.target.closest('.card,.pt,.sm,.dx,.rlb,.cr button,.fb,.fs,.rwb,.main');if(t&&!t.disabled&&t!==POPT){POPT=t;sfx('pop')}}});
+document.addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.closest('.card,.pt,.sm,.dx,.rlb,.cr button,.fb,.fs,.rwb,.main,.node');if(t&&!t.disabled&&AU.ctx)sfx('pop')});
+function evPick(i){const r=G.ev.o[i][1]();if(r==null)return;G.evr=r;render()}
+function delMenu(){const ids=[...new Set(G.deck)];$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="text-align:center"><h2>カード削除</h2><p>デッキから外すカードを1枚選ぶ</p><div class="hand">${ids.map(id=>cardEl(id,0,`doDel('${id}')`)).join('')}</div><div class="btns"><button class="main off" onclick="closeDeck()">閉じる</button></div></div></div>`}
+function doDel(id){if(G.deck.length<=5){toast('これ以上減らせない');return}G.deck.splice(G.deck.indexOf(id),1);$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:340px;text-align:center"><h2>削除した</h2><div class="hand">${cardEl(id,0,'')}</div><p>デッキから外れた。</p><button class="main" onclick="closeDeck();toMap()">進む</button></div></div>`}
+EVENTS.push({k:'鍛',t:'腕のいい鍛冶屋が仕事をしている。',o:[['カードを1枚強化してもらう',()=>{restUpMenu();return null}],['立ち去る',()=>'礼を言って別れた。']]},{k:'削',t:'古い写本を燃やす僧がいる。',o:[['カードを1枚削除してもらう',()=>{delMenu();return null}],['立ち去る',()=>'何もせず別れた。']]});
+function sortHand(){G.sm=((G.sm||0)+1)%3;const co=id=>CARDS[id].cost,to={a:0,s:1,m:2},tt=id=>to[ct(CARDS[id])];if(G.sm===1)G.hand.sort((x,y)=>co(x)-co(y)||tt(x)-tt(y));if(G.sm===2)G.hand.sort((x,y)=>tt(x)-tt(y)||co(x)-co(y));render()}
+function pvHtml(c,click){if(!click||!click.startsWith('play')||!c.dmg)return'';const v=(c.dmg+(G.str||0))*(G.dbl?2:1);return`<div class="pv">⚔ ${v}${c.hits>1?'×'+c.hits:''}</div>`}
+function mapHtml(){const m=G.map,R=m.length,rh=62,H=R*rh,y=r=>(R-1-r)*rh+rh/2;let ln='',nd='';
+m.forEach((row,r)=>row.forEach((n,i)=>{n.to.forEach(j=>{const q=m[r+1][j];ln+=`<line x1="${(n.c+.5)*100}" y1="${y(r)}" x2="${(q.c+.5)*100}" y2="${y(r+1)}" class="${G.row===r&&G.col===i?'on':''}"/>`});
+nd+=`<button class="node ${n.t}${G.row===r&&G.col===i?' ok':''}${n.vis?' vis':''}" style="left:${(n.c+.5)*25}%;top:${y(r)}px" disabled>${n.b?n.b.k:ICON[n.t]}</button>`}));
+return`<div class="mapw" style="height:${H}px"><svg viewBox="0 0 400 ${H}" preserveAspectRatio="none">${ln}</svg>${nd}</div>`}
+function mapPeek(){if(!G.map)return;$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="text-align:center"><h2>🗺 マップ（${G.row+1}段目）</h2>${mapHtml()}<p class="stat">戦=敵／強=強敵／？=イベント／店／休=焺き火／最上段=ボス</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
+Object.assign(FR,{体:'からだ',泳:'およぐ',細:'ほそい',絵:'え',理:'り',銀:'ぎん',吹:'ふく',鳴:'なく',助:'たすける',早:'はやい',晶:'しょう',持:'もつ',待:'まつ',詩:'し',湖:'みずうみ',想:'そう',街:'まち',緑:'みどり',轟:'とどろく'});
+FUKU.push({k:'体',l:'lr',p:['亻','本']},{k:'泳',l:'lr',p:['氵','永']},{k:'細',l:'lr',p:['糸','田']},{k:'絵',l:'lr',p:['糸','会']},{k:'理',l:'lr',p:['王','里']},{k:'銀',l:'lr',p:['金','艮']},{k:'吹',l:'lr',p:['口','欠']},{k:'鳴',l:'lr',p:['口','鳥']},{k:'助',l:'lr',p:['且','力']},{k:'早',l:'tb',p:['日','十']},{k:'晶',l:'tri',p:['日','日','日']},{k:'持',l:'lr3',p:['扌','土','寸']},{k:'待',l:'lr3',p:['彳','土','寸']},{k:'詩',l:'lr3',p:['言','土','寸']},{k:'湖',l:'lr3',p:['氵','古','月']},{k:'想',l:'bt',p:['木','目','心'],lv:3},{k:'街',l:'lr3',p:['彳','圭','亠'],lv:3},{k:'緑',l:'lr3',p:['糸','彐','水'],lv:3},{k:'轟',l:'tri',p:['車','車','車'],lv:3});
+['本','永','会','里','艮','欠','鳥','且','十','扌','彳','圭','亠','古','車','彐','水','目','土'].forEach(x=>{if(!PARTS.includes(x))PARTS.push(x)});
+let FT=null;
+function mkFuku(lv){const lvOf=p=>p.lv||(p.p.length>=3?2:1),L=FUKU.filter(p=>lvOf(p)===lv),src=L.length?L:FUKU,p=src[rnd(src.length)],size={1:8,2:10,3:12}[lv]||10,dec=sh(PARTS.filter(x=>!p.p.includes(x))).slice(0,size-p.p.length);return{p,lv,t:{1:45,2:35,3:25}[lv]||35,bank:sh([...p.p,...dec].map(c=>({c,u:0}))),slot:Array(p.p.length).fill(null)}}
+function startFT(){clearInterval(FT);FT=setInterval(()=>{const f=G.fk;if(!f||!G.qc){clearInterval(FT);return}f.t--;const el=document.getElementById('fkt');if(el)el.textContent=f.t;if(f.t<=0){clearInterval(FT);finishQuiz(false,f.p.k)}},1000)}
+function fukuView(){const f=G.fk,p=f.p,sl=f.slot.map((c,i)=>`<button class="fs" onclick="fukuClr(${i})">${c?c.c:'＋'}</button>`).join('');
+$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:400px;text-align:center"><h2>必殺・福笑い</h2><p>パーツを並べて漢字を完成させよう</p><p class="stat">よみがな：${FR[p.k]}　難易度 ${'★'.repeat(f.lv)}${'☆'.repeat(3-f.lv)}　⏱ <b id="fkt">${f.t}</b>秒</p><div class="fg ${p.l}">${sl}</div><div class="btns">${f.bank.map((b,i)=>`<button class="main off fb" ${b.u?'disabled':''} onclick="fukuPut(${i})">${b.c}</button>`).join('')}</div><div class="btns"><button class="main off" onclick="fukuReset()">やり直す</button><button class="main" ${f.slot.every(x=>x)?'':'disabled'} onclick="fukuDone()">完成！</button></div></div></div>`}
+function openQuiz(c){G.qc=c;const t=c.quiz;if(t==='fuku'){const fl=c.fl||[1,2];G.fk=mkFuku(fl[0]+rnd(fl[1]-fl[0]+1));startFT();fukuView();return}
+G.qz=t==='read'?mkRead():t==='rad'?mkRad():mkQuiz();
+const title={ord:'必殺・筆順クイズ',read:'必殺・読みクイズ',rad:'必殺・部首クイズ'}[t]||'必殺クイズ';
+$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:360px;text-align:center"><h2>${title}</h2><p>${G.qz.q}</p><div class="btns" style="flex-direction:column">${G.qz.o.map((x,i)=>`<button class="main off" onclick="ansQuiz(${i})">${x}</button>`).join('')}</div></div></div>`}
+function finishQuiz(ok,ans){clearInterval(FT);const c=G.qc;sfx(ok?'ok':'ng');if(ok&&has('鈴'))G.en+=1;
+if(ok&&!G.custom){ST.quiz=(ST.quiz||0)+1;try{localStorage.setItem('kanjiStat',JSON.stringify(ST))}catch(e){}if(ST.quiz>=5)ach('quiz5')}
+const t=applyFx(ok?c.ok:c.ng);
+$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:360px;text-align:center"><h2>${ok?'⭕ 正解！':'❌ ざんねん…'}</h2><p>答え：${ans}</p><p>${t}</p><button class="main" onclick="closeQuiz()">続ける</button></div></div>`}
+{const ae=ACH.find(a=>a.id==='evolve');if(ae){ae.name='進化の剣';ae.d='剣を3回合体させて大剣に進化させる'}}
+/* ---- v2.2 ---- */
+Object.assign(CARDS,{
+日:{n:'日',name:'日光',cost:1,t:'sk',d:'エナジー+2',en:2},
+月:{n:'月',name:'月光',cost:0,t:'def',d:'ブロック4',blk:4},
+女:{n:'女',name:'女',cost:1,t:'def',d:'ブロック3・次のターンもブロック3',blk:3,nextBlk:3},
+田:{n:'田',name:'田',cost:1,t:'atk',d:'4ダメージ・手札を1枚捨てる',dmg:4,disc:1},
+山:{n:'山',name:'山',cost:2,t:'def',d:'ブロック10',blk:10},
+石:{n:'石',name:'石',cost:1,t:'atk',d:'1ダメージ×5',dmg:1,hits:5},
+夕:{n:'夕',name:'夕',cost:1,t:'atk',d:'3ダメージ×2',dmg:3,hits:2},
+明:{n:'明',name:'明',cost:1,t:'sk',d:'次のターン開始時：ブロック8・2枚引く',later:{blk:8,draw:2}},
+好:{n:'好',name:'好',cost:1,t:'sk',d:'HP3回復・ブロック6',heal:3,blk:6}});
+function openDisc(n){$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="text-align:center"><h2>捨てるカードを選ぶ</h2><div class="hand">${G.hand.map((id,i)=>cardEl(id,i,`doDisc(${i})`)).join('')}</div></div></div>`}
+function doDisc(i){const id=G.hand.splice(i,1)[0];G.disc.push(id);closeDeck();G.busy=false;if(G.e.cur<=0)return winSoon();render()}
+function summon(k){G.sums=G.sums||[];const d=SUMS[k],buff=G.nextBuff||0;G.nextBuff=0;const left=d.left>=99?99:d.left+(has('鍵')?1:0)+buff,idx=G.dropIdx==null?0:Math.max(0,Math.min(G.dropIdx,G.sums.length)),r=G.sums[idx];
+if(r&&r.k===k){r.lv=(r.lv||1)+1;r.left=Math.max(r.left,left);if(d.hp)r.hp+=d.hp;r.rv=1;mergeCheck(r);return}
+if(G.sums.length>=slotMax()){G.sumFail=1;G.log='召喚枠がいっぱいで、召喚獣は出なかった';toast('召喚枠がいっぱい！');return}
+G.sums.splice(idx,0,{k,hp:d.hp||0,left,lv:1,rv:1})}
+function playSummonAt(i,idx){G.dropIdx=idx;try{play(i)}finally{G.dropIdx=null}}
+function sumsHtml(){const s=G.sums||[];if(!s.length)return'<div class="sums"></div>';return`<div class="sums">${s.map((x,i)=>`<div class="sm k${x.k}${x.rv?' rise':''}${x.act?' go':''}" onclick="sumInfo(${i})" style="cursor:pointer"><b>${dn(x.k)}</b>${(x.lv||1)>1?`<i class="lv">Lv${x.lv}</i>`:''}<small class="act">${SUMS[x.k].s}</small><small>${SUMS[x.k].hp?'HP'+x.hp:'あと'+x.left+'T'}</small></div>`).join('')}</div>`}
+let DR=null,DRS=false;
+function sumsRect(){const el=document.querySelector('.sums');return el?el.getBoundingClientRect():null}
+function insIdx(px){let n=0;[...document.querySelectorAll('.sums .sm')].forEach(e=>{const r=e.getBoundingClientRect();if(r.left+r.width/2<px)n++});return n}
+function insPos(idx){const els=[...document.querySelectorAll('.sums .sm')];if(!els.length){const r=sumsRect();return r?{x:r.left+r.width/2,t:r.top,h:r.height}:null}const r0=els[Math.min(idx,els.length-1)].getBoundingClientRect();let x;if(idx===0)x=els[0].getBoundingClientRect().left-6;else if(idx>=els.length)x=els[els.length-1].getBoundingClientRect().right+6;else x=(els[idx-1].getBoundingClientRect().right+els[idx].getBoundingClientRect().left)/2;return{x,t:r0.top,h:r0.height}}
+function inZone(x,y){const r=sumsRect();return !!r&&x>r.left-70&&x<r.right+70&&y>r.top-40&&y<r.bottom+40}
+function tp(e){const t=e.pointerType==='touch';return{x:e.clientX-(t?36:0),y:e.clientY-(t?64:0)}}
+function mkGhostCard(el,c){const g=mkGhost(`<div class="ghp">${c?c.n:''}</div>`);if(!el)return g;const rc=el.getBoundingClientRect(),cl=el.cloneNode(true);cl.removeAttribute('onclick');cl.style.cssText=`width:${rc.width}px;height:${rc.height}px;margin:0;transform:none;position:static;opacity:1`;g.innerHTML='';g.appendChild(cl);el.style.opacity='.35';g.dataset.src='1';return g}
+function mkGhost(h){const g=document.createElement('div');g.className='ghost';g.innerHTML=h;document.body.appendChild(g);return g}
+function dragEnd(){if(!DR)return;const d=DR;DR=null;if(d.el)d.el.style.opacity='';if(d.g)d.g.remove();if(d.b)d.b.remove();document.querySelectorAll('.sums').forEach(z=>z.classList.remove('dz'));document.querySelectorAll('.fs').forEach(s=>s.classList.remove('hot'));return d}
+function fukuDrop(d,j){const f=G.fk;if(!f)return;
+if(d.k==='fb'){const b=f.bank[d.i];if(!b||b.u||j==null)return;const cur=f.slot[j];if(cur)cur.u=0;f.slot[j]=b;b.u=1}
+else{const c=f.slot[d.i];if(!c)return;if(j==null){c.u=0;f.slot[d.i]=null}else if(j!==d.i){f.slot[d.i]=f.slot[j];f.slot[j]=c}}
+fukuView()}
+function fukuView(){const f=G.fk,p=f.p,sl=f.slot.map((c,i)=>`<button class="fs" data-s="${i}" onclick="fukuClr(${i})">${c?c.c:'＋'}</button>`).join('');
+$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:400px;text-align:center"><h2>必殺・福笑い</h2><p>パーツをドラッグして漢字を完成させよう</p><p class="stat">よみがな：${FR[p.k]}　難易度 ${'★'.repeat(f.lv)}${'☆'.repeat(3-f.lv)}　⏱ <b id="fkt">${f.t}</b>秒</p><div class="fg ${p.l}">${sl}</div><div class="btns">${f.bank.map((b,i)=>`<button class="main off fb" data-p="${i}" ${b.u?'disabled':''} onclick="fukuPut(${i})">${b.c}</button>`).join('')}</div><div class="btns"><button class="main off" onclick="fukuReset()">やり直す</button><button class="main" ${f.slot.every(x=>x)?'':'disabled'} onclick="fukuDone()">完成！</button></div></div></div>`}
+document.addEventListener('pointerdown',e=>{if(!e.target.closest)return;let t=e.target.closest('.card[data-sm="1"]');if(t&&!G.busy&&G.scr==='battle'){DR={k:'sm',i:+t.dataset.i,x:e.clientX,y:e.clientY,on:false,el:t};return}
+t=e.target.closest('.fb');if(t&&!t.disabled&&G.fk&&G.qc){DR={k:'fb',i:+t.dataset.p,x:e.clientX,y:e.clientY,on:false,ch:t.textContent};return}
+t=e.target.closest('.fs');if(t&&G.fk&&G.qc&&G.fk.slot[+t.dataset.s])DR={k:'fs',i:+t.dataset.s,x:e.clientX,y:e.clientY,on:false,ch:t.textContent}});
+document.addEventListener('pointermove',e=>{if(!DR)return;if(!DR.on){if(Math.hypot(e.clientX-DR.x,e.clientY-DR.y)<10)return;DR.on=true;
+if(DR.k==='sm'){DR.c=CARDS[G.hand[DR.i]];DR.g=mkGhostCard(DR.el,DR.c);const z=document.querySelector('.sums');if(z)z.classList.add('dz');DR.b=document.createElement('div');DR.b.className='insb';document.body.appendChild(DR.b)}else DR.g=mkGhost(`<div class="ghp">${DR.ch}</div>`)}
+DR.g.style.left=tp(e).x+'px';DR.g.style.top=tp(e).y+'px';
+if(DR.k==='sm'){const idx=insIdx(tp(e).x),p=insPos(idx),ok=inZone(tp(e).x,tp(e).y);DR.idx=idx;DR.in=ok;if(p&&ok){const r=G.sums[idx],merge=r&&r.k===DR.c.sum,full=!merge&&G.sums.length>=slotMax();DR.b.style.cssText=`left:${p.x-2}px;top:${p.t}px;height:${p.h}px;background:${merge?'#2f9d55':full?'#c62828':'#e6a800'}`}else DR.b.style.height='0'}
+else{document.querySelectorAll('.fs').forEach(s=>s.classList.remove('hot'));const t=document.elementFromPoint(tp(e).x,tp(e).y),s=t&&t.closest&&t.closest('.fs');if(s)s.classList.add('hot')}});
+document.addEventListener('pointerup',e=>{if(!DR)return;const wasOn=DR.on,t0=e.target;const d=dragEnd();if(!wasOn)return;DRS=true;setTimeout(()=>DRS=false,60);
+if(d.k==='sm'){if(d.in)playSummonAt(d.i,d.idx);return}
+const t=document.elementFromPoint(tp(e).x,tp(e).y),s=t&&t.closest&&t.closest('.fs');fukuDrop(d,s?+s.dataset.s:null)});
+document.addEventListener('pointercancel',()=>{dragEnd()});
+document.addEventListener('click',e=>{if(DRS){e.stopPropagation();e.preventDefault();DRS=false}},true);
+/* ---- v2.4 ---- */
+let DC=null;
+const HOVNONE=!!(window.matchMedia&&window.matchMedia('(hover:none)').matches);
+document.addEventListener('pointerdown',e=>{if(!e.target.closest||G.busy||G.scr!=='battle')return;const t=e.target.closest('.hand.bh .card');if(t&&t.dataset.sm==='0')DC={i:+t.dataset.i,x:e.clientX,y:e.clientY,on:false,el:t}});
+document.addEventListener('pointermove',e=>{if(!DC)return;if(!DC.on){if(Math.hypot(e.clientX-DC.x,e.clientY-DC.y)<12)return;DC.on=true;const c=CARDS[G.hand[DC.i]];DC.g=mkGhostCard(DC.el,c);const en=document.querySelector('.enemy');if(en)en.classList.add('dz2')}DC.g.style.left=tp(e).x+'px';DC.g.style.top=tp(e).y+'px'});
+function dcEnd(){if(!DC)return null;const d=DC;DC=null;if(d.el)d.el.style.opacity='';if(d.g)d.g.remove();document.querySelectorAll('.enemy.dz2').forEach(x=>x.classList.remove('dz2'));return d}
+document.addEventListener('pointerup',e=>{if(!DC)return;const was=DC.on,i=DC.i;dcEnd();if(!was)return;DRS=true;setTimeout(()=>DRS=false,60);const h=document.querySelector('.hand.bh'),r=h?h.getBoundingClientRect():null;if(!r||tp(e).y>=r.top-8)return;const t=document.elementFromPoint(tp(e).x,tp(e).y),mn=t&&t.closest&&t.closest('.mn');if(mn&&!/dead/.test(mn.className)){const m=/mn(\d+)/.exec(mn.className);if(m)G.t=+m[1]}play(i)});
+document.addEventListener('pointercancel',()=>{dcEnd()});
+document.addEventListener('click',e=>{if(!HOVNONE)return;const t=e.target.closest&&e.target.closest('.hand.bh .card');if(!t)return;if(!t.classList.contains('sel')){e.stopPropagation();e.preventDefault();document.querySelectorAll('.hand.bh .card.sel').forEach(x=>x.classList.remove('sel'));t.classList.add('sel')}},true);
+/* ---- 手書き認識テスト(テスト専用) ---- */
+const HW={ch:['一','十','人','大','水'],tg:'一',st:[],cur:null,hp:100,atk:false,last:null,rs:0};
+let HWD={samples:[]};
+function hwDist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function hwLen(p){let s=0;for(let i=1;i<p.length;i++)s+=hwDist(p[i-1],p[i]);return s}
+function hwResample(p,n){const L=hwLen(p);if(!(L>0))return Array.from({length:n},()=>({x:p[0].x,y:p[0].y}));const I=L/(n-1);let D=0;const q=[{x:p[0].x,y:p[0].y}];p=p.slice();for(let i=1;i<p.length;i++){const d=hwDist(p[i-1],p[i]);if(D+d>=I&&d>0){const t=(I-D)/d,m={x:p[i-1].x+t*(p[i].x-p[i-1].x),y:p[i-1].y+t*(p[i].y-p[i-1].y)};q.push(m);p.splice(i,0,m);D=0}else D+=d}while(q.length<n)q.push({x:p[p.length-1].x,y:p[p.length-1].y});return q.slice(0,n)}
+function hwAd(x,y){let d=x-y;while(d>180)d-=360;while(d<-180)d+=360;return d}
+function hwM(s){const n=s.length,a=s[0],b=s[n-1],L=hwLen(s),C=hwDist(a,b),dx=b.x-a.x,dy=b.y-a.y,ang=Math.atan2(dy,dx)*180/Math.PI;let dev=0;const sg=[];for(const p of s){const d=C>0?((p.x-a.x)*dy-(p.y-a.y)*dx)/C:0;dev=Math.max(dev,Math.abs(d));sg.push(d)}
+const dirs=[];for(let i=3;i<n-3;i++)dirs.push(Math.atan2(s[i+3].y-s[i-3].y,s[i+3].x-s[i-3].x)*180/Math.PI);let turn=0;for(let i=1;i<dirs.length;i++)turn=Math.max(turn,Math.abs(hwAd(dirs[i],dirs[i-1])));
+const q=Math.floor(n/4),d1=Math.atan2(s[q].y-a.y,s[q].x-a.x)*180/Math.PI,d2=Math.atan2(b.y-s[n-1-q].y,b.x-s[n-1-q].x)*180/Math.PI,bend=Math.abs(hwAd(d1,d2));
+const th=.05*L;let last=0,alt=0;for(const d of sg){if(Math.abs(d)>th){const g=Math.sign(d);if(last&&g!==last)alt++;last=g}}
+return{L,C,st:L>0?C/L:0,ang,dev:L>0?dev/L:0,turn,bend,alt,a,b}}
+function hwPrep(strokes){const ss=strokes.filter(s=>s&&s.length>=2&&hwLen(s)>.02),n=ss.length;if(!n)return{n:0};const rs=ss.map(s=>hwResample(s,32));let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;rs.flat().forEach(p=>{x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)});const bw=x1-x0,bh=y1-y0;return{n,raw:ss,rs,m:rs.map(hwM),bw,bh,S:Math.max(bw,bh,1e-6),cx:(x0+x1)/2,cy:(y0+y1)/2}}
+const hwLo=(x,ok,z)=>x<=ok?1:x>=z?0:(z-x)/(z-ok),hwHi=(x,z,ok)=>x<=z?0:x>=ok?1:(x-z)/(ok-z),hwTz=(x,a,b,c,d)=>x<=a||x>=d?0:x<b?(x-a)/(b-a):x<=c?1:(d-x)/(d-c);
+function hwCk(l,n,v){l.push([n,+Math.max(0,Math.min(1,v)).toFixed(3)])}
+function hwFin(l,mul,note){const s=l.length?Math.min(...l.map(x=>x[1])):0;return{score:+(s*(mul==null?1:mul)).toFixed(3),l,note:note||''}}
+const hwStraight=m=>Math.min(hwHi(m.st,.85,.95),hwLo(m.dev,.05,.12),hwLo(m.turn,28,55),hwLo(m.bend,16,36),m.alt>=2?0:1);
+const hwRelaxed=m=>Math.min(hwHi(m.st,.78,.9),hwLo(m.dev,.14,.28),hwLo(m.turn,45,85),hwLo(m.bend,50,95),m.alt>=1?.5:1);
+const hwAH=m=>{const a=Math.abs(m.ang),g=Math.min(a,180-a),v=hwLo(g,20,38);return m.b.x>m.a.x?v:v*.3};
+const hwAV=m=>{const g=Math.abs(Math.abs(m.ang)-90),v=hwLo(g,20,38);return m.b.y>m.a.y?v:v*.3};
+const hwALF=m=>hwTz(m.ang,82,105,162,178),hwARF=m=>hwTz(m.ang,4,20,70,86);
+function hwSeg(p,q,r,s){const d=(q.x-p.x)*(s.y-r.y)-(q.y-p.y)*(s.x-r.x);if(Math.abs(d)<1e-12)return null;const t=((r.x-p.x)*(s.y-r.y)-(r.y-p.y)*(s.x-r.x))/d,u=((r.x-p.x)*(q.y-p.y)-(r.y-p.y)*(q.x-p.x))/d;return t>=0&&t<=1&&u>=0&&u<=1?{t,u}:null}
+function hwInter(a,b){for(let i=1;i<a.length;i++)for(let j=1;j<b.length;j++){const r=hwSeg(a[i-1],a[i],b[j-1],b[j]);if(r)return{t1:(i-1+r.t)/(a.length-1),t2:(j-1+r.u)/(b.length-1)}}return null}
+function hwNear(a,p){let d=1e9,k=0;a.forEach((q,i)=>{const e=hwDist(q,p);if(e<d){d=e;k=i}});return{d,t:k/(a.length-1)}}
+function hwR1(P){const l=[];hwCk(l,'筆画数が1本',P.n===1?1:0);if(P.n!==1)return hwFin(l);const m=P.m[0];hwCk(l,'横向き(傾き20°以内・左から右)',hwAH(m));hwCk(l,'直線である(山形・V字・折れ線でない)',hwStraight(m));hwCk(l,'途中で大きく曲がっていない',Math.min(hwLo(m.turn,28,55),hwLo(m.bend,16,36)));hwCk(l,'波線でない',m.alt>=2?0:1);hwCk(l,'長さが足りている',hwHi(m.L,.1,.25));return hwFin(l)}
+function hwR10(P){const l=[];hwCk(l,'筆画数が2本',P.n===2?1:0);if(P.n!==2)return hwFin(l);const[m0,m1]=P.m;const hi=Math.min(hwAH(m0),hwAV(m1))>=Math.min(hwAH(m1),hwAV(m0))?0:1,vi=1-hi,H=P.m[hi],V=P.m[vi];
+hwCk(l,'横線の向き',hwAH(H));hwCk(l,'縦線の向き',hwAV(V));hwCk(l,'横線が直線',hwStraight(H));hwCk(l,'縦線が直線',hwStraight(V));const x=hwInter(P.rs[hi],P.rs[vi]);hwCk(l,'横線と縦線が交差している',x?1:0);if(x){hwCk(l,'横線の中ほどで交差',hwTz(x.t1,.1,.28,.72,.9));hwCk(l,'縦線の中ほどで交差',hwTz(x.t2,.1,.28,.72,.9))}hwCk(l,'大きさ',hwHi(P.S,.12,.25));hwCk(l,'縦横の比',hwTz(P.bw/Math.max(P.bh,1e-6),.35,.6,1.7,2.8));return hwFin(l,hi===0?1:.7,hi===0?'':'書き順が逆(縦→横)')}
+function hwR2(P){const l=[];hwCk(l,'筆画数が2本',P.n===2?1:0);if(P.n!==2)return hwFin(l);let iA=0,iB=1;const f=(a,b)=>Math.min(hwALF(P.m[a]),hwARF(P.m[b]));if(f(1,0)>f(0,1)){iA=1;iB=0}const A=P.m[iA],B=P.m[iB];
+hwCk(l,'左はらいの向き',hwALF(A));hwCk(l,'右はらいの向き',hwARF(B));hwCk(l,'左はらいの形',hwRelaxed(A));hwCk(l,'右はらいの形',hwRelaxed(B));const nr=hwNear(P.rs[iA],P.rs[iB][0]);hwCk(l,'右はらいの始点が左はらいに接する',hwLo(nr.d/P.S,.1,.25));hwCk(l,'接する位置(上〜中ほど)',hwTz(nr.t,-.01,0,.6,.85));hwCk(l,'下で左右に広がる',hwHi((B.b.x-A.b.x)/P.S,.1,.3));hwCk(l,'大きさ',hwHi(P.S,.12,.25));hwCk(l,'縦横の比',hwTz(P.bw/Math.max(P.bh,1e-6),.4,.6,1.8,3));return hwFin(l,iA===0?1:.7,iA===0?'':'書き順が逆')}
+function hwR3(P){const l=[];hwCk(l,'筆画数が3本',P.n===3?1:0);if(P.n!==3)return hwFin(l);const roles=[m=>{const a=Math.abs(m.ang),g=Math.min(a,180-a),v=hwLo(g,28,48);return m.b.x>m.a.x?v:v*.3},m=>hwTz(m.ang,70,92,168,181),m=>hwTz(m.ang,-1,12,78,96)],perms=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];let best=null;for(const p of perms){const s=Math.min(roles[0](P.m[p[0]]),roles[1](P.m[p[1]]),roles[2](P.m[p[2]]));if(!best||s>best.s)best={s,p}}
+const[h,lf,rf]=best.p,H=P.m[h],LF=P.m[lf],RF=P.m[rf];hwCk(l,'横線・左はらい・右はらいの向き',best.s);hwCk(l,'横線が直線',hwRelaxed(H));hwCk(l,'左はらいの形',hwRelaxed(LF));hwCk(l,'右はらいの形',hwRelaxed(RF));const n1=hwNear(P.rs[h],LF.a),n2=hwNear(P.rs[h],RF.a);hwCk(l,'左はらいが横線に接する',hwLo(n1.d/P.S,.2,.42));hwCk(l,'右はらいが横線に接する',hwLo(n2.d/P.S,.2,.42));hwCk(l,'接点が横線の中ほど',Math.min(hwTz(n1.t,-.05,.12,.88,1.05),hwTz(n2.t,-.05,.12,.88,1.05)));hwCk(l,'2本のはらいの始点が近い',hwLo(hwDist(LF.a,RF.a)/P.S,.3,.6));const hy=(H.a.y+H.b.y)/2;hwCk(l,'はらいが横線より下へ伸びる',Math.min(hwHi((LF.b.y-hy)/P.S,.02,.1),hwHi((RF.b.y-hy)/P.S,.02,.1)));hwCk(l,'左右に広がる',hwHi((RF.b.x-LF.b.x)/P.S,.18,.38));hwCk(l,'大きさ',hwHi(P.S,.07,.16));return hwFin(l,best.p.join()==='0,1,2'?1:.85,best.p.join()==='0,1,2'?'':'書き順が違う')}
+function hwR4(P){const l=[];hwCk(l,'筆画数が4本',P.n===4?1:0);if(P.n!==4)return hwFin(l);let vi=0,vb=-1;P.rs.forEach((s,i)=>{const mm=hwM(s.slice(0,26)),d=Math.abs(mm.b.y-mm.a.y);if(d>vb){vb=d;vi=i}});const V=hwM(P.rs[vi].slice(0,26)),rest=[0,1,2,3].filter(i=>i!==vi);
+hwCk(l,'縦線の向き',hwAV(V));hwCk(l,'縦線の長さ',hwHi(vb/P.S,.4,.6));hwCk(l,'縦線が中央',hwTz((V.a.x-P.cx)/P.S,-.4,-.15,.15,.4));hwCk(l,'縦線の形',hwRelaxed(V));
+const near=m=>hwLo(Math.abs(m.a.x-P.cx)/P.S,.18,.4);const roles=[(m,s)=>Math.min(hwHi(-(m.a.x-P.cx)/P.S,0,.1),hwTz(hwM(s.slice(0,17)).ang,-60,-35,35,60)),(m)=>Math.min(hwALF(m),near(m)),(m)=>Math.min(hwARF(m),near(m))];
+const perms=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];let best=null;for(const p of perms){const s=Math.min(...p.map((si,r)=>roles[r](P.m[rest[si]],P.rs[rest[si]])));if(!best||s>best.s)best={s,p}}
+hwCk(l,'横折れ・左はらい・右はらいの形と位置',best.s);hwCk(l,'縦横の比',hwTz(P.bw/Math.max(P.bh,1e-6),.45,.7,1.6,2.4));hwCk(l,'大きさ',hwHi(P.S,.12,.25));const ord=best.p.join()==='0,1,2'&&vi===0;return hwFin(l,ord?1:.8,ord?'':'書き順が違う(参考)')}
+function hwNormS(strokes){const rs=strokes.map(s=>hwResample(s,16)),pts=rs.flat();let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;pts.forEach(p=>{x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)});const S=Math.max(x1-x0,y1-y0,1e-6),cx=(x0+x1)/2,cy=(y0+y1)/2;return rs.map(s=>s.map(p=>({x:(p.x-cx)/S,y:(p.y-cy)/S})))}
+function hwSD(a,b){if(a.length!==b.length)return null;let t=0,c=0;for(let i=0;i<a.length;i++)for(let j=0;j<16;j++){t+=hwDist(a[i][j],b[i][j]);c++}return t/c}
+function hwSamples(P,ch){const q=hwNormS(P.raw);let okD=null,ngD=null;for(const s of HWD.samples){if(s.ch!==ch||s.n!==P.n)continue;const d=hwSD(q,hwNormS(s.strokes));if(d==null)continue;if(s.label==='ok'){if(okD==null||d<okD)okD=d}else if(ngD==null||d<ngD)ngD=d}return{okD,ngD}}
+function hwRecog(strokes,target){const P=hwPrep(strokes);if(!P.n)return{state:'empty',scores:{},best:null,conf:0};const R={一:hwR1,十:hwR10,人:hwR2,大:hwR3,水:hwR4},sc={},ad={};
+for(const c of HW.ch){const r=R[c](P),sm=hwSamples(P,c);ad[c]=sm;let s=r.score,note=r.note;if(sm.ngD!=null&&sm.ngD<.09&&(sm.okD==null||sm.ngD<sm.okD)){s*=.35;note=(note?note+' ':'')+'不正解サンプルに近い'}else if(sm.okD!=null&&sm.okD<.09&&s>=.55)s=Math.min(1,s+.05);sc[c]={score:+s.toFixed(3),l:r.l,note}}
+let best=null;for(const c of HW.ch)if(!best||sc[c].score>sc[best].score)best=c;const t=sc[target].score,o=Math.max(...HW.ch.filter(c=>c!==target).map(c=>sc[c].score));let state;if(t>=.72&&t>=o-.05)state='ok';else if(t<.4||(o>=.6&&o>t+.2))state='ng';else state='hold';return{state,scores:sc,best,conf:t,ad}}
+function hwValid(obj){const ok=[],bad=[];if(Array.isArray(obj))obj={samples:obj};if(!obj||typeof obj!=='object'||!Array.isArray(obj.samples))return{ok,bad:[{i:-1,r:'samples配列がありません'}],fatal:true};obj.samples.forEach((s,i)=>{const r=hwCheckSample(s);if(r)bad.push({i,r});else ok.push(hwClean(s))});return{ok,bad}}
+function hwCheckSample(s){if(!s||typeof s!=='object')return'データがオブジェクトではない';if(!HW.ch.includes(s.ch))return'対象の漢字が不正';if(s.label!=='ok'&&s.label!=='ng')return'ラベルが不正';if(!Array.isArray(s.strokes)||s.strokes.length<1||s.strokes.length>8)return'筆画の数が不正';for(const st of s.strokes){if(!Array.isArray(st)||st.length<2)return'筆画の点が少ない';for(const p of st){if(!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)||p.x<-.5||p.x>1.5||p.y<-.5||p.y>1.5)return'座標が不正'}}if(s.n!==undefined&&s.n!==s.strokes.length)return'筆画数と一致しない';return null}
+function hwClean(s){return{ch:s.ch,label:s.label,n:s.strokes.length,strokes:s.strokes.map(st=>st.map(p=>({x:+(+p.x).toFixed(4),y:+(+p.y).toFixed(4)}))),ts:typeof s.ts==='string'?s.ts:new Date().toISOString()}}
+function hwParse(t){try{return{obj:JSON.parse(t)}}catch(e){return{err:'JSONとして解釈できません（'+e.message+'）'}}}
+function hwSave(){try{localStorage.setItem('kanjiHW',JSON.stringify({v:1,samples:HWD.samples}))}catch(e){}}
+try{const r=hwParse(localStorage.getItem('kanjiHW')||'null');if(r.obj){const v=hwValid(r.obj);if(!v.fatal)HWD.samples=v.ok}}catch(e){}
+function hwCounts(){const o={};HW.ch.forEach(c=>o[c]={ok:0,ng:0});HWD.samples.forEach(s=>o[s.ch][s.label]++);return o}
+function hwPts(vs,n){n=n||14;const out=[];for(let i=1;i<vs.length;i++){const a=vs[i-1],b=vs[i];for(let k=0;k<n;k++){const t=k/n;out.push({x:a[0]+(b[0]-a[0])*t,y:a[1]+(b[1]-a[1])*t})}}const l=vs[vs.length-1];out.push({x:l[0],y:l[1]});return out}
+function hwSelfTest(){const R=[],T=(n,ok,d)=>R.push({n,ok:!!ok,d:d||''}),S=(t,ss)=>hwRecog(ss,t).state;
+const saved=HWD.samples;HWD.samples=[];
+T('「一」正しい横線→正解',S('一',[hwPts([[.2,.5],[.8,.5]])])==='ok');
+T('「一」少し傾いた横線(約6°)→正解(許容)',S('一',[hwPts([[.2,.53],[.8,.47]])])==='ok');
+T('「一」軽く揺れた自然な横線→正解(許容)',S('一',[hwPts([[.2,.5],[.35,.51],[.5,.49],[.65,.51],[.8,.5]],8)])==='ok');
+T('「一」山形→不正解',S('一',[hwPts([[.2,.55],[.5,.35],[.8,.55]])])==='ng');
+T('「一」V字→不正解',S('一',[hwPts([[.2,.4],[.5,.6],[.8,.4]])])==='ng');
+T('「一」波線→不正解',S('一',[Array.from({length:40},(_,i)=>({x:.2+.6*i/39,y:.5+.07*Math.sin(i/39*Math.PI*4)}))])==='ng');
+T('「一」折れ線→不正解',S('一',[hwPts([[.2,.5],[.5,.5],[.6,.35],[.8,.35]])])==='ng');
+T('「一」斜め線(45°)→不正解',S('一',[hwPts([[.25,.25],[.75,.75]])])==='ng');
+T('「一」右から左へ書いた線→正解にしない',S('一',[hwPts([[.8,.5],[.2,.5]])])!=='ok');
+T('「一」とても短い線→正解にしない',S('一',[hwPts([[.45,.5],[.55,.5]])])!=='ok');
+T('「一」の問題で縦線を書く→不正解',S('一',[hwPts([[.5,.2],[.5,.8]])])==='ng');
+T('「一」の問題で「十」を書く→不正解',S('一',[hwPts([[.2,.5],[.8,.5]]),hwPts([[.5,.2],[.5,.8]])])==='ng');
+T('空欄で判定→空欄扱い(クラッシュしない)',S('一',[])==='empty');
+const ideal={十:[hwPts([[.2,.5],[.8,.5]]),hwPts([[.5,.2],[.5,.8]])],人:[hwPts([[.5,.2],[.25,.8]]),hwPts([[.45,.4],[.78,.8]])],大:[hwPts([[.2,.4],[.8,.4]]),hwPts([[.5,.38],[.2,.8]]),hwPts([[.5,.38],[.8,.8]])],水:[hwPts([[.5,.15],[.5,.8],[.45,.85]]),hwPts([[.18,.42],[.45,.4],[.3,.62]]),hwPts([[.5,.35],[.22,.78]]),hwPts([[.5,.35],[.8,.75]])]};
+for(const c of['十','人','大','水'])T('「'+c+'」の標準的な形→正解',S(c,ideal[c])==='ok');
+T('「十」の問題で斜めに交差する線(×)→正解にしない',S('十',[hwPts([[.25,.25],[.75,.75]]),hwPts([[.75,.25],[.25,.75]])])!=='ok');
+T('「人」の問題で「大」を書く→不正解',S('人',ideal.大)==='ng');
+const v0=hwValid({samples:[{ch:'一',label:'ok',strokes:[hwPts([[.2,.5],[.8,.5]])]}]});T('JSON読み込み:正しいデータが1件通る',v0.ok.length===1&&v0.bad.length===0);
+const v1=hwValid({samples:[{ch:'?',label:'ok',strokes:[]},{ch:'一',label:'x',strokes:[[{x:0,y:0},{x:1,y:1}]]},null,{ch:'一',label:'ok',strokes:[[{x:'a',y:0},{x:1,y:1}]]}]});T('JSON読み込み:不正なデータは除外される',v1.ok.length===0&&v1.bad.length===4,v1.bad.map(b=>b.r).join(' / '));
+T('不正なJSONでクラッシュしない',!!hwParse('{bad json').err&&hwValid(5).fatal===true&&hwValid(null).fatal===true);
+const rt=hwValid(hwParse(JSON.stringify({v:1,samples:v0.ok})).obj);T('書き出し→読み込みで件数が一致',rt.ok.length===1);
+HWD.samples=[hwClean({ch:'一',label:'ng',strokes:[hwPts([[.2,.55],[.5,.35],[.8,.55]])]})];T('不正解として登録した山形に近い入力は、不正解のまま',S('一',[hwPts([[.2,.55],[.5,.36],[.8,.55]])])==='ng');
+HWD.samples=saved;return R}
+function hwEl(id){return document.getElementById(id)}
+function hwMsg(t){const e=hwEl('hwmsg');if(e)e.textContent=t;return t}
+function hwHp(){const e=hwEl('hwhp');if(e)e.innerHTML='<i style="width:'+HW.hp+'%"></i><b class="hpn">'+HW.hp+'/100</b>'}
+function hwCnt(){const e=hwEl('hwcnt');if(!e)return;const c=hwCounts();e.innerHTML='<b>登録データ（漢字ごと）</b><table class="hwt2">'+HW.ch.map(k=>`<tr><td>${k}</td><td>正解 ${c[k].ok}${k==='一'?' / 50':''}</td><td>不正解 ${c[k].ng}${k==='一'?' / 50':''}</td></tr>`).join('')+`</table><div class="stat">合計 ${HWD.samples.length} 件（「一」は、正解50件・不正解50件が目標）</div>`}
+function hwDraw(){const cv=HW.cv;if(!cv)return;const c=cv.getContext('2d'),w=cv.width,h=cv.height;c.setTransform(1,0,0,1,0,0);c.fillStyle='#fff';c.fillRect(0,0,w,h);c.strokeStyle='#ddd';c.lineWidth=1;c.beginPath();c.moveTo(w/2,0);c.lineTo(w/2,h);c.moveTo(0,h/2);c.lineTo(w,h/2);c.stroke();c.strokeStyle='#111';c.lineCap='round';c.lineJoin='round';c.lineWidth=Math.max(4,w/55);HW.st.forEach(s=>{if(!s.length)return;c.beginPath();c.moveTo(s[0].x*w,s[0].y*h);for(let i=1;i<s.length;i++)c.lineTo(s[i].x*w,s[i].y*h);c.stroke()})}
+function hwPt(e){const r=HW.cv.getBoundingClientRect();return{x:Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),y:Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))}}
+function hwOpen(){closeDeck();if(hwEl('hw'))return;const o=document.createElement('div');o.id='hw';
+o.innerHTML=`<div class="hwh"><h2>🧪 手書き認識テスト（テスト専用・一時的）</h2><button class="main off" onclick="hwClose()">✕ ゲームに戻る</button></div>
+<p class="stat">外部AI・通信は使わず、このページの中だけで判定します。まず「一」の精度を優先して確かめます。間違った字を正解にしないことを最優先にしています。</p>
+<div class="btns">${HW.ch.map(c=>`<button class="main off hwt" onclick="hwSetTarget('${c}')">${c}</button>`).join('')}</div>
+<p id="hwask" class="stat"></p><canvas id="hwc"></canvas>
+<div class="btns"><button class="main off" onclick="hwClear()">書き直し</button><button class="main off" onclick="hwUndoStroke()">1画戻す</button><button class="main" onclick="hwJudge()">判定</button></div>
+<div id="hwres" class="hwbox"></div>
+<div class="btns"><button class="main off" onclick="hwReg('ok')">正解として登録</button><button class="main off" onclick="hwReg('ng')">不正解として登録</button><button class="main off" onclick="hwUndo()">最後の登録を取り消す</button></div>
+<div id="hwcnt" class="hwbox"></div>
+<h3>ゲーム連携テスト</h3><div class="bar p" id="hwhp" style="margin:6px auto;width:240px;height:20px"></div>
+<div class="btns"><button class="main off" onclick="hwAtk()">敵の攻撃（25ダメージ）</button><button class="main off" onclick="hwHpReset()">HPを100に戻す</button></div><p id="hwgm" class="stat"></p>
+<h3>学習データ管理</h3>
+<div class="btns"><button class="main off" onclick="hwExport()">JSONを書き出す</button><button class="main off" onclick="hwCopy()">コピー</button><label class="main off hwlab" for="hwfile">JSONファイルを選ぶ</label><input id="hwfile" type="file" accept=".json,application/json,text/plain" class="hwfi"><button class="main off" onclick="hwEl('hwfile').click()">ファイル選択（直接）</button></div>
+<textarea id="hwtxt" rows="4" placeholder="書き出したJSON、または読み込むJSONをここに貼り付け"></textarea>
+<div class="btns"><button class="main off" onclick="hwImportTxt()">貼り付けたJSONを読み込む</button><button class="main off" id="hwrs" onclick="hwReset()">全データを初期化</button></div>
+<div id="hwmsg" class="hwbox stat"></div>
+<h3>自己テスト</h3><div class="btns"><button class="main off" onclick="hwTests()">テストを実行</button></div><div id="hwtest" class="hwbox"></div>`;
+document.body.appendChild(o);const cv=hwEl('hwc');HW.cv=cv;const sz=Math.min(360,(window.innerWidth||360)-40),dp=window.devicePixelRatio||1;cv.style.width=sz+'px';cv.style.height=sz+'px';cv.width=Math.floor(sz*dp);cv.height=Math.floor(sz*dp);
+cv.addEventListener('pointerdown',e=>{e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(x){}HW.cur=[hwPt(e)];HW.st.push(HW.cur);hwDraw()});
+cv.addEventListener('pointermove',e=>{if(!HW.cur)return;const p=hwPt(e),l=HW.cur[HW.cur.length-1];if(Math.hypot(p.x-l.x,p.y-l.y)>.004){HW.cur.push(p);hwDraw()}});
+const end=e=>{if(HW.cur){const p=hwPt(e),l=HW.cur[HW.cur.length-1];if(p.x!==l.x||p.y!==l.y)HW.cur.push(p);if(HW.cur.length<2)HW.cur.push({x:HW.cur[0].x,y:HW.cur[0].y});HW.cur=null;hwDraw()}};
+cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+hwEl('hwfile').addEventListener('change',hwFile);HW.st=[];hwSetTarget(HW.tg);hwDraw();hwCnt();hwHp()}
+function hwClose(){const o=hwEl('hw');if(o)o.remove();HW.cv=null}
+function hwSetTarget(c){HW.tg=c;const a=hwEl('hwask');if(a)a.textContent='いま書く漢字：「'+c+'」'+(HW.atk?'（敵の攻撃を防御中）':'');document.querySelectorAll('.hwt').forEach(b=>b.classList.toggle('on',b.textContent===c))}
+function hwClear(){HW.st=[];HW.cur=null;hwDraw();const r=hwEl('hwres');if(r)r.innerHTML=''}
+function hwUndoStroke(){HW.st.pop();hwDraw()}
+function hwWhy(r){const t=r.scores[HW.tg],bad=t.l.filter(x=>x[1]<.6),ad=r.ad[HW.tg];let h='';if(bad.length)h+='<div class="stat">点が低い項目：'+bad.map(x=>x[0]+'('+Math.round(x[1]*100)+'%)').join('、')+'</div>';if(t.note)h+='<div class="stat">'+t.note+'</div>';if(ad&&(ad.okD!=null||ad.ngD!=null))h+='<div class="stat">登録データとの近さ：正解 '+(ad.okD==null?'-':ad.okD.toFixed(3))+' / 不正解 '+(ad.ngD==null?'-':ad.ngD.toFixed(3))+'（小さいほど近い）</div>';return h}
+function hwJudge(){const r=hwRecog(HW.st,HW.tg),e=hwEl('hwres');HW.last=r;if(r.state==='empty'){e.innerHTML='<b>何も書かれていません。</b>書いてから判定してください。';return}
+const st={ok:'⭕ 正解',ng:'❌ 不正解',hold:'⚠ 判定保留（書き直してください）'}[r.state],sc=r.scores,bs=sc[r.best].score,seen=r.state==='ok'?HW.tg:(bs>=.5?r.best:'？');
+e.innerHTML=`<div class="hwbig">${seen}</div><div><b>${st}</b>　信頼度 ${Math.round(r.conf*100)}%（「${HW.tg}」としての点数）</div><div class="stat">入力した文字（推定）：${seen}${seen==='？'?'（どの漢字にも十分似ていません）':''}</div><table class="hwt2">${HW.ch.map(c=>`<tr><td>${c}</td><td><div class="hwbar"><i style="width:${Math.round(sc[c].score*100)}%"></i></div></td><td>${Math.round(sc[c].score*100)}%</td></tr>`).join('')}</table>${hwWhy(r)}`;
+if(HW.atk){let m;if(r.state==='ok'){m='🛡 防御成功！ダメージなし。';HW.atk=false}else if(r.state==='ng'){HW.hp=Math.max(0,HW.hp-25);m='💥 防御失敗！HP -25。';HW.atk=false}else m='書き直してください（攻撃はまだ続いています）。';const g=hwEl('hwgm');if(g)g.textContent=m;hwHp();hwSetTarget(HW.tg)}}
+function hwAtk(){HW.atk=true;const c=HW.ch[Math.floor(Math.random()*HW.ch.length)];hwSetTarget(c);hwClear();hwEl('hwgm').textContent='敵の攻撃！「'+c+'」を書いて防御しよう（失敗で25ダメージ）'}
+function hwHpReset(){HW.hp=100;HW.atk=false;hwHp();hwSetTarget(HW.tg);hwEl('hwgm').textContent=''}
+function hwReg(label){const P=hwPrep(HW.st);if(!P.n){hwMsg('書いてから登録してください');return}HWD.samples.push(hwClean({ch:HW.tg,label,strokes:P.raw,ts:new Date().toISOString()}));hwSave();hwCnt();hwMsg('「'+HW.tg+'」を'+(label==='ok'?'正解':'不正解')+'として登録しました（'+P.n+'画）')}
+function hwUndo(){const s=HWD.samples.pop();if(!s){hwMsg('取り消せるデータがありません');return}hwSave();hwCnt();hwMsg('最後の登録（「'+s.ch+'」'+(s.label==='ok'?'正解':'不正解')+'）を取り消しました')}
+function hwReset(){const b=hwEl('hwrs');if(!HW.rs){HW.rs=1;b.textContent='もう一度押すと全データを削除';setTimeout(()=>{HW.rs=0;if(b)b.textContent='全データを初期化'},3000);return}HW.rs=0;HWD.samples=[];hwSave();hwCnt();b.textContent='全データを初期化';hwMsg('全データを初期化しました')}
+function hwExport(){const t=JSON.stringify({v:1,exported:new Date().toISOString(),samples:HWD.samples});hwEl('hwtxt').value=t;try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'application/json'}));a.download='kanji-hw-data.json';document.body.appendChild(a);a.click();a.remove()}catch(e){}hwMsg('書き出しました（'+HWD.samples.length+'件）。ダウンロードが動かない環境では、下の欄のJSONをコピーして保存してください。')}
+function hwCopy(){const t=hwEl('hwtxt');if(!t.value)hwExport();t.select();try{if(navigator.clipboard)navigator.clipboard.writeText(t.value);else document.execCommand('copy');hwMsg('コピーしました')}catch(e){hwMsg('コピーできませんでした。欄のJSONを手動で選んでコピーしてください')}}
+function hwImportText(txt){const p=hwParse(txt);if(p.err)return hwMsg('読み込み失敗：'+p.err);const v=hwValid(p.obj);if(v.fatal)return hwMsg('読み込み失敗：'+v.bad[0].r);HWD.samples=HWD.samples.concat(v.ok);hwSave();hwCnt();const why={};v.bad.forEach(b=>why[b.r]=(why[b.r]||0)+1);return hwMsg('読み込み完了：追加 '+v.ok.length+' 件／除外 '+v.bad.length+' 件'+(v.bad.length?'（理由：'+Object.entries(why).map(([k,n])=>k+' '+n+'件').join('、')+'）':'')+'／現在の合計 '+HWD.samples.length+' 件')}
+function hwImportTxt(){const t=hwEl('hwtxt').value.trim();if(!t){hwMsg('読み込むJSONを欄に貼り付けてください');return}hwImportText(t)}
+function hwFile(e){const f=e.target.files&&e.target.files[0];if(!f)return;const fr=new FileReader();fr.onload=()=>hwImportText(String(fr.result));fr.onerror=()=>hwMsg('読み込み失敗：ファイルを読めませんでした');fr.readAsText(f);e.target.value=''}
+function hwTests(){const r=hwSelfTest(),f=r.filter(x=>!x.ok).length;hwEl('hwtest').innerHTML='<b>'+(f?'⚠ 失敗 '+f+' 件':'✅ すべて成功')+'（'+r.length+'件）</b>'+r.map(x=>'<div>'+(x.ok?'✅':'❌')+' '+x.n+(x.d?'<span class="stat"> '+x.d+'</span>':'')+'</div>').join('')+'<div class="stat"><b>手動で確認する項目</b>：マウスで書く／タッチで書く／複数の筆画／書き直し／空欄で判定／JSONのファイル選択画面がChromeで開く／再読み込み後もデータが残る。※自己テストは、機械で作った線で判定を確かめるものです。実際の手書きでの精度は、登録データを増やして確かめてください。</div>'}
+
+/* ---- v2.5 ---- */
+POOL.push(
+{k:'蜂',name:'蜂',hp:30,acts:[{t:'pois',v:3,p:2,nm:'毒針'},{t:'atk',v:3,n:3,nm:'連針',pw:'vul',pt:1},{t:'def',v:5,nm:'旋回'}]},
+{k:'亀',name:'亀',hp:62,acts:[{t:'def',v:12,nm:'甲羅'},{t:'atk',v:9,nm:'噛砕'},{t:'def',v:8,nm:'籠城'}]},
+{k:'猿',name:'猿',hp:40,acts:[{t:'atk',v:5,n:2,nm:'投石'},{t:'buff',v:2,nm:'威嚇'},{t:'atk',v:10,nm:'猿拳'}]},
+{k:'蝙',name:'蝙',hp:32,acts:[{t:'curse',v:4,nm:'怪音'},{t:'atk',v:6,nm:'急襲',pw:'wk',pt:1},{t:'atk',v:4,n:2,nm:'翼撃'}]},
+{k:'猪',name:'猪',hp:58,acts:[{t:'buff',v:2,nm:'突進'},{t:'atk',v:13,nm:'猪突猛進'},{t:'def',v:5,nm:'息吹'}]},
+{k:'雀',name:'雀',hp:24,acts:[{t:'atk',v:3,n:2,nm:'突啄'},{t:'atk',v:5,nm:'急降'},{t:'def',v:4,nm:'羽繕'}]});
+DEXLIST.push('蜂','亀','猿','蝙','猪','雀');
+{const a=ACH.find(x=>x.id==='dex');if(a)a.d='図鑑の敵'+DEXLIST.length+'種をすべて倒す'}
+function endTurn3(){const e=G.e,a=curAct(e);if(G.hwDef&&['atk','pois','curse'].includes(a.t)){G.hwDef=false;hwDefend(()=>endTurn2())}else endTurn2()}
+function hwBind(cv){cv.addEventListener('pointerdown',e=>{e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(x){}HW.cur=[hwPt(e)];HW.st.push(HW.cur);hwDraw()});cv.addEventListener('pointermove',e=>{if(!HW.cur)return;const p=hwPt(e),l=HW.cur[HW.cur.length-1];if(Math.hypot(p.x-l.x,p.y-l.y)>.004){HW.cur.push(p);hwDraw()}});const end=e=>{if(HW.cur){const p=hwPt(e),l=HW.cur[HW.cur.length-1];if(p.x!==l.x||p.y!==l.y)HW.cur.push(p);if(HW.cur.length<2)HW.cur.push({x:HW.cur[0].x,y:HW.cur[0].y});HW.cur=null;hwDraw()}};cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end)}
+function hwDefend(done){G.busy=true;const c=HW.ch[rnd(HW.ch.length)];HW.dtg=c;HW.dtry=0;HW.dend=false;HW.st=[];HW.dcb=done;
+const o=document.createElement('div');o.id='hd';o.className='modal';o.innerHTML=`<div class="mbox" style="max-width:380px;text-align:center"><h2>✍ 手書き防御！</h2><p>「${c}」を書いて、敵の攻撃を防御しよう（成功でダメージ半減）</p><canvas id="hdc"></canvas><div id="hdm" class="stat"></div><div class="btns"><button class="main off" onclick="hdClear()">書き直し</button><button class="main" onclick="hdJudge()">判定</button><button class="main off" onclick="hdGive()">あきらめる</button></div></div>`;
+document.body.appendChild(o);const cv=document.getElementById('hdc'),sz=Math.min(300,(window.innerWidth||320)-60),dp=window.devicePixelRatio||1;cv.style.width=sz+'px';cv.style.height=sz+'px';cv.width=Math.floor(sz*dp);cv.height=Math.floor(sz*dp);HW.cv=cv;hwBind(cv);hwDraw()}
+function hdClear(){HW.st=[];HW.cur=null;hwDraw()}
+function hdJudge(){if(HW.dend)return;const r=hwRecog(HW.st,HW.dtg),m=document.getElementById('hdm');if(r.state==='empty'){m.textContent='何も書かれていません';return}
+if(r.state==='ok')hdEnd(true,'⭕ 防御成功！ダメージ半減');else if(r.state==='ng')hdEnd(false,'❌ 失敗…ダメージをそのまま受ける');else{HW.dtry++;if(HW.dtry>=3)hdEnd(false,'❌ 判定できず…ダメージをそのまま受ける');else{m.textContent='⚠ 判定保留：書き直してください（'+HW.dtry+'/3）';hdClear()}}}
+function hdGive(){if(HW.dend)return;hdEnd(false,'防御をあきらめた…')}
+function hdEnd(ok,msg){HW.dend=true;const m=document.getElementById('hdm');if(m)m.textContent=msg;sfx(ok?'ok':'ng');G.hwHalf=ok;setTimeout(()=>{const o=document.getElementById('hd');if(o)o.remove();HW.cv=null;G.busy=false;const cb=HW.dcb;HW.dcb=null;if(cb)cb()},900)}
+function selectView(){$('#app').innerHTML=`<div class="overlay"><button id="tutbtn" onclick="tutStart()">❓ チュートリアル</button><h2>漢字の塔</h2>${contHtml()}<p><button class="main off" onclick="customOpen()">🛠 カスタムモード（実績は解除されない）</button></p><p>戦う漢字を選ぶ</p><div class="hand">${CHARS.map((c,i)=>`<button class="card sk chr" onclick="choose(${i})"><div class="k">${c.k}</div><div class="n">${c.name}</div><div class="d">HP${c.hp}<br>能力「${c.ab}」<br>${c.d}</div></button>`).join('')}</div><p><button class="main" onclick="achOpen()">🏆 実績・倒した敵の一覧</button></p></div>`}
+function achOpen(){$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:520px;text-align:center"><h2>🏆 実績・倒した敵</h2>${achHtml()}<h3>倒した敵 ${DEX.length}/${DEXLIST.length}</h3><div class="dex">${DEXLIST.map(k=>DEX.includes(k)?`<button class="dx" onclick="dexInfo('${k}')">${k}</button>`:`<span class="dx off">？</span>`).join('')}</div><p class="stat">倒した漢字を押すと、くわしく見られます。</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
+
+/* ---- v2.6 ---- */
+Object.assign(SUMN,{'土':'砦'});Object.assign(CARDS['土'],{n:'砦',name:'召砦'});
+CTN.e='属性';
+function ct(c){return c.sec?'e':(c.sum||c.sums||c.sac||c.sacAll||c.sub||c.recall||(c.ok&&c.ok.sums))?'m':c.t==='atk'?'a':'s'}
+Object.assign(CARDS,{
+赤:{n:'火',name:'火の秘策',cost:1,t:'sk',d:'セット：攻撃カードを使ったとき、敵に追加で6ダメージ',sec:{trig:'atk',e:'火',dmg:6}},
+蒼:{n:'水',name:'水の秘策',cost:1,t:'sk',d:'セット：攻撃を受けたとき、そのダメージを6軽減',sec:{trig:'hit',e:'水',red:6}},
+碧:{n:'木',name:'木の秘策',cost:1,t:'sk',d:'セット：次のターンの開始時、HP6回復・1枚引く',sec:{trig:'turn',e:'木',heal:6,draw:1}},
+黄:{n:'土',name:'土の秘策',cost:1,t:'sk',d:'セット：手札が6枚以上になったとき、ブロック10',sec:{trig:'hand',e:'土',n:6,blk:10}}});
+'赤蒼碧黄'.split('').forEach(k=>{RAR[k]='u';REWARDS.push(k)});
+RELICS['墨']={name:'墨壺',d:'攻防一体の効果が1.5倍（守護者専用）',ch:'盾'};
+RELICS['鏡']={name:'属性の鏡',d:'秘策が発動するたびブロック+2'};
+RELICS['鈴']={name:'福の鈴',d:'必殺技のクイズに正解するたびエナジー+1'};
+RELICS['盃']={name:'癒しの盃',d:'焚き火の休息でHP50%回復'};
+RELICS['財']={name:'商人の財布',d:'店のカードとレリックが2割引'};
+CHARS[1].d='次の敵の攻撃の前に漢字を書き、書いた字の効果を得る';
+function cp(id){const r=rar(id);return Math.round(((r==='r'?100:r==='u'?60:40)+Math.floor(Math.random()*20))*(has('財')?.8:1))}
+function holdList(){return [...(G.sums||[]).flatMap(s=>s.cards||[]),...(G.sec||[]).filter(x=>x.held).map(x=>x.id)]}
+function holdN(){return holdList().length}
+function sumGone(s){(s.cards||[]).forEach(c=>G.disc.push(c));s.cards=[]}
+function secDone(s){toast('🔮 '+s.e+'の秘策が発動！');sfx('block');if(has('鏡'))G.blk+=2}
+function secFire(trig){const a=(G.sec||[]).filter(s=>s.trig===trig&&(trig!=='hand'||(G.hand&&G.hand.length>=s.n)));a.forEach(s=>{G.sec.splice(G.sec.indexOf(s),1);if(s.dmg)hitEnemy(s.dmg);if(s.heal)G.hp=Math.min(G.max,G.hp+s.heal);if(s.draw)drawN(s.draw);if(s.blk)G.blk+=s.blk;secDone(s)})}
+function secHtml(){const s=G.sec||[];return s.length?`<div class="secs">${s.map(x=>`<span class="sec">🔮${x.e}<small>${{atk:'攻撃した時',hit:'攻撃された時',turn:'次のターン',hand:'手札'+x.n+'枚以上'}[x.trig]}</small></span>`).join('')}</div>`:''}
+function summon(k,src){G.sums=G.sums||[];const d=SUMS[k],buff=G.nextBuff||0;G.nextBuff=0;const left=d.left>=99?99:d.left+(has('鍵')?1:0)+buff,idx=G.dropIdx==null?0:Math.max(0,Math.min(G.dropIdx,G.sums.length)),r=G.sums[idx];
+const hold=s=>{if(src){const i=G.disc.lastIndexOf(src);if(i>=0)G.disc.splice(i,1);s.cards=(s.cards||[]).concat(src)}};
+if(r&&r.k===k){r.lv=(r.lv||1)+1;r.left=Math.max(r.left,left);if(d.hp)r.hp+=d.hp;r.rv=1;hold(r);mergeCheck(r);return}
+if(G.sums.length>=slotMax()){G.sumFail=1;G.log='召喚枠がいっぱいで、召喚獣は出なかった';toast('召喚枠がいっぱい！');return}
+const s={k,hp:d.hp||0,left,lv:1,rv:1};hold(s);G.sums.splice(idx,0,s)}
+function hurt(d){if(d>0&&(G.sec||[]).some(s=>s.trig==='hit')){const sc=G.sec.splice(G.sec.findIndex(s=>s.trig==='hit'),1)[0];d=Math.max(0,d-sc.red);secDone(sc)}
+if(G.sub>0&&(G.sums||[]).length&&d>0){G.sub--;const s=G.sums.pop();sumGone(s);G.log='身代わり！'+dn(s.k)+'が攻撃を肩代わりした';toast('🛡 身代わり！'+dn(s.k)+'が犠牲に');if(has('供'))G.blk+=2;return}
+let r=Math.max(0,d-G.blk);G.blk=Math.max(0,G.blk-d);const w=(G.sums||[]).find(s=>SUMS[s.k].taunt);if(w&&r>0){w.hp-=r;if(w.hp<=0){G.sums.splice(G.sums.indexOf(w),1);sumGone(w)}}else G.hp-=r}
+function doSac(i){const s=G.sums.splice(i,1)[0],m=G.sacMode,v=sacV(s);sumGone(s);let t;
+if(m==='dmg'){hitEnemy(Math.round(v*1.5));t='敵にダメージ'}else if(m==='heal'){G.hp=Math.min(G.max,G.hp+Math.round(v*.6));t='HP回復'}else if(m==='draw'){drawN(2);G.en+=1;t='2枚ドロー'}else if(m==='buff'){G.nextBuff=(G.nextBuff||0)+2;t='次の召喚の持続+2'}else{G.blk+=v;t='ブロック'+v}
+if(has('供'))G.blk+=2;G.log=dn(s.k)+'を犠牲にした（'+t+'）';sfx('block');closeDeck();G.busy=false;if(G.e.cur<=0)return winSoon();render()}
+function sacAll(){const n=(G.sums||[]).length;if(!n){G.log='犠牲にする召喚獣がいない';return}let b=0,d=0;G.sums.forEach(s=>{const v=sacV(s);b+=Math.round(v/2);d+=Math.round(v/2);if(has('供'))b+=2;sumGone(s)});G.sums=[];G.blk+=b;if(d)hitEnemy(d);G.log='全員を犠牲に！ブロック'+b+'・ダメージ'+d}
+function showDeck(k){const src=k==='draw'?G.draw:k==='disc'?G.disc:k==='hold'?holdList():G.deck,ids=[...src].sort(),cnt2={};ids.forEach(i=>cnt2[i]=(cnt2[i]||0)+1);
+const tabs=(G.scr==='battle'?[['deck','デッキ全体'],['draw','山札'],['disc','捨て札'],['hold','保留']]:[['deck','デッキ全体']]).map(([x,l])=>`<button class="main${x===k?'':' off'}" onclick="showDeck('${x}')">${l}</button>`).join('');
+$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox"><div class="btns">${tabs}<button class="main off" onclick="closeDeck()">✕ 閉じる</button></div><div class="stat" style="text-align:center">${ids.length}枚${k==='draw'?'（順不同）':''}${k==='hold'?'（召喚獣がいる間、元のカードがここに入る）':''}</div><div class="hand">${Object.keys(cnt2).map(id=>`<div style="position:relative">${cardEl(id,0,'')}${cnt2[id]>1?`<span class="badge">×${cnt2[id]}</span>`:''}</div>`).join('')}</div></div></div>`}
+function sortHand(){if(!(G.sm||0)){G.hSnap=[...G.hand];G.hSnapT=G.turn}G.sm=((G.sm||0)+1)%3;const co=id=>CARDS[id].cost,to={a:0,s:1,e:2,m:3},tt=id=>to[ct(CARDS[id])];if(G.sm===0&&G.hSnap&&G.hSnapT===G.turn){const rest=[...G.hand],out=[];G.hSnap.forEach(id=>{const j=rest.indexOf(id);if(j>=0){out.push(id);rest.splice(j,1)}});G.hand=out.concat(rest)}if(G.sm===1)G.hand.sort((x,y)=>co(x)-co(y)||tt(x)-tt(y));if(G.sm===2)G.hand.sort((x,y)=>tt(x)-tt(y)||co(x)-co(y));render()}
+function fuseMenu(){const h=G.hand,seen={},o=[];for(let i=0;i<h.length;i++)for(let j=i+1;j<h.length;j++){const key=[h[i],h[j]].sort().join(''),r=FUSE[key];if(r&&!seen[key]){seen[key]=1;o.push([i,j,r])}}
+const rec=Object.entries(FUSE).map(([k,r])=>[...k].map(x=>CARDS[x].n).join('＋')+'→'+CARDS[r].n).join('　');
+$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:380px;text-align:center"><h2>合成</h2>${o.length?`<div class="btns" style="flex-direction:column">${o.map(([i,j,r])=>`<button class="main off" onclick="doFuse(${i},${j},'${r}')">${CARDS[h[i]].n}＋${CARDS[h[j]].n}→${CARDS[r].n}（${CARDS[r].name}：${CARDS[r].d}）</button>`).join('')}</div>`:'<p>今の手札では合成できない。</p>'}<p class="stat">レシピ：${rec}</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
+function restFuseMenu(){const h=G.deck,seen={},o=[];for(let i=0;i<h.length;i++)for(let j=i+1;j<h.length;j++){const key=[h[i],h[j]].sort().join(''),r=FUSE[key];if(r&&!seen[key]){seen[key]=1;o.push([i,j,r])}}
+const rec=Object.entries(FUSE).map(([k,r])=>[...k].map(x=>CARDS[x].n).join('＋')+'→'+CARDS[r].n).join('　');
+$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:380px;text-align:center"><h2>合成</h2><p>デッキの2枚を合体させて、新しい漢字カードにする（デッキに残る）</p>${o.length?`<div class="btns" style="flex-direction:column">${o.map(([i,j,r])=>`<button class="main off" onclick="doRestFuse(${i},${j},'${r}')">${CARDS[h[i]].n}＋${CARDS[h[j]].n}→${CARDS[r].n}（${CARDS[r].name}：${CARDS[r].d}）</button>`).join('')}</div>`:'<p>今のデッキには合成できる組み合わせがない。</p>'}<p class="stat">レシピ：${rec}</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
+const HWFX={一:{n:'シールド6',blk:6},十:{n:'シールド10',blk:10},人:{n:'HP8回復＋シールド4',heal:8,blk:4},大:{n:'敵に12ダメージ＋シールド4',dmg:12,blk:4},水:{n:'この攻撃のダメージ半減＋次のターンのブロック5',half:1,nb:5}};
+function hwFree(strokes){const r=hwRecog(strokes,'一');if(r.state==='empty')return{state:'empty'};const l=HW.ch.map(c=>[c,r.scores[c].score]).sort((a,b)=>b[1]-a[1]),b=l[0],s=l[1];return{state:b[1]>=.72&&b[1]-s[1]>=.1?'ok':b[1]<.4?'ng':'hold',ch:b[0],score:b[1],list:l}}
+function hwApply(c){const f=HWFX[c],m=has('墨')?1.5:1,t=[];if(f.blk){const v=Math.round(f.blk*m);G.blk+=v;t.push('シールド'+v)}if(f.heal){const v=Math.round(f.heal*m);G.hp=Math.min(G.max,G.hp+v);t.push('HP'+v+'回復')}if(f.dmg){const v=Math.round(f.dmg*m);hitEnemy(v);t.push('敵に'+v+'ダメージ')}if(f.half){G.hwHalf=true;t.push('この攻撃のダメージ半減')}if(f.nb){const v=Math.round(f.nb*m);G.nextBlk=(G.nextBlk||0)+v;t.push('次のターンのブロック'+v)}return t.join('、')}
+function hwDefend(done){G.busy=true;HW.dtry=0;HW.dend=false;HW.st=[];HW.dcb=done;
+const o=document.createElement('div');o.id='hd';o.className='modal';o.innerHTML=`<div class="mbox" style="max-width:400px;text-align:center"><h2>✍ 攻防一体！</h2><p>好きな漢字を書こう。書いた字の効果が、すぐに発動します</p><div class="stat" style="text-align:left;display:inline-block">${HW.ch.map(c=>'<b>'+c+'</b>：'+HWFX[c].n).join('<br>')}<br><b>判定できないとき</b>：何度でも書き直せる(「あきらめる」でランダムに1つ発動)</div><canvas id="hdc"></canvas><div id="hdm" class="stat"></div><div class="btns"><button class="main off" onclick="hdClear()">書き直し</button><button class="main" onclick="hdJudge()">判定</button><button class="main off" onclick="hdGive()">あきらめる</button></div></div>`;
+document.body.appendChild(o);const cv=document.getElementById('hdc'),sz=Math.min(280,(window.innerWidth||320)-60),dp=window.devicePixelRatio||1;cv.style.width=sz+'px';cv.style.height=sz+'px';cv.width=Math.floor(sz*dp);cv.height=Math.floor(sz*dp);HW.cv=cv;hwBind(cv);hwDraw()}
+function hdJudge(){if(HW.dend)return;const r=hwFree(HW.st),m=document.getElementById('hdm');if(r.state==='empty'){m.textContent='何も書かれていません';return}
+if(r.state==='ok'){const t=hwApply(r.ch);hdEnd(true,'⭕ 「'+r.ch+'」と判定！ '+t)}else if(r.state==='ng')hwMiss('❌ どの漢字にも判定できず…');else{HW.dtry++;if(HW.dtry>=3)hwMiss('❌ 判定できず…');else{m.textContent='⚠ 判定保留：もう少しはっきり書いてみよう（'+HW.dtry+'/3）';hdClear()}}}
+function hdEnd(ok,msg){HW.dend=true;const m=document.getElementById('hdm');if(m)m.textContent=msg;sfx(ok?'ok':'ng');setTimeout(()=>{const o=document.getElementById('hd');if(o)o.remove();HW.cv=null;G.busy=false;const cb=HW.dcb;HW.dcb=null;if(G.e.cur<=0)return winSoon();if(cb)cb()},1200)}
+function cuF(k,v){CU.f=CU.f||{t:'',r:'',c:'',q:''};CU.f[k]=CU.f[k]===v?'':v;customView()}
+function cuQ(v){CU.f=CU.f||{t:'',r:'',c:'',q:''};CU.f.q=v;const b=document.getElementById('cuRows');if(b)b.innerHTML=cuRows()}
+function cuFR(){CU.f={t:'',r:'',c:'',q:''};customView()}
+function cuIds(){const f=CU.f||{},RNJ={c:'コモン',u:'アンコモン',r:'レア'};return Object.keys(CARDS).filter(k=>{if(k.endsWith('+')||k==='呪'||CARDS[k].cost>=9||CARDS[k].cc)return false;const c=CARDS[k];if(f.t&&CTN[ct(c)]!==f.t)return false;if(f.r&&RNJ[rar(k)]!==f.r)return false;if(f.c&&(f.c==='3'?c.cost<3:c.cost!==+f.c))return false;if(f.q&&!(c.name+c.n+c.d).includes(f.q))return false;return true}).sort((a,b)=>(RO[rar(a)]-RO[rar(b)])||(CARDS[a].cost-CARDS[b].cost))}
+function cuRows(){return cuIds().map(k=>{const x=CARDS[k],r=rar(k);return`<div class="cr r${RO[r]}"><b class="ck">${x.n}</b><span class="cn">${x.name}${r==='r'?' ★':r==='u'?' ◆':''}<small>${CTN[ct(x)]}・コスト${x.cost}・${x.d}</small></span><button onclick="cuAdd('${k}',-1)">−</button><span class="cc">${CU.deck[k]||0}</span><button onclick="cuAdd('${k}',1)">＋</button></div>`}).join('')||'<div class="stat" style="padding:10px">該当するカードがありません</div>'}
+function customOpen(){CU={ch:0,deck:cnt(CHARS[0].deck),rel:[],f:{t:'',r:'',c:'',q:''}};G={scr:'custom'};render()}
+function customView(){const n=cuN(),sc=document.querySelector('.cl'),y=sc?sc.scrollTop:0,f=CU.f=CU.f||{t:'',r:'',c:'',q:''};
+const fb=(k,arr)=>arr.map(v=>`<button class="main off cf${f[k]===v?' on':''}" onclick="cuF('${k}','${v}')">${v==='3'?'3以上':v}</button>`).join('');
+$('#app').innerHTML=`<div class="overlay"><h2>🛠 カスタムモード</h2><p class="stat">開始時のデッキとレリックを自分で決められます。実績・図鑑・記録は解除されません（保存は別枠）。</p>
+<h3>キャラ</h3><div class="dex">${CHARS.map((c,i)=>`<button class="dx${CU.ch===i?' on':''}" onclick="cuChar(${i})">${c.k}</button>`).join('')}</div><p class="stat">${CHARS[CU.ch].name}：HP${CHARS[CU.ch].hp}／能力「${CHARS[CU.ch].ab}」${CHARS[CU.ch].d}</p>
+${cuRelHtml()}
+<h3>デッキ（${n}枚：5〜30枚、同じカードは4枚まで、レアは2枚まで）</h3><div class="btns"><button class="main off" onclick="cuReset()">キャラの初期デッキに戻す</button><button class="main off" onclick="cuClear()">すべて外す</button></div>
+<div class="cfb"><div>タイプ：${fb('t',['アタック','スキル','召喚','属性','パワー'])}</div><div>レア度：${fb('r',['コモン','アンコモン','レア'])}</div><div>コスト：${fb('c',['0','1','2','3'])}</div><div><input class="cq" value="${(f.q||'').replace(/"/g,'&quot;')}" placeholder="名前・効果で検索" oninput="cuQ(this.value)"><button class="main off cf" onclick="cuFR()">絞り込みをリセット</button></div><div class="stat">該当 ${cuIds().length} 枚</div></div>
+<div class="cl" id="cuRows">${cuRows()}</div>
+<div class="btns"><button class="main" ${n>=5&&n<=30?'':'disabled'} onclick="customStart()">この構成でスタート</button><button class="main off" onclick="newGame()">タイトルへ</button></div></div>`;
+const s2=document.querySelector('.cl');if(s2)s2.scrollTop=y}
+
+/* ---- v2.9 tutorial ---- */
+let TUT=null;
+const TUTE={k:'鬼',name:'鬼',hp:24,acts:[{t:'atk',v:5,nm:'殴打'},{t:'def',v:6,nm:'防御'},{t:'atk',v:6,nm:'強打'}]};
+function tutCard(id){return()=>[...document.querySelectorAll('.hand.bh .card')].find(e=>G.hand[+e.dataset.i]===id)||null}
+const TUTS=[
+{t:'「漢字の塔」へようこそ！\nスポットライトで画面の見かたを順番に案内するよ。まずは敵から。'},
+{s:'.enemy .kanji',t:'これが敵。漢字そのものが敵だよ。\n複数の敵がいる戦闘では、タップして狙う相手を選べる。'},
+{s:'.enemy .bar',t:'敵のHPバー。0にすれば勝ち。\n敵にシールド(🛡)があるとバーが青くなり、先にシールドが削られる。'},
+{s:'.enemy .intent',t:'敵の「次の行動」。色で種類がわかる。\n赤＝攻撃 ／ 青＝防御 ／ 紫＝強化・特殊。\n毎ターンここを見て、守るか攻めるか決めよう。'},
+{s:'.me .en',t:'エナジー。カードを使うたびにコスト分だけ減って、毎ターン3に回復する。'},
+{s:'.hand.bh',t:'手札。カードの左上の数字がコスト。\n上の帯でタイプがわかる：攻撃(赤)／スキル(青)／召喚(紫)／属性(緑)。★◆はレア度。\nカードはタップで使えるほか、手札から上へドラッグして敵に投げても使える。'},
+{s:tutCard('斬'),a:1,c:()=>G.e.cur<G.e.maxhp,t:'攻撃カード「斬」を使ってみよう。\nタップで使用！敵にダメージが入る。'},
+{s:tutCard('盾'),a:1,c:()=>G.blk>0,t:'防御カード「盾」でシールドを得よう。\nシールドは敵の攻撃を肩代わりして、次の自分のターンに消える。'},
+{s:tutCard('火'),a:1,c:()=>(G.sums||[]).length>0,t:'召喚カード「剣」を使おう。\n召喚獣は毎ターン自動で行動する。召喚カードは手札から召喚枠へドラッグすると、置く位置も決められる。'},
+{s:'.row2',t:'召喚された「剣」。「あとNT」は残りターン数。\nタップすると能力の詳細を確認できる。召喚枠は3つ（レリックで増える）。\nカードを使うと「保留」に入り、その召喚獣が消えるまで同じカードからは再召喚できない。'},
+{s:tutCard('禅'),a:1,c:()=>G.disc.includes('禅'),t:'「禅」はコスト0。カードを2枚引ける。\nコスト0のカードはエナジーを使わず何度でも使える。'},
+{s:'.me .ab',a:1,c:()=>G.used,pre:()=>{G.en=Math.max(G.en,1)},t:'キャラクター固有スキル。召喚師の「号令」は、召喚獣を全員すぐ行動させる。\n(練習用にエナジーを補充したよ。押してみよう！)'},
+{s:'.me .bar.p',t:'自分のHP。0になると負け。\n盾マークはいま持っているシールド。'},
+{s:'.hbar .sbtn',t:'手札の並び替え。コスト順／種類順に切り替えられる。\n「なし」に戻すと、引いた順に戻る。'},
+{s:'.hbar .pots .pt:not(.off)',a:1,c:()=>!(G.pots||[]).length,t:'ポーション。戦闘中いつでも1回だけ使える消耗品。\n「守」を使ってみよう（ブロック12）。'},
+{s:'.dkb',t:'デッキ確認。山札・捨て札・保留の中身を見られる。\n山札が尽きると、捨て札をシャッフルして山札に戻る。'},
+{s:'.me > button:last-child',a:1,w:300,c:()=>G.turn>=2,pre:()=>{G.draw.push('火','火','火')},t:'「ターン終了」で敵のターンへ。\n手札は全部捨て札になり、敵が行動 → 召喚獣が行動 → 新しく5枚引く、の順に進む。\n(敵の攻撃の演出も、スポットライトを消してしっかり見せるよ)'},
+{s:'.enemy .intent',t:'敵の行動が変わった。\nブロックを積む、攻める、毒で削る…状況に合わせて選ぶのがコツ。'},
+{s:'.hand.bh',t:'次は召喚獣の置き場所の話！\nさっき出した「剣」と同じカードが、手札に3枚来ている。\n召喚カードは「どこに置くか」で結果が変わる。まずは右に置くとどうなるか見てみよう。'},
+{s:tutCard('火'),a:1,f:'right',c:()=>(G.sums||[]).length>=2,t:'「剣」を1枚使ってみよう。\n(このタップでは、いちばん右に置かれるようにしてあるよ)'},
+{s:'.row2',t:'右に置いた剣は、別の召喚獣として並んだ。\n同じ召喚獣でも、右に置くと合体しない。召喚枠を1つ使うだけだよ。\n(ドラッグで置く場所を選べるのは、このためだよ)'},
+{s:'.row2',t:'合体させたいときは、いちばん左の同じ召喚獣に重ねるように置く。\nもう1枚の剣を使って、合体させてみよう。'},
+{s:tutCard('火'),a:1,f:'left',c:()=>(G.sums||[])[0]&&G.sums[0].k==='火'&&(G.sums[0].lv||1)>=2,t:'「剣」を使って、いちばん左の剣と合体させよう！\n(このチュートリアルでは、左にだけ置けるようにしてあるよ)'},
+{s:'.row2',t:'合体して「剣 Lv2」になった！\nLvが上がると強くなり、残りターンも回復する。\nLv3になると、もう1段階上の召喚獣に進化する。'},
+{s:tutCard('火'),a:1,f:'left',c:()=>(G.sums||[])[0]&&G.sums[0].k!=='火',t:'最後の1枚を使って、Lv3まで合体させよう！'},
+{s:'.row2',f:null,t:'「剣」が「大剣」に進化した！\n盾は大盾、布は法衣に進化する。進化先は召喚獣ごとに違うよ。\n(同じ召喚獣が3体そろったときは、合体せずシールド5になるものもある)'},
+{t:'さぁ、敵を倒して次のチュートリアルに進もう！\n手札のカードを使って、鬼のHPを0にすれば勝ち。\n(倒すと、次はマップの説明だよ。右下の「マップの説明へ」で先に進むこともできる)',last:1}
+];
+const TUTM=[
+{t:'敵を倒した！\n戦闘に勝つとマップ画面に戻って、次に進む部屋を選ぶ。\n次はそのマップの見かたを説明するよ。'},
+{s:'.mapw',t:'これが塔のマップ。下から上へ登っていく。\n線でつながった部屋にしか進めない。いちばん上にボスがいる。\n(チュートリアルでは、いつも同じマップだよ)'},
+{s:'.node.ok',t:'光っている印が、いま進める部屋。\n分かれ道は自分で選べる。どの部屋を通るか考えるのも、大事な戦略だよ。'},
+{s:'.node.battle',t:'【戦】普通の敵との戦闘。\n勝つとゴールドがもらえて、カードを3枚の中から1枚選んでデッキに加えられる。ポーションが出ることもある。\nいちばん多い部屋で、カードを増やす主な機会だよ。'},
+{s:'.node.elite',t:'【強】強敵との戦闘。普通の敵よりかなり強い。\nそのぶん、勝つとゴールドが多く、レリック(持っているだけで効果がある宝物)がもらえることもある。\nデッキが育ってきたら挑戦しよう。'},
+{s:'.node.event',t:'【？】イベント。\nランダムな出来事が起きて、選択肢から選ぶ。得をすることも、損をすることもある。\n何が起きるかは、入ってからのお楽しみ。'},
+{s:'.node.shop',t:'【店】商店。\nゴールドを使って、カードやレリック、ポーションを買える。\nゴールドを払って、いらないカードをデッキから削除することもできる。'},
+{s:'.node.rest',t:'【休】焚き火。\n次の中から1つ選べる。\n・休む：HPを30%回復\n・鍛える：最大HPを+6\n・カード強化：カード1枚を強くする\n(合成師は、ここでカードの合成もできる)\nボスの前には必ず休める部屋があるよ。'},
+{s:'.node.boss',t:'【ボス】各階層のいちばん上にいる大ボス。\n強力な必殺技を使ってくる。倒すとレアカードの報酬と、レリックがもらえて、次の階層に進める。\nボスの漢字は、マップに表示されているよ。'},
+{s:'.top',t:'上の帯：HP、所持金、地図の確認、デッキ確認。\n戦闘に勝つたびにカードを選んで、デッキを強くしていこう。'},
+{t:'以上でチュートリアルは終わり！\nキャラクターを選んで、塔に挑もう。',last:1,fin:1}
+];
+function tutSteps(){return TUT&&TUT.m?TUTM:TUTS}
+function tutStart(){
+ const c=CHARS[4];
+ G={hp:c.hp,max:c.hp,gold:0,deck:[...'斬斬斬盾盾盾盾火火禅'],ch:c,rel:[],pots:['守'],beaten:[],floor:1,pt:0,ts:null,elK:0,scr:'map',row:0,col:0,tut:1,custom:true,map:[[{r:0,c:0,t:'battle',to:[]}]]};
+ G.node=G.map[0][0];
+ startBattle(TUTE);
+ G.hand=[];G.disc=[];G.anim=0;G.turn=0;G.en=3;G.blk=0;G.sums=[];G.sec=[];G.draw=[...'盾斬斬禅盾火斬'];
+ TUT={i:0,free:0,iv:setInterval(()=>{if(TUT&&G&&G.tut)tutCheck()},250)};
+ startTurn();
+ tutShow()}
+function tutOff(){if(TUT&&TUT.iv)clearInterval(TUT.iv);TUT=null;document.querySelectorAll('.tutl').forEach(e=>e.remove())}
+function tutBuildMap(){const N=(r,c,t)=>({r,c,t,to:[]}),R=5,m=[[],[],[],[],[]];
+const ty=[['battle','battle','battle','battle'],['battle','event','shop','battle'],['battle','elite','battle','event'],['rest','rest','rest','rest']];
+ty.forEach((row,r)=>row.forEach((t,c)=>m[r].push(N(r,c,t))));
+m[4].push({r:4,c:1.5,t:'boss',to:[],b:ENEMIES[2]});
+for(let r=0;r<3;r++)m[r].forEach(n=>{[n.c,n.c+1].forEach(k=>{if(k<4)n.to.push(k)})});
+m[3].forEach(n=>n.to=[0]);
+return m}
+function tutMap(){const iv=TUT&&TUT.iv;G.busy=false;G.scr='map';G.map=tutBuildMap();G.row=-1;G.col=-1;G.node=null;TUT={i:0,m:1,iv};document.querySelectorAll('.tutl').forEach(e=>e.remove());render();tutShow()}
+function tutEl(){const s=tutSteps()[TUT.i];if(!s||!s.s)return null;return typeof s.s==='function'?s.s():document.querySelector(s.s)}
+function tutGo(n){TUT.i=n;TUT.sc=0;TUT.t0=0;TUT.sig='';const st=tutSteps();
+ if(n>=st.length){if(TUT.m)return tutDone();TUT.free=1}
+ else{const s=st[n];if('f' in s)TUT.force=s.f;if(s.pre){s.pre();render()}if(s.a)G.en=Math.max(G.en,1)}
+ tutShow()}
+function tutHold(){if(TUT.sig==='hold')return;TUT.sig='hold';document.querySelectorAll('.tutl').forEach(e=>e.remove());const d=document.createElement('div');d.className='tutl tblk';d.style.cssText='left:0;top:0;width:100vw;height:100vh';document.body.appendChild(d)}
+function tutShow(){
+ if(!TUT||!G.tut)return;
+ const mk=(c,st)=>{const d=document.createElement('div');d.className='tutl '+c;if(st)d.style.cssText=st;document.body.appendChild(d);return d};
+ if(TUT.free||(!TUT.m&&G.scr!=='battle')){
+  if(TUT.sig==='free')return;TUT.sig='free';document.querySelectorAll('.tutl').forEach(e=>e.remove());
+  mk('tskip','').textContent='✕ 終了';document.querySelector('.tskip').onclick=()=>{tutOff();newGame()};
+  if(TUT.free&&G.scr==='battle'){const b=mk('tskip tmap','');b.textContent='▶ マップの説明へ';b.onclick=()=>tutMap()}
+  return}
+ const st=tutSteps(),s=st[TUT.i];if(!s)return;const el=tutEl();
+ if(s.a&&!el&&s.c())return tutGo(TUT.i+1);
+ if(el&&!TUT.sc){el.scrollIntoView({block:'center'});TUT.sc=1}
+ const W=innerWidth,H=innerHeight;let r=null;
+ if(el){const b=el.getBoundingClientRect(),p=6;r={x:Math.max(0,b.left-p),y:Math.max(0,b.top-p),w:Math.min(W,b.width+p*2),h:Math.min(H,b.height+p*2)}}
+ const sig=TUT.i+'|'+(TUT.m?1:0)+'|'+(r?[r.x,r.y,r.w,r.h].map(Math.round).join(','):'');
+ if(TUT.sig===sig&&document.querySelector('.tutl.tbub'))return;
+ TUT.sig=sig;document.querySelectorAll('.tutl').forEach(e=>e.remove());
+ const nxt=()=>tutGo(TUT.i+1);
+ if(r){
+  mk('thole',`left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px`);
+  if(s.a){mk('tblk',`left:0;top:0;width:${W}px;height:${r.y}px`);mk('tblk',`left:0;top:${r.y+r.h}px;width:${W}px;height:${Math.max(0,H-r.y-r.h)}px`);mk('tblk',`left:0;top:${r.y}px;width:${r.x}px;height:${r.h}px`);mk('tblk',`left:${r.x+r.w}px;top:${r.y}px;width:${Math.max(0,W-r.x-r.w)}px;height:${r.h}px`)}
+  else mk('tblk',`left:0;top:0;width:${W}px;height:${H}px`).onclick=nxt
+ }else{mk('tdim','');mk('tblk',`left:0;top:0;width:${W}px;height:${H}px`).onclick=nxt}
+ const bub=mk('tbub','');
+ bub.innerHTML=`<div class="tn">${TUT.i+1}/${st.length}${s.a?'':'　／ 画面のどこをタップしても次へ'}</div><div class="tt">${s.t.replace(/\n/g,'<br>')}</div><div class="tb">${s.a?'<span class="tha">👆 やってみよう</span>':`<button class="main" id="tnext">${s.fin?'完了':s.last?(TUT.m?'次へ':'自由に戦う'):'次へ'}</button>`}<button class="main off" id="tq">終了</button></div>`;
+ const bh=bub.offsetHeight||150;let y;
+ if(!r)y=Math.max(10,(H-bh)/2);else if(r.y+r.h+bh+12<H)y=r.y+r.h+10;else if(r.y-bh-12>0)y=r.y-bh-10;else y=Math.max(8,H-bh-8);
+ bub.style.top=y+'px';
+ const nx=document.getElementById('tnext');if(nx)nx.onclick=nxt;
+ document.getElementById('tq').onclick=()=>{tutOff();newGame()}}
+function tutCheck(){
+ if(!TUT||!G.tut)return;
+ if(TUT.free){tutShow();return}
+ if(G.busy){tutHold();return}
+ const s=tutSteps()[TUT.i];
+ if(s&&s.a&&s.c()){if(!TUT.t0)TUT.t0=Date.now();if(Date.now()-TUT.t0<(s.w||1100)){tutHold();return}return tutGo(TUT.i+1)}
+ TUT.t0=0;tutShow()}
+function tutDone(){tutOff();G.busy=false;$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:340px;text-align:center"><div class="kanji sm">勝</div><h2>チュートリアル完了！</h2><p>基本はこれでバッチリ。キャラを選んで、塔に挑もう！</p><button class="main" onclick="closeDeck();newGame()">タイトルへ</button></div></div>`}
+(function(){
+ const _sm=summon;summon=function(k,src){if(G.tut&&TUT&&TUT.force){const o=G.dropIdx;G.dropIdx=TUT.force==='right'?(G.sums||[]).length:0;try{return _sm.apply(this,arguments)}finally{G.dropIdx=o}}return _sm.apply(this,arguments)};
+ const _r=render;render=function(){_r.apply(this,arguments);if(G&&G.tut){const t=document.querySelector('.top span');if(t&&G.scr==='battle')t.textContent='チュートリアル';setTimeout(tutCheck,0)}};
+ const _w=win;win=function(){if(G.tut){if(TUT&&!TUT.m)return tutMap();return tutDone()}return _w.apply(this,arguments)};
+ const _s=save,_c=clearSave;save=function(){if(G&&G.tut)return;_s()};clearSave=function(){if(G&&G.tut)return;_c()};
+ const _n=newGame;newGame=function(){tutOff();_n()};
+ let q=0;const re=()=>{if(q)return;q=1;requestAnimationFrame(()=>{q=0;if(TUT&&G.tut&&!TUT.free&&TUT.sig!=='hold')tutShow()})};addEventListener('resize',re);addEventListener('scroll',re,true)})();
+
+/* ---- v3.0 relics / events / card forge ---- */
+Object.assign(RELICS,{
+旗:{name:'戦旗',d:'各戦闘の最初のターン、エナジー+1'},
+蔵:{name:'書庫の鍵',d:'各戦闘の最初のターン、カードを1枚多く引く'},
+楯:{name:'小盾',d:'毎ターン開始時、ブロック+2'},
+護:{name:'身代わり人形',d:'各戦闘で最初に受けるダメージを無効にする'},
+蜜:{name:'蜂蜜',d:'戦闘に勝つたびゴールド+8'},
+糧:{name:'旅の糧',d:'入手時、HPを20回復'},
+貨:{name:'古い金貨袋',d:'入手時、ゴールド+80'},
+芯:{name:'不屈の芯',d:'HPが半分以下の間、毎ターン開始時にブロック+4'}
+});
+(function(){
+ const _st=startTurn;startTurn=function(){
+  if(G.rel){if(has('楯'))G.nextBlk=(G.nextBlk||0)+2;if(has('芯')&&G.hp<=G.max/2)G.nextBlk=(G.nextBlk||0)+4}
+  _st.apply(this,arguments);
+  if(G.turn===1&&G.scr==='battle'&&G.rel){let c=0;if(has('旗')){G.en+=1;c=1}if(has('蔵')){drawN(1);c=1}if(c)render()}};
+ const _sb=startBattle;startBattle=function(){G.mm=0;return _sb.apply(this,arguments)};
+ const _h=hurt;hurt=function(d){if(d>0&&G.rel&&has('護')&&!G.mm&&!G.tut){G.mm=1;G.log='身代わり人形が攻撃を無効にした';toast('🪆 身代わり人形が攻撃を無効に！');return}return _h.apply(this,arguments)};
+ const _w=win;win=function(){if(!G.tut&&G.rel&&has('蜜'))G.gold+=8;return _w.apply(this,arguments)};
+ const _g=gainRel;gainRel=function(k){_g.apply(this,arguments);if(k==='糧')G.hp=Math.min(G.max,G.hp+20);if(k==='貨')G.gold+=80}})();
+function loadGame(c){try{G=JSON.parse(localStorage.getItem(c?'kanjiSaveC':'kanjiSave'));Object.entries(G.cc||{}).forEach(([k,v])=>{CARDS[k]=v});[G.deck,G.hand,G.draw,G.disc].forEach(a=>(a||[]).forEach(id=>{if(id.endsWith('+'))upCard(id.slice(0,-1))}));G.busy=false;G.ts=Date.now();render()}catch(e){newGame()}}
+/* --- original card forge --- */
+const FG={dmg:{n:'ダメージ',v:[1,2,3,4,5,6,7,8,9,10,13,16,19,22],p:1},blk:{n:'ブロック',v:[1,2,3,4,5,6,7,8,9,10,12],p:1},heal:{n:'HP回復',v:[1,2,3,4,5,6,8,10],p:1.5},draw:{n:'ドロー',v:[1,2,3],p:4},poi:{n:'毒',v:[1,2,3,4,5,6],p:2.5},en:{n:'エナジー',v:[1,2],p:8},str:{n:'筋力',v:[1,2],p:10}};
+const FB=[3,7,12,18],FMAX=[7,14,22,30];
+function fgText(k,v){return{dmg:v+'ダメージ',blk:'ブロック'+v,heal:'HP'+v+'回復',draw:v+'枚引く',poi:'毒を'+v+'与える',en:'エナジー+'+v,str:'筋力+'+v}[k]}
+function fgCalc(f){let V=0;f.e.forEach(x=>{if(x)V+=FG[x.k].p*FG[x.k].v[x.i]});const over=V-FB[f.cost];let gold;if(over>0)gold=-Math.round((over*7+over*over*.5)/5)*5;else gold=Math.min(30,Math.round(-over*3/5)*5);return{V,gold,ok:V>0&&V<=FMAX[f.cost]}}
+function fgCard(f){const c={n:f.ch||'？',name:f.title||'名無し',cost:f.cost,t:'sk',cc:1};f.e.forEach(x=>{if(x)c[x.k]=FG[x.k].v[x.i]});c.t=c.dmg?'atk':(c.blk?'def':'sk');c.d=f.e.filter(Boolean).map(x=>fgText(x.k,FG[x.k].v[x.i])).join('／');return c}
+function forgeOpen(){G.hand=G.hand||[];G.fg={ch:'',title:'',cost:1,e:[{k:'dmg',i:5},null]};forgeView()}
+function fgType(s,k){const f=G.fg;f.e[s]=k?{k,i:Math.floor(FG[k].v.length/3)}:null;forgeView()}
+function fgNum(s,d){const x=G.fg.e[s];if(!x)return;x.i=Math.max(0,Math.min(FG[x.k].v.length-1,x.i+d));forgeView()}
+function fgCost(c){G.fg.cost=c;forgeView()}
+function fgErr(){const f=G.fg,c=fgCalc(f),ch=[...(f.ch||'').trim()];if(ch.length!==1||!/[぀-ヿ㐀-鿿]/.test(ch[0]))return'カードの文字を、かな・漢字で1文字入れてね';if(!(f.title||'').trim())return'タイトルを入れてね';if(!f.e[0])return'効果を選んでね';if(c.V>FMAX[f.cost])return'このコストでは強すぎて作れない（効果を弱めるかコストを上げてね）';if(c.gold<0&&G.gold<-c.gold)return'💰が足りない（あと'+(-c.gold-G.gold)+'）';return''}
+function forgeView(){const f=G.fg,c=fgCalc(f),er=fgErr();
+const slot=s=>{const x=f.e[s],o=f.e[1-s];return`<p class="stat">効果${s+1}${s?'（なくてもOK）':''}</p><div class="btns" style="flex-wrap:wrap;gap:4px">${Object.keys(FG).map(k=>`<button class="main${x&&x.k===k?'':' off'}" style="padding:4px 8px;font-size:12px;min-height:0" ${o&&o.k===k?'disabled':''} onclick="fgType(${s},'${k}')">${FG[k].n}</button>`).join('')}${s?`<button class="main${x?' off':''}" style="padding:4px 8px;font-size:12px;min-height:0" onclick="fgType(1,null)">なし</button>`:''}</div>${x?`<div class="stat"><button class="main off" style="padding:4px 12px;min-height:0" onclick="fgNum(${s},-1)">−</button> <b>${fgText(x.k,FG[x.k].v[x.i])}</b> <button class="main off" style="padding:4px 12px;min-height:0" onclick="fgNum(${s},1)">＋</button></div>`:''}`};
+CARDS._pv=fgCard(f);
+$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:380px;text-align:center"><h2>✍ オリジナルカード作り</h2>
+<div style="display:flex;gap:8px;justify-content:center;align-items:center;margin:6px 0"><input value="${(f.ch||'').replace(/"/g,'')}" placeholder="文字" oninput="G.fg.ch=this.value" onchange="G.fg.ch=[...this.value.trim()][0]||'';this.value=G.fg.ch;forgeView()" style="width:3.2em;font-size:26px;text-align:center"><input value="${(f.title||'').replace(/"/g,'')}" placeholder="タイトル(8字まで)" maxlength="8" oninput="G.fg.title=this.value" onchange="forgeView()" style="width:9em;font-size:16px"></div>
+<p class="stat">コスト</p><div class="btns">${[0,1,2,3].map(n=>`<button class="main${f.cost===n?'':' off'}" style="padding:4px 14px;min-height:0" onclick="fgCost(${n})">${n}</button>`).join('')}</div>
+${slot(0)}${slot(1)}
+<div class="hand" style="justify-content:center;margin:8px 0">${cardEl('_pv',0,'')}</div>
+<p class="stat">価格：${c.gold>=0?'💰+'+c.gold+'（受け取る）':'💰'+c.gold+'（支払う）'}　所持💰${G.gold}</p>
+<p class="stat" style="color:#e57373;min-height:1.2em">${er}</p>
+<div class="btns"><button class="main" ${er?'disabled':''} onclick="forgeMake()">作る</button><button class="main off" onclick="closeDeck()">やめる</button></div></div></div>`;delete CARDS._pv}
+function forgeMake(){if(fgErr())return;const f=G.fg,c=fgCalc(f);const card=fgCard(f);card.n=[...f.ch.trim()][0];card.name=f.title.trim();G.cc=G.cc||{};G.ccn=(G.ccn||0)+1;const id='c'+G.ccn;G.cc[id]=card;CARDS[id]=card;G.deck.push(id);G.gold+=c.gold;G.fg=null;G.evr='「'+card.name+'」('+card.n+')を作った！'+(c.gold?'　💰'+(c.gold>0?'+':'')+c.gold:'');closeDeck();render()}
+EVENTS.push(
+{k:'宝',t:'古びた宝箱が置いてある。罠があるかもしれない。',o:[['開ける (半々でレリック／HP-10)',()=>{if(Math.random()<.5){const r=randRel();if(r){gainRel(r);return'レリック「'+RELICS[r].name+'」を手に入れた！'}G.gold+=40;return'💰40を見つけた。'}G.hp=Math.max(1,G.hp-10);return'罠だった！ HPを10失った…'}],['無視する',()=>'触れずに通り過ぎた。']]},
+{k:'芸',t:'旅の大道芸人が芸を披露している。',o:[['見物する (💰10 / HP+10)',()=>{if(G.gold<10)return'金が足りない。';G.gold-=10;G.hp=Math.min(G.max,G.hp+10);return'笑って元気が出た。'}],['通り過ぎる',()=>'足早に通り過ぎた。']]},
+{k:'祭',t:'小さな祭りが開かれている。',o:[['💰20でくじを引く (ポーション)',()=>{if(G.gold<20)return'金が足りない。';if(G.pots.length>=potMax())return'ポーションがいっぱいだ。';G.gold-=20;const p=POTK[Math.floor(Math.random()*POTK.length)];G.pots.push(p);return'ポーション「'+p+'」が当たった！'}],['眺めるだけ',()=>'祭りを眺めて先へ進んだ。']]},
+{k:'呪',t:'禍々しい書物が落ちている。',o:[['読む (💰+70 / 呪いのカードを1枚入手)',()=>{G.gold+=70;G.deck.push('呪');return'💰70を得たが、呪いがデッキに混ざった…'}],['閉じる',()=>'そっと閉じて立ち去った。']]},
+{k:'商',t:'怪しい行商人がレリックを売っている。',o:[['💰90でレリックを買う',()=>{if(G.gold<90)return'金が足りない。';const r=randRel();if(!r)return'もう売るものがないようだ。';G.gold-=90;gainRel(r);return'レリック「'+RELICS[r].name+'」を買った。'}],['断る',()=>'興味を示さず立ち去った。']]},
+{k:'鳥',t:'傷ついた小鳥が震えている。',o:[['手当てする (HP-4 / 💰+45)',()=>{G.hp=Math.max(1,G.hp-4);G.gold+=45;return'小鳥は礼に金貨をくわえてきた。'}],['そっとしておく',()=>'そっとしておいた。']]}
+);
+{const FE={k:'創',t:'筆と墨の匂いがする工房。名工が「好きな札を一枚、仕立ててやろう」と言う。',o:[['✍ オリジナルカードを作る',()=>{forgeOpen();return null}],['立ち去る',()=>'丁寧に断った。']]};EVENTS.push(FE)}
+
+/* ---- v3.1 攻防一体 ---- */
+CHARS[1].ab='攻防一体';CHARS[1].d='漢字(一・十・人・大・水)を書いて、書いた字の効果を今すぐ発動';
+Object.assign(HWFX,{
+一:{n:'シールド3＋カードを2枚引く',blk:3,draw:2},
+十:{n:'シールド8',blk:8},
+人:{n:'HP2回復を3ターン継続',regen:2},
+大:{n:'敵に10ダメージ',dmg:10},
+水:{n:'カードパック(コスト0)を1枚入手',pack:1}});
+CARDS['袋']={n:'袋',name:'カードパック',cost:0,t:'sk',d:'ランダムなカード3枚から1枚選んで手札に加える(この戦闘のみ)',pack:1,cc:1};
+function hwApply(c){const f=HWFX[c],m=has('墨')?1.5:1,t=[];
+if(f.blk){const v=Math.round(f.blk*m);G.blk+=v;t.push('シールド'+v)}
+if(f.draw){drawN(f.draw);t.push('カードを'+f.draw+'枚引いた')}
+if(f.heal){const v=Math.round(f.heal*m);G.hp=Math.min(G.max,G.hp+v);t.push('HP'+v+'回復')}
+if(f.regen){const v=Math.round(f.regen*m);G.regen={v,t:3};t.push('3ターンのあいだ、毎ターンHP'+v+'回復')}
+if(f.dmg){const v=Math.round(f.dmg*m);hitEnemy(v);t.push('敵に'+v+'ダメージ')}
+if(f.pack){G.hand.push('袋');t.push('カードパックを手に入れた')}
+if(f.self){if(has('符'))t.push('護符で自分へのダメージを防いだ');else{G.hp=Math.max(1,G.hp-f.self);t.push('自分に'+f.self+'ダメージ')}}
+if(f.half){G.hwHalf=true;t.push('この攻撃のダメージ半減')}
+if(f.nb){const v=Math.round(f.nb*m);G.nextBlk=(G.nextBlk||0)+v;t.push('次のターンのブロック'+v)}
+return t.join('、')}
+function packOpen(){G.pk=pickCards(3);$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:420px;text-align:center"><h2>🎴 カードパック</h2><p>3枚の中から1枚選んで、手札に加えよう</p><div class="hand" style="justify-content:center">${G.pk.map((id,i)=>`<div>${cardEl(id,0,'packPick('+i+')')}</div>`).join('')}</div></div></div>`}
+function packPick(i){const id=(G.pk||[])[i];if(!id)return;G.pk=null;if(G.hand.length<10)G.hand.push(id);else G.disc.push(id);G.log='パックから「'+CARDS[id].name+'」を手札に加えた';closeDeck();G.busy=false;render()}
+(function(){
+ const _pl=play;play=function(i){const c=CARDS[G.hand[i]];if(c&&c.pack&&!G.busy){G.hand.splice(i,1);G.busy=true;sfx('ok');packOpen();return}return _pl.apply(this,arguments)};
+ const _st=startTurn;startTurn=function(){if(G.regen&&G.regen.t>0){G.hp=Math.min(G.max,G.hp+G.regen.v);G.log=(G.log||'')+'／継続回復+'+G.regen.v;G.regen.t--;if(!G.regen.t)G.regen=null}return _st.apply(this,arguments)};
+ const _sb=startBattle;startBattle=function(){G.regen=null;return _sb.apply(this,arguments)}})();
+
+/* ---- v3.2 miss = random ---- */
+HWFX['凶']={n:'大凶：痛み分け(自分に5・敵に10ダメージ)',self:5,dmg:10};
+function hwMiss(pre){const c=['一','十','人','大','水','凶'][rnd(6)],t=hwApply(c);hdEnd(c!=='凶',pre+'ランダム発動！'+(c==='凶'?'💀 大凶「痛み分け」 ':'「'+c+'」 ')+t)}
+
+/* ---- v3.3 パワーカード ---- */
+CTN.p='パワー';
+function ct(c){return c.pw?'p':c.sec?'e':(c.sum||c.sums||c.sac||c.sacAll||c.sub||c.recall||(c.ok&&c.ok.sums))?'m':c.t==='atk'?'a':'s'}
+const PWC={
+P1:['剣','気','剣気',1,'攻撃カードを使うたび、敵に追加で2ダメージ',{atkB:2},'u'],
+P2:['剣','構','一閃の構え',2,'毎ターン開始時、次の攻撃のダメージが2倍になる',{dbl:1},'r'],
+P3:['剣','錬','錬磨',2,'毎ターン開始時、筋力+1',{str:1},'u'],
+P4:['盾','不','不動',2,'シールドがターン経過で失われなくなる(ためておける)',{keep:1},'r'],
+P5:['盾','鉄','鉄壁',1,'毎ターン開始時、シールド+4',{startBlk:4},'u'],
+P6:['盾','重','重装',1,'ブロックを得るカードを使うたび、シールド+2',{blkB:2},'u'],
+P7:['薬','熟','毒の心得',1,'毒を与えるカードを使うたび、毒+1追加',{poiB:1},'u'],
+P8:['薬','湯','薬湯',1,'毎ターン開始時、HP2回復',{heal:2},'u'],
+P9:['薬','劇','劇薬',2,'毎ターン開始時、敵に毒2',{poiT:2},'r'],
+P10:['術','循','魔力循環',3,'毎ターン開始時、エナジー+1',{en:1},'r'],
+P11:['術','極','集中の極み',1,'毎ターン開始時、カードを1枚多く引く',{drawB:1},'u'],
+P12:['術','秘','秘術',1,'毎ターン開始時、敵に3ダメージ',{dotT:3},'u'],
+P13:['召','儀','召喚の儀',1,'これから出す召喚獣の持続ターン+1',{sumL:1},'u'],
+P14:['召','祭','供物の祭壇',1,'召喚カードを使うたび、カードを1枚引く',{sumDraw:1},'u'],
+P15:['召','護','守護の誓い',1,'毎ターン開始時、召喚獣がいればシールド+3',{sumBlk:3},'u'],
+P16:['合','発','閃き',1,'カードを使うたび、シールド+1',{useBlk:1},'u'],
+P17:['合','写','写本',2,'毎ターン開始時、カードを1枚多く引く',{drawB:1},'u']};
+Object.entries(PWC).forEach(([id,v])=>{CARDS[id]={n:v[1],name:v[2],cost:v[3],t:'sk',d:'パワー：'+v[4]+'(この戦闘のあいだ)',pw:v[5]};RAR[id]=v[6];if(CHC[v[0]]&&!CHC[v[0]].includes(id))CHC[v[0]].push(id)});
+function sortHand(){if(!(G.sm||0)){G.hSnap=[...G.hand];G.hSnapT=G.turn}G.sm=((G.sm||0)+1)%3;const co=id=>CARDS[id].cost,to={a:0,s:1,e:2,p:3,m:4},tt=id=>to[ct(CARDS[id])];if(G.sm===0&&G.hSnap&&G.hSnapT===G.turn){const rest=[...G.hand],out=[];G.hSnap.forEach(id=>{const j=rest.indexOf(id);if(j>=0){out.push(id);rest.splice(j,1)}});G.hand=out.concat(rest)}if(G.sm===1)G.hand.sort((x,y)=>co(x)-co(y)||tt(x)-tt(y));if(G.sm===2)G.hand.sort((x,y)=>tt(x)-tt(y)||co(x)-co(y));render()}
+(function(){
+ const _pl=play;play=function(i){const id=G.hand[i],c=CARDS[id];if(!c||G.busy||c.cost>G.en||c.pack)return _pl.apply(this,arguments);
+  const dead0=G.e.cur<=0;_pl.apply(this,arguments);
+  G.pw=G.pw||{};const pw=G.pw;let ch=0;
+  if(c.pw){Object.entries(c.pw).forEach(([k,v])=>{pw[k]=k==='keep'||k==='dbl'?1:(pw[k]||0)+v});const j=G.disc.lastIndexOf(id);if(j>=0)G.disc.splice(j,1);G.pwN=G.pwN||[];if(!G.pwN.includes(c.name))G.pwN.push(c.name);G.log=c.name+'のパワーを得た！';toast('✨ パワー：'+c.name);sfx('ok');ch=1}
+  else{
+   if(c.dmg&&pw.atkB){hitEnemy(pw.atkB);ch=1}
+   if(c.blk&&pw.blkB){G.blk+=pw.blkB;ch=1}
+   if(c.poi&&pw.poiB){G.e.poi+=pw.poiB;ch=1}
+   if((c.sum||c.sums)&&pw.sumDraw){drawN(pw.sumDraw);ch=1}
+   if(pw.useBlk){G.blk+=pw.useBlk;ch=1}}
+  if(ch){if(!dead0&&G.e.cur<=0&&!G.busy){winSoon();return}if(!G.busy)render()}};
+ const _st=startTurn;startTurn=function(){const pw=G.pw||{};
+  if(pw.keep)G.nextBlk=(G.nextBlk||0)+G.blk;
+  if(pw.startBlk)G.nextBlk=(G.nextBlk||0)+pw.startBlk;
+  if(pw.sumBlk&&(G.sums||[]).length)G.nextBlk=(G.nextBlk||0)+pw.sumBlk;
+  if(pw.heal)G.hp=Math.min(G.max,G.hp+pw.heal);
+  if(pw.str)G.str+=pw.str;
+  if(pw.dbl)G.dbl=true;
+  if(pw.poiT)G.e.poi+=pw.poiT;
+  if(pw.drawB){G.nextFx=G.nextFx||{blk:0,draw:0};G.nextFx.draw+=pw.drawB}
+  if(pw.dotT){hitEnemy(pw.dotT);if(G.e.cur<=0){winSoon();return}}
+  _st.apply(this,arguments);
+  if(pw.en){G.en+=pw.en;if(!G.busy)render()}};
+ const _sb=startBattle;startBattle=function(){G.pw=relPw();G.pwN=[];return _sb.apply(this,arguments)};
+ const _sm=summon;summon=function(k,src){const b=(G.sums||[]).slice();const r=_sm.apply(this,arguments);if(G.pw&&G.pw.sumL)(G.sums||[]).forEach(s=>{if(!b.includes(s)&&s.left<99)s.left+=G.pw.sumL});return r}})();
+
+/* ---- v3.4 ヒーローカラー ---- */
+const HK=['剣','盾','薬','術','召','合'],HCOL=['#e64a19','#1565c0','#2e9d55','#8e24aa','#00897b','#c79100'];
+const CO={};Object.entries(CHC).forEach(([h,l])=>l.forEach(id=>{CO[id]=HK.indexOf(h)}));
+(function(){
+ const _ce=cardEl;cardEl=function(id,i,click){let h=_ce.apply(this,arguments);const o=CO[String(id).replace('+','')];if(o==null||o<0)return h;return h.replace('<button class="card ','<button class="card hh'+o+' ').replace('<div class="ty">','<i class="hb hh'+o+'">'+HK[o]+'</i><div class="ty">')};
+ const _r=render;render=function(){_r.apply(this,arguments);try{const hi=G&&G.ch?HK.indexOf(G.ch.k):-1;document.body.style.setProperty('--hc',hi>=0?HCOL[hi]:'transparent');document.body.classList.toggle('hero',hi>=0&&G.scr==='battle');
+  if(G&&G.scr==='select')document.querySelectorAll('.chr').forEach((b,i)=>{b.style.borderColor=HCOL[i];b.style.boxShadow='inset 0 0 0 2px '+HCOL[i];const k=b.querySelector('.k');if(k)k.style.color=HCOL[i]})}catch(e){}};
+ CO.__=0})();
+
+/* ---- v3.5 カスタム：ヒーロー専用カード ---- */
+(function(){
+ const _ci=cuIds;cuIds=function(){return _ci.apply(this,arguments).filter(k=>{const o=CO[k];return o==null||o<0||o===CU.ch}).filter(k=>!(CU.f&&CU.f.o)||CO[k]===CU.ch)};
+ const _cv=customView;customView=function(){_cv.apply(this,arguments);try{
+  document.querySelectorAll('.dex .dx').forEach((b,i)=>{if(i>=HK.length)return;b.style.borderColor=HCOL[i];b.style.borderWidth='2px';if(i===CU.ch){b.style.background=HCOL[i];b.style.color='#fff'}else{b.style.color=HCOL[i]}});
+  const cf=document.querySelector('.cfb');if(cf){cf.insertAdjacentHTML('afterbegin',`<div>表示：<button class="main off cf${CU.f&&CU.f.o?' on':''}" onclick="cuF('o','固有のみ')">${HK[CU.ch]}の固有カードのみ</button></div>`);cf.insertAdjacentHTML('beforeend','<div class="stat">ヒーロー専用カードは、そのヒーローを選ぶと表示されます（枠の色とバッジがヒーローの色）</div>')}}catch(e){}};
+})();
+function cuRows(){return cuIds().map(k=>{const x=CARDS[k],r=rar(k),o=CO[k],hs=o!=null&&o>=0;return`<div class="cr r${RO[r]}${hs?' hh'+o:''}">${hs?`<i class="hb2 hh${o}">${HK[o]}</i>`:''}<b class="ck">${x.n}</b><span class="cn">${x.name}${r==='r'?' ★':r==='u'?' ◆':''}<small>${hs?'【'+CHARS[o].name+'専用】':''}${CTN[ct(x)]}・コスト${x.cost}・${x.d}</small></span><button onclick="cuAdd('${k}',-1)">−</button><span class="cc">${CU.deck[k]||0}</span><button onclick="cuAdd('${k}',1)">＋</button></div>`}).join('')||'<div class="stat" style="padding:10px">該当するカードがありません</div>'}
+
+/* ---- v3.6 ヒーロー固有レリック ---- */
+Object.assign(RELICS,{
+鞘:{name:'居合の鞘',d:'戦闘開始時、次の攻撃のダメージが2倍(剣士専用)',ch:'剣'},
+砥:{name:'砥石',d:'攻撃カードを使うたび、追加で1ダメージ(剣士専用)',ch:'剣'},
+符:{name:'護符',d:'攻防一体の大凶「痛み分け」で、自分がダメージを受けない(守護者専用)',ch:'盾'},
+甲:{name:'重甲',d:'毎ターン開始時、シールド+2(守護者専用)',ch:'盾'},
+瓢:{name:'薬瓢箪',d:'調合を使うたび、さらに毒+1・HP2回復(薬師専用)',ch:'薬'},
+臼:{name:'薬研',d:'毒を与えるカードを使うたび、毒+1追加(薬師専用)',ch:'薬'},
+杖:{name:'魔杖',d:'集中で失うHPが3から2になる(術師専用)',ch:'術'},
+晶:{name:'魔晶',d:'戦闘開始時、カードを2枚多く引く(術師専用)',ch:'術'},
+魂:{name:'召喚の魂',d:'召喚するたび、シールド+2(召喚師専用)',ch:'召'},
+陣:{name:'結界陣',d:'毎ターン開始時、召喚獣がいればシールド+2(召喚師専用)',ch:'召'},
+部:{name:'部首表',d:'カードを使うたび、シールド+1(合成師専用)',ch:'合'},
+硯:{name:'古い硯',d:'毎ターン開始時、HP1回復(合成師専用)',ch:'合'}});
+function relPw(){const p={};if(!G.rel)return p;if(has('砥'))p.atkB=1;if(has('臼'))p.poiB=1;if(has('甲'))p.startBlk=2;if(has('陣'))p.sumBlk=2;if(has('部'))p.useBlk=1;if(has('硯'))p.heal=1;return p}
+(function(){
+ const _st=startTurn;startTurn=function(){if(G.turn===0&&G.rel){if(has('鞘'))G.dbl=true;if(has('晶')){G.nextFx=G.nextFx||{blk:0,draw:0};G.nextFx.draw+=2}}return _st.apply(this,arguments)};
+ const _ua=useAb;useAb=function(){const u=G.uses||0,k=G.ch.k;_ua.apply(this,arguments);if((G.uses||0)>u&&G.rel){if(k==='薬'&&has('瓢')){G.e.poi+=1;G.hp=Math.min(G.max,G.hp+2);if(!G.busy)render()}if(k==='術'&&has('杖')){G.hp+=1;if(!G.busy)render()}}};
+ const _sm=summon;summon=function(){const n=(G.sums||[]).length;G.sumFail=0;const r=_sm.apply(this,arguments);if(G.rel&&has('魂')&&!G.sumFail)G.blk+=2;return r}})();
+function cuRelHtml(){const h=CHARS[CU.ch],open=!!CU.ro;const all=Object.keys(RELICS).filter(k=>!RELICS[k].ch||RELICS[k].ch===h.k);
+const btn=k=>`<button class="main off rlb${CU.rel.includes(k)?' on':''}"${RELICS[k].ch?` style="border-color:${HCOL[CU.ch]}"`:''} onclick="cuRel('${k}')">${CU.rel.includes(k)?'✔ ':''}${k} ${RELICS[k].name}<small>${RELICS[k].d}</small></button>`;
+const com=all.filter(k=>!RELICS[k].ch),own=all.filter(k=>RELICS[k].ch);
+return`<h3><button class="main off cf" onclick="CU.ro=!CU.ro;customView()">${open?'▼':'▶'} 開始レリック（${CU.rel.length}/3）${open?'':'：'+(CU.rel.length?CU.rel.join(' '):'なし')}</button></h3>`+(open?`<div class="stat">共通レリック</div><div class="btns">${com.map(btn).join('')}</div><div class="stat" style="color:${HCOL[CU.ch]};font-weight:700">【${h.name}専用レリック】</div><div class="btns">${own.map(btn).join('')}</div>`:'')}
+
+/* ---- v3.7 敵の属性・弱体/脆弱・手書き防御の書き直し ---- */
+(function(){
+ const EWK={炎:'火',猪:'火',獅:'火',氷:'水',亀:'水',蛇:'水',蜂:'木',猿:'木',蘇:'木',骸:'土',鬼:'土',狼:'土'};
+ const EC={火:'#e64a19',水:'#1976d2',木:'#2e9d55',土:'#a1760f'};
+ window.EWK=EWK;
+ // 秘策: 弱点なら弱点ダメージ3
+ secDone=function(s){if(s.held)G.disc.push(s.id);toast('🔮 '+s.e+'の秘策が発動！');sfx('block');const wk=G.e&&EWK[G.e.k]===s.e;
+  if(has('鏡'))G.blk+=wk?4:2;
+  if(wk){G.fxT=-1;const d=3;G.e.cur=s.trig==='hit'?Math.max(1,G.e.cur-d):G.e.cur-d;G.fx=(G.fx||0)+d;G.log=(G.log||'')+'／弱点！ +'+d+'ダメージ';toast('💥 弱点ダメージ3')}};
+ // 状態異常
+ window.stTick=function(a){const e=G.e;if(e.wk>0)e.wk--;if(e.vul>0)e.vul--;if(G.pwk>0)G.pwk--;if(G.pvul>0)G.pvul--;
+  if(a&&a.pw){if(a.pw==='wk')G.pwk=a.pt||1;else G.pvul=a.pt||1;G.log+='／'+(a.pw==='wk'?'弱体':'脆弱')+'を受けた'}};
+ const _h=hurt;hurt=function(d){if(d>0&&G.pvul>0){d=Math.ceil(d*1.5);arguments[0]=d}return _h.apply(this,arguments)};
+ const _p=play;play=function(i){const id=G.hand[i],c=CARDS[id],n=G.hand.length;const r=_p.apply(this,arguments);
+  if(c&&(c.vul||c.wk)&&G.hand.length<n&&G.e){const boss=G.node&&G.node.t==='boss';
+   if(c.vul){G.e.vul=Math.max(G.e.vul||0,boss?1:c.vul);toast('💢 敵が脆弱！')}
+   if(c.wk){G.e.wk=Math.max(G.e.wk||0,c.wk);toast('💧 敵が弱体！')}
+   if(G.scr==='battle'&&!G.busy&&G.e.cur>0)render()}
+  return r};
+ const _sb=startBattle;startBattle=function(){G.pwk=0;G.pvul=0;return _sb.apply(this,arguments)};
+ CARDS['脆']={n:'脆',name:'脆弱の術',cost:1,t:'sk',d:'敵に脆弱2ターン(受けるダメージ+50%)',vul:2};
+ CARDS['弱']={n:'弱',name:'弱撃',cost:1,t:'atk',d:'6ダメージ・敵に弱体2ターン(与えるダメージ-25%)',dmg:6,wk:2};
+ CHC['術'].push('脆');CHC['剣'].push('弱');CO['脆']=3;CO['弱']=0;RAR['脆']='u';RAR['弱']='c';
+ // 表示
+ const st=document.createElement('style');st.textContent='.enemy .kanji{position:relative}.wkb{position:absolute;left:8px;top:8px;font-size:12px;font-weight:700;color:#fff;border-radius:8px;padding:1px 6px;line-height:1.3;letter-spacing:0}';(document.head||document.body).appendChild(st);
+ const _r=render;render=function(){_r.apply(this,arguments);try{if(!G||G.scr!=='battle'||!G.e)return;const e=G.e,a=EWK[e.k],kn=document.querySelector('.enemy');
+  if(a&&kn&&!kn.querySelector('.wkb'))kn.insertAdjacentHTML('beforeend','<small class="wkb" data-tip="<b>弱点:'+a+'</b>：'+a+'の秘策が発動すると、元の効果に加えて弱点ダメージ3を与える" style="background:'+EC[a]+'">弱点:'+a+'</small>');
+  const es=document.querySelector('.enemy .stat');if(es)es.innerHTML+=(e.vul>0?' ／ 💢脆弱'+e.vul:'')+(e.wk>0?' ／ 💧弱体'+e.wk:'');
+  const ps=document.querySelector('.me .stat');if(ps)ps.innerHTML+=(G.pvul>0?' ／ 💢脆弱'+G.pvul:'')+(G.pwk>0?' ／ 💧弱体'+G.pwk:'')}catch(x){}};
+ // 手書き防御: ミスなし・書き直し自由
+ hwMiss=function(pre){const c=['一','十','人','大','水'][rnd(5)],t=hwApply(c);hdEnd(true,(pre||'')+'ランダム発動！「'+c+'」 '+t)};
+ hdGive=function(){if(HW.dend)return;hwMiss('あきらめた…')};
+ hdJudge=function(){if(HW.dend)return;const r=hwFree(HW.st),m=document.getElementById('hdm');if(r.state==='empty'){m.textContent='何も書かれていません';return}
+  if(r.state==='ok'){const t=hwApply(r.ch);hdEnd(true,'⭕ 「'+r.ch+'」と判定！ '+t)}else{m.textContent='⚠ 判定できませんでした。もう一度書いてみよう(「あきらめる」でランダム発動)';hdClear()}};
+})();
+
+/* ---- v3.8 UI調整 ---- */
+function barS(o,cur,max,blk){const p=Math.max(0,cur)/max*100,w=Math.min(100,(blk||0)/max*100),l=p+w<=100?p:100-w;return barHtml(o,p)+(blk>0?'<span class="shd" style="left:'+l+'%;width:'+w+'%"></span>':'')}
+const HL={flat:false};try{HL.flat=localStorage.getItem('kanjiHand')==='flat'}catch(e){}
+function togHand(){HL.flat=!HL.flat;try{localStorage.setItem('kanjiHand',HL.flat?'flat':'')}catch(e){}if(G&&G.scr==='battle')render();optMenu()}
+SFX.block=[['n',0,.035,'hi',.16],[2600,0,.05,'square',.05],[3400,.01,.04,'square',.03],[1900,.07,.32,'triangle',.07],[2850,.07,.26,'sine',.05]];
+(function(){
+ let lb=0,ls=0;const _s=sfx;sfx=function(n){if(n==='block')ls=Date.now();return _s.apply(this,arguments)};
+ const _r=render;render=function(){_r.apply(this,arguments);try{document.body.classList.toggle('hflat',!!HL.flat);
+  if(G&&G.scr==='battle'){const hd=document.querySelector('.hand.bh');if(hd)hd.style.setProperty('--n',Math.max(1,G.hand.length));
+   if((G.blk||0)>lb&&Date.now()-ls>400)sfx('block');lb=G.blk||0}else lb=0}catch(x){}};
+})();
+
+/* ---- v3.9 ツールチップ・ショートカット・音量 ---- */
+(function(){
+ // 音量
+ const V={se:1,bgm:1};try{const v=JSON.parse(localStorage.getItem('kanjiVol')||'{}');if(typeof v.se==='number')V.se=v.se;if(typeof v.bgm==='number')V.bgm=v.bgm}catch(e){}
+ window.AV=V;const G2={};
+ window.outN=function(){const c=AU.ctx,k=AU.ch==='bgm'?'bgm':'se';if(!G2[k]||G2[k].c!==c){const g=c.createGain();g.connect(c.destination);G2[k]={c,g}}G2[k].g.gain.value=V[k];return G2[k].g};
+ const _bt=bgmTick;bgmTick=function(){AU.ch='bgm';try{return _bt.apply(this,arguments)}finally{AU.ch='se'}};
+ window.setVol=function(k,v){V[k]=Math.max(0,Math.min(1,v/100));try{localStorage.setItem('kanjiVol',JSON.stringify(V))}catch(e){}if(AU.ctx){const x=G2[k];if(x)x.g.gain.value=V[k]}};
+ window.volTest=function(){sfx('block')};
+ // ツールチップ
+ const tip=document.createElement('div');tip.id='tip';document.body.appendChild(tip);
+ const GL={sum:['召喚','召喚獣を場に出す。手札から召喚の列へドラッグすると置く位置を選べる。同じ召喚獣の左に置くと合体、右に置くと合体しない。出した札は、召喚獣がいる間「保留」になる。'],
+  sac:['犠牲','召喚獣を犠牲にして、効果を得る。'],sub:['身代わり','次に受ける攻撃を、召喚獣が1体かわりに受ける。'],
+  pw:['パワー','使うと、この戦闘のあいだずっと効果が続く。使ったカードは消費される(捨て札に行かない)。'],
+  sec:['秘策','セットしておくと、条件を満たしたときに自動で発動する(最大3つ)。セット中は「保留」になり、発動すると捨て札へ戻る。弱点の敵に発動すると弱点ダメージ3が加わる。'],
+  quiz:['必殺技','クイズに答えて発動する。正解で強い効果、不正解でも弱めの効果が出る。'],
+  vul:['脆弱','敵が受けるダメージが+50%になる(ボスには1ターンだけ)。'],wk:['弱体','敵の与えるダメージが-25%になる。'],
+  poi:['毒','ターン開始時に毒の数だけダメージを与え、毒は1ずつ減る。'],str:['筋力','攻撃のダメージが、筋力の数だけ増える。']};
+ function gloss(c){const o=[];if(c.sum||c.sums||(c.ok&&c.ok.sums))o.push(GL.sum);if(c.sac||c.sacAll)o.push(GL.sac);if(c.sub)o.push(GL.sub);if(c.pw)o.push(GL.pw);if(c.sec)o.push(GL.sec);if(c.quiz)o.push(GL.quiz);if(c.vul)o.push(GL.vul);if(c.wk)o.push(GL.wk);if(c.poi||c.poiX)o.push(GL.poi);if(c.str)o.push(GL.str);return o}
+ function textOf(el){if(el.dataset.tip)return el.dataset.tip;const c=CARDS[el.dataset.id];if(!c)return'';return gloss(c).map(x=>'<b>'+x[0]+'</b>：'+x[1]).join('<br>')}
+ function hide(){tip.style.display='none'}
+ document.addEventListener('mouseover',e=>{const el=e.target.closest&&e.target.closest('[data-tip],.card[data-id]');if(!el)return hide();const t=textOf(el);if(!t)return hide();
+  tip.innerHTML=t;tip.style.display='block';const r=el.getBoundingClientRect(),w=tip.offsetWidth,hh=tip.offsetHeight;let x=r.right+8;if(x+w>innerWidth-4)x=Math.max(4,r.left-w-8);let y=Math.min(Math.max(4,r.top),innerHeight-hh-4);tip.style.left=x+'px';tip.style.top=y+'px'});
+ document.addEventListener('mousedown',hide);document.addEventListener('scroll',hide,true);
+ const _r=render;render=function(){hide();return _r.apply(this,arguments)};
+ // 秘策の表示(説明つき)
+ secHtml=function(){const s=G.sec||[];return s.length?`<div class="secs">${s.map(x=>{const c=CARDS[x.id];return `<span class="sec" data-tip="<b>${c?c.name:x.e+'の秘策'}</b>：${c?c.d.replace(/^セット：/,''):''}">🔮${x.e}<small>${{atk:'攻撃した時',hit:'攻撃された時',turn:'次のターン',hand:'手札'+x.n+'枚以上'}[x.trig]}</small></span>`}).join('')}</div>`:''};
+ // ターン終了ショートカット(PC)
+ const pc=matchMedia('(hover:hover) and (pointer:fine)').matches;
+ let K={type:'mouse',code:2};try{const k=JSON.parse(localStorage.getItem('kanjiKey')||'null');if(k&&k.type)K=k}catch(e){}
+ let cap=false;
+ const kname=k=>k.type==='mouse'?['左クリック','中クリック','右クリック','戻るボタン','進むボタン'][k.code]||('マウス'+k.code):(k.code==='Space'?'スペース':k.code.replace(/^Key/,'').replace(/^Digit/,''));
+ window.keyName=()=>kname(K);window.keyCap=()=>cap;
+ window.keyStart=function(){cap=true;optMenu()};
+ window.keyReset=function(){K={type:'mouse',code:2};try{localStorage.removeItem('kanjiKey')}catch(e){}optMenu()};
+ let lastCap=0;
+ function save(k){K=k;cap=false;lastCap=Date.now();try{localStorage.setItem('kanjiKey',JSON.stringify(k))}catch(e){}optMenu()}
+ function can(){return pc&&G&&G.scr==='battle'&&!G.busy&&!G.tut&&!document.querySelector('.modal')&&!document.getElementById('hd')}
+ function go(){if(can())endTurn()}
+ document.addEventListener('keydown',e=>{if(cap){e.preventDefault();if(e.code==='Escape'){cap=false;optMenu();return}save({type:'key',code:e.code});return}
+  if(K.type==='key'&&e.code===K.code&&!e.repeat&&!/INPUT|TEXTAREA/.test((e.target||{}).tagName||'')){e.preventDefault();go()}});
+ document.addEventListener('mousedown',e=>{if(cap){if(e.button===0)return;e.preventDefault();save({type:'mouse',code:e.button});return}
+  if(K.type==='mouse'&&e.button===K.code&&e.button!==0){if(can()){e.preventDefault();go()}}},true);
+ document.addEventListener('contextmenu',e=>{if(cap||Date.now()-lastCap<600||(K.type==='mouse'&&K.code===2&&can()))e.preventDefault()});
+ window.keyPc=pc;
+})();
+
+newGame();
+</script>
+</body>
+</html>
+
+</body></html>
