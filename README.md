@@ -17,14 +17,25 @@ https://numei136.github.io/KanjinoTower/
 - ダウンロード・投稿: https://numei136.github.io/KanjinoTower/packs.html
 - 使い方: パックをダウンロードして、ゲームのオプション →「📦 拡張パック」から、読み込みます。
 - パックの一覧は、`packs/index.json` に書かれています。パックのファイルは、`packs/` に置かれます。
-- 自分で作るためのテンプレートや、AIに問題を作らせるプロンプトも、ページにあります。
+- AIに問題を作らせるプロンプトも、ページにあります。
 - パックを投稿するには、[パック投稿フォーム](https://github.com/numei136/KanjinoTower/issues/new?template=pack.yml)を使います(GitHubのアカウントが必要です)。管理人が、内容を確認してから、載せます。
 - 投稿した内容と、GitHubの名前は、公開されます。個人情報は、書かないでください。
 
-### 手書きデータ(KanjiVG)
-- [KanjiVG](https://kanjivg.tagaini.net/)などの線のデータを読み込むと、どの漢字でも、手書き問題にできます。変換スクリプト(`kanjivg_to_pack.py`)も、あります。
+### お試しパック(4つ)
+どれも30問です。内訳は、4択8・読み8・部首6・手書き8です。
+
+| ファイル | 対象 |
+|---|---|
+| `kanjitower_lv1_shogaku.json` | 小学6年生まで |
+| `kanjitower_lv2_chugaku.json` | 中学3年まで |
+| `kanjitower_lv3_koukou.json` | 高校〜 |
+| `kanjitower_lv4_shakai.json` | 社会でよく使う漢字 |
+
+### 手書きデータ(KanjiVG)もあるよ
+- 手書きの判定の材料になる、線のデータです。ダウンロードページから、そのままダウンロードできます(常用漢字2136字、全漢字6413字)。
+- 手書きデータだけでは、問題は増えません。出題する字は、別の「手書き問題パック」で指定します。
 - 読み込むと、手書きの判定の仕組みが変わります(読み込み時に、注意が出ます)。
-- KanjiVGは、CC BY-SA 3.0で配られています。出典の表示が必要で、これを元にしたパックも、同じ条件(CC BY-SA)で配ります。
+- [KanjiVG](https://kanjivg.tagaini.net/)は、CC BY-SA 3.0で配られています。出典の表示が必要で、これを元にしたパックも、同じ条件(CC BY-SA)で配ります。
 
 ## 更新の記録・要望
 - 調整点(更新の記録)・利用上の注意: https://numei136.github.io/KanjinoTower/info.html
