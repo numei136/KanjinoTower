@@ -1843,7 +1843,7 @@ function optBody(){
 })();
 
 /* v4.8 title: play button */
-var TM=0;const VER='5.10.22';
+var TM=0;const VER='5.10.30';
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.tw{position:relative;display:inline-block}.ver{position:absolute;right:0;top:100%;margin-top:-2px;font-size:clamp(9px,2vw,13px);opacity:.65;letter-spacing:.05em;font-weight:700}.ttsub{display:inline-block;animation:ttbob 2.8s ease-in-out infinite}@keyframes ttbob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}@media (prefers-reduced-motion:reduce){.ttsub{animation:none}}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
 function titleGo(){TM=1;render()}
 function titleBack(){TM=0;render()}
@@ -2150,6 +2150,323 @@ document.head.appendChild(Object.assign(document.createElement('style'),{textCon
 function shnFix(){try{document.querySelectorAll('.bar').forEach(b=>{const n=b.querySelector('.shn'),d=b.querySelector('.shd');if(!n||!d)return;if(!n.textContent){return}const l=parseFloat(d.style.left)||0,w=parseFloat(d.style.width)||0;n.classList.add('cs');n.style.left=(l+w/2)+'%'})}catch(e){}}
 {const _r=render;render=function(){const r=_r.apply(this,arguments);shnFix();return r}}
 try{new MutationObserver(()=>shnFix()).observe(document.getElementById('app'),{childList:true,subtree:true})}catch(e){}
+
+/* v5.10.23 challenge mode + handwriting quiz */
+CARDS['写']={n:'写',name:'必殺・書き取り',cost:1,t:'atk',d:'手書きクイズ。読みの漢字を書く。正解で16ダメージ',quiz:'hw',ok:{dmg:16},ng:{dmg:4}};RAR['写']='u';
+ACH.push({id:'ch_quiz',name:'博識の挑戦者',d:'チャレンジ「全カード問題付き」で塔を制覇'},{id:'ch_hand',name:'筆の達人',d:'チャレンジ「手書きの試練」で塔を制覇'},{id:'ch_poi',name:'毒を飲む者',d:'チャレンジ「毒の血」で塔を制覇'},{id:'ch_vul',name:'薄氷を踏む',d:'チャレンジ「脆弱の体」で塔を制覇'},{id:'ch_wk',name:'非力の英雄',d:'チャレンジ「弱体の呪い」で塔を制覇'},{id:'ch_en',name:'節約の達人',d:'チャレンジ「枯渇」で塔を制覇'},{id:'ch_hp',name:'紙の装甲',d:'チャレンジ「脆い命」で塔を制覇'},{id:'ch_all',name:'塔の挑戦王',d:'チャレンジを3つ以上同時に選んで塔を制覇'});
+const CHALS=[
+{id:'quiz',n:'📝 全カード問題付き',d:'手札のカードを使うたびに問題(読み・部首・筆順・手書き)。正解で効果発動、不正解だと効果なし(コストは消費)'},
+{id:'hand',n:'✍ 手書きの試練',d:'カードを使うたびに手書き問題。読みに合う漢字を書けたら効果発動'},
+{id:'poi',n:'🩸 毒の血',d:'毎ターン開始時、HPが2減る(1までは減る)'},
+{id:'vul',n:'🪶 脆弱の体',d:'常に脆弱状態。受けるダメージ1.5倍'},
+{id:'wk',n:'🥀 弱体の呪い',d:'常に弱体状態。与えるダメージ0.75倍'},
+{id:'en',n:'🔋 枯渇',d:'毎ターンのエナジーが2'},
+{id:'hp',n:'💔 脆い命',d:'最大HPが半分で開始'}];
+function chOn(k){return !!(G&&G.chal&&G.chal.includes(k))}
+function chAch(id){if(ACHS.includes(id))return;ACHS.push(id);try{localStorage.setItem('kanjiAch',JSON.stringify(ACHS))}catch(e){}const a=ACH.find(x=>x.id===id);if(a)toast('🏆 実績解除：'+a.name)}
+function cuChal(k){CU.chal=CU.chal||[];const i=CU.chal.indexOf(k);if(i>=0)CU.chal.splice(i,1);else CU.chal.push(k);if(k==='quiz'||k==='hand'){const o=k==='quiz'?'hand':'quiz';const j=CU.chal.indexOf(o);if(j>=0&&i<0)CU.chal.splice(j,1)}customView()}
+function chalHtml(){const c=CU.chal||[];return `<h3>🔥 チャレンジモード（複数選択可）</h3><div class="stat">縛りを付けて挑戦。塔を制覇すると専用の実績が解除されます（カスタムでもこの実績だけは解除されます）</div><div class="btns">${CHALS.map(x=>`<button class="main off rlb${c.includes(x.id)?' on':''}" onclick="cuChal('${x.id}')">${c.includes(x.id)?'✔ ':''}${x.n}${ACHS.includes('ch_'+x.id)?' 🏆':''}<small>${x.d}</small></button>`).join('')}</div>`}
+{const _cv=customView;customView=function(){const r=_cv.apply(this,arguments);try{const d=document.querySelector('.overlay .dex');const p=d&&d.nextElementSibling;if(p)p.insertAdjacentHTML('afterend',chalHtml())}catch(e){}return r}}
+{const _cs=customStart;customStart=function(){const c=[...(CU.chal||[])];_cs.apply(this,arguments);if(G&&G.custom){G.chal=c;if(c.includes('hp')){G.max=Math.max(10,Math.ceil(G.max/2));G.hp=G.max}render()}}}
+/* debuffs */
+{const _st=startTurn;startTurn=function(){try{if(G&&G.chal&&G.chal.length&&G.scr==='battle'){if(chOn('vul'))G.pvul=Math.max(G.pvul||0,9);if(chOn('wk'))G.pwk=Math.max(G.pwk||0,9);if(chOn('poi')&&G.hp>1){G.hp=Math.max(1,G.hp-3)}}}catch(e){}
+ const r=_st.apply(this,arguments);try{if(chOn('en')&&G.scr==='battle'){G.en=Math.min(G.en,2);if(!G.busy)render()}}catch(e){}return r}}
+/* question gate */
+var CHQ=null;
+const HQR={一:'いち（数字の1）',十:'じゅう（数字の10）',人:'ひと',大:'おおきい',水:'みず'};
+function hqAsk(cb){const t=HW.ch[rnd(HW.ch.length)];HW.dtry=0;HW.dend=false;HW.st=[];HW.dtg=t;
+ const o=document.createElement('div');o.id='hd';o.className='modal';o.innerHTML=`<div class="mbox" style="max-width:400px;text-align:center"><h2>✍ 書き取り問題</h2><p>「${HQR[t]}」を表す漢字を書こう</p><canvas id="hdc"></canvas><div id="hdm" class="stat"></div><div class="btns"><button class="main off" onclick="hdClear()">書き直し</button><button class="main" onclick="hqJudge()">判定</button><button class="main off" onclick="hqEnd(false,'あきらめた…')">あきらめる</button></div></div>`;
+ document.body.appendChild(o);const cv=document.getElementById('hdc'),sz=Math.min(280,(window.innerWidth||320)-60),dp=window.devicePixelRatio||1;cv.style.width=sz+'px';cv.style.height=sz+'px';cv.width=Math.floor(sz*dp);cv.height=Math.floor(sz*dp);HW.cv=cv;hwBind(cv);hwDraw();HQ={cb,t}}
+var HQ=null;
+function hqJudge(){if(HW.dend||!HQ)return;const r=hwFree(HW.st),m=document.getElementById('hdm');if(r.state==='empty'){m.textContent='何も書かれていません';return}
+ if(r.state==='ok'){if(r.ch===HQ.t)hqEnd(true,'⭕ 「'+HQ.t+'」正解！');else hqEnd(false,'❌ 「'+r.ch+'」と判定。正解は「'+HQ.t+'」')}
+ else if(r.state==='ng')hqEnd(false,'❌ 判定できず…正解は「'+HQ.t+'」');else{HW.dtry++;if(HW.dtry>=3)hqEnd(false,'❌ 判定できず…正解は「'+HQ.t+'」');else{m.textContent='⚠ 判定保留：もう少しはっきり書いてみよう（'+HW.dtry+'/3）';hdClear()}}}
+function hqEnd(ok,msg){if(HW.dend||!HQ)return;HW.dend=true;const m=document.getElementById('hdm');if(m)m.textContent=msg;sfx(ok?'ok':'ng');const q=HQ;setTimeout(()=>{const o=document.getElementById('hd');if(o)o.remove();HW.cv=null;HQ=null;q.cb(ok,q.t)},1100)}
+{const _oq=openQuiz;openQuiz=function(c){if(c&&c.quiz==='hw'){G.qc=c;hqAsk((ok,t)=>finishQuiz(ok,t));return}return _oq.apply(this,arguments)}}
+function chAsk(i,args){const id=G.hand[i],c=CARDS[id];G.busy=true;CHQ={i,args,id};
+ const fin=ok=>{G.busy=false;const q=CHQ;CHQ=null;if(ok){G.chOK=true;try{play.apply(null,q.args)}finally{G.chOK=false}}else{const cc=CARDS[q.id];if(G.hand[q.i]===q.id){G.en-=cc.cost;G.hand.splice(q.i,1);G.disc.push(q.id)}G.log='不正解…「'+cc.name+'」は不発！(HP-4)';toast('❌ 不発…HP-4');G.hp-=4;if(G.hp<=0){G.hp=0;G.scr='lose';return render()}render()}};
+ const kinds=chOn('hand')?['hw']:['read','rad','ord','hw'],k=kinds[rnd(kinds.length)];
+ if(k==='hw'){hqAsk((ok)=>fin(ok));return}
+ const Q=k==='read'?mkRead():k==='rad'?mkRad():mkQuiz();CHQ.qz=Q;
+ $('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:360px;text-align:center"><h2>📝 ${c.name}の問題</h2><p>${Q.q}</p><div class="btns" style="flex-direction:column">${Q.o.map((x,j)=>`<button class="main off" onclick="chAns(${j})">${x}</button>`).join('')}</div></div></div>`;CHQ.fin=fin}
+function chAns(j){if(!CHQ||!CHQ.qz)return;const Q=CHQ.qz,ok=j===Q.a,fin=CHQ.fin;CHQ.qz=null;sfx(ok?'ok':'ng');$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:360px;text-align:center"><h2>${ok?'⭕ 正解！':'❌ ざんねん…'}</h2><p>答え：${Q.o[Q.a]}</p></div></div>`;setTimeout(()=>{$('#modal').innerHTML='';fin(ok)},900)}
+{const _p=play;play=function(i){try{if(G&&G.scr==='battle'&&G.custom&&(chOn('quiz')||chOn('hand'))&&!G.busy&&!G.chOK){const id=G.hand[i],c=CARDS[id];if(c&&!c.quiz&&!c.pack&&c.cost<=G.en&&!(typeof frzOn==='function'&&frzOn(i))){chAsk(i,Array.from(arguments));return}}}catch(e){}return _p.apply(this,arguments)}}
+/* clear -> achievements */
+{const _w=win;win=function(){const r=_w.apply(this,arguments);try{if(G&&G.custom&&G.chal&&G.chal.length&&(G.scr==='clear'||G.bossNext==='clear')){G.chal.forEach(k=>chAch('ch_'+k));if(G.chal.length>=3)chAch('ch_all')}}catch(e){}return r}}
+{const _r=render;render=function(){const r=_r.apply(this,arguments);try{if(G&&G.custom&&G.chal&&G.chal.length&&G.scr==='battle'){const t=document.querySelector('.top');if(t&&!document.getElementById('chs'))t.insertAdjacentHTML('afterend','<div id="chs" class="stat" style="text-align:center;margin:0">🔥 '+G.chal.map(k=>CHALS.find(x=>x.id===k).n).join(' ／ ')+'</div>')}}catch(e){}return r}}
+
+/* v5.10.24 challenge screen / single challenge / harder / 20 handwriting kanji */
+const HT={
+一:[[[.08,.5],[.92,.5]]],
+二:[[[.25,.3],[.75,.3]],[[.08,.75],[.92,.75]]],
+三:[[[.28,.15],[.72,.15]],[[.2,.5],[.8,.5]],[[.08,.85],[.92,.85]]],
+十:[[[.08,.5],[.92,.5]],[[.5,.08],[.5,.92]]],
+人:[[[.45,.12],[.1,.92]],[[.4,.45],[.92,.92]]],
+入:[[[.38,.12],[.12,.9]],[[.35,.35],[.9,.9]]],
+八:[[[.42,.2],[.12,.88]],[[.58,.3],[.9,.88]]],
+大:[[[.08,.35],[.92,.35]],[[.55,.08],[.1,.92]],[[.5,.38],[.92,.92]]],
+小:[[[.5,.08],[.5,.92]],[[.3,.35],[.1,.75]],[[.7,.35],[.9,.75]]],
+山:[[[.5,.1],[.5,.8]],[[.15,.4],[.15,.9],[.85,.9]],[[.85,.4],[.85,.9]]],
+川:[[[.2,.1],[.15,.92]],[[.5,.1],[.5,.92]],[[.8,.1],[.85,.92]]],
+口:[[[.15,.12],[.15,.88]],[[.15,.12],[.85,.12],[.85,.88]],[[.15,.88],[.85,.88]]],
+日:[[[.2,.08],[.2,.92]],[[.2,.08],[.8,.08],[.8,.92]],[[.2,.5],[.8,.5]],[[.2,.92],[.8,.92]]],
+土:[[[.3,.35],[.7,.35]],[[.5,.08],[.5,.92]],[[.08,.92],[.92,.92]]],
+上:[[[.35,.08],[.35,.8]],[[.35,.45],[.68,.45]],[[.08,.92],[.92,.92]]],
+下:[[[.08,.15],[.92,.15]],[[.45,.15],[.45,.92]],[[.5,.45],[.78,.65]]],
+木:[[[.08,.4],[.92,.4]],[[.5,.08],[.5,.92]],[[.5,.45],[.1,.9]],[[.5,.45],[.9,.9]]],
+水:[[[.5,.08],[.5,.92]],[[.12,.38],[.4,.55]],[[.5,.3],[.1,.9]],[[.55,.3],[.9,.9]]],
+火:[[[.28,.3],[.2,.55]],[[.72,.3],[.82,.55]],[[.5,.1],[.1,.9]],[[.5,.45],[.9,.9]]],
+中:[[[.15,.3],[.15,.72]],[[.15,.3],[.85,.3],[.85,.72]],[[.15,.72],[.85,.72]],[[.5,.05],[.5,.95]]]};
+const HTN={};Object.keys(HT).forEach(k=>{HTN[k]=hwNormS(HT[k].map(s=>s.map(p=>({x:p[0],y:p[1]}))))});
+const HQ2={一:'いち（数字の1）',二:'に（数字の2）',三:'さん（数字の3）',十:'じゅう（数字の10）',人:'ひと',入:'はいる',八:'はち（数字の8）',大:'おおきい',小:'ちいさい',山:'やま',川:'かわ',口:'くち',日:'ひ（空の太陽）',土:'つち',上:'うえ',下:'した',木:'き',水:'みず',火:'ひ（燃える炎）',中:'なか'};
+function hwPerms(n){if(n<=1)return[[0]];const r=[];const go=(a,rest)=>{if(!rest.length){r.push(a);return}rest.forEach((x,i)=>go([...a,x],rest.filter((_,j)=>j!==i)))};go([],[...Array(n).keys()]);return r}
+function tmDist(raw,k){const t=HTN[k];if(t.length!==raw.length)return null;const u=hwNormS(raw);let best=9;hwPerms(raw.length).forEach(p=>{const d=hwSD(p.map(i=>u[i]),t);if(d!=null&&d<best)best=d});return best}
+function tmJudge(strokes,target){const raw=strokes.filter(s=>s&&s.length>=2&&hwLen(s)>.02);if(!raw.length)return{state:'empty'};const ds={};Object.keys(HT).forEach(k=>{const d=tmDist(raw,k);if(d!=null)ds[k]=d});const dt=ds[target];let best=null;Object.keys(ds).forEach(k=>{if(!best||ds[k]<ds[best])best=k});
+ if(dt==null)return{state:'ng',ch:best};if(best===target&&dt<.2)return{state:'ok',ch:target};if(dt<.2&&dt<=ds[best]+.02)return{state:'ok',ch:target};if(best!==target&&ds[best]<.2)return{state:'ng',ch:best};return dt<.3?{state:'hold',ch:target}:{state:'ng',ch:best}}
+function hqJudge(){if(HW.dend||!HQ)return;const old=HW.ch.includes(HQ.t),m=document.getElementById('hdm');let r;const r2=tmJudge(HW.st,HQ.t);if(old){const r1=hwFree(HW.st);r=r2.state==='ok'?r2:(r1.state==='ok'&&r1.ch===HQ.t)?r1:(r1.state==='ng'&&r2.state==='ng')?r2:r1.state==='ok'?{state:'ng',ch:r1.ch}:r1.state==='empty'?r1:{state:'hold'}}else r=r2;
+ if(r.state==='empty'){m.textContent='何も書かれていません';return}
+ if(r.state==='ok')hqEnd(true,'⭕ 「'+HQ.t+'」正解！');else if(r.state==='ng')hqEnd(false,'❌ '+(r.ch&&r.ch!==HQ.t?'「'+r.ch+'」と判定。':'判定できず…')+'正解は「'+HQ.t+'」');
+ else{HW.dtry++;if(HW.dtry>=3)hqEnd(false,'❌ 判定できず…正解は「'+HQ.t+'」');else{m.textContent='⚠ 判定保留：もう少しはっきり書いてみよう（'+HW.dtry+'/3）';hdClear()}}}
+{const _a=hqAsk;hqAsk=function(cb){const ks=Object.keys(HQ2),t=ks[rnd(ks.length)];const hc=HW.ch;_a.apply(this,arguments);HQ.t=t;HW.dtg=t;const p=document.querySelector('#hd p');if(p)p.textContent='「'+HQ2[t]+'」を表す漢字を書こう'}}
+/* challenge definitions: single + harder */
+CHALS.length=0;CHALS.push(
+{id:'quiz',n:'📝 全カード問題付き',d:'カードを使うたびに問題（読み・部首・筆順・手書き）。正解で効果発動。不正解は不発＋HP4ダメージ。敵のHP+20%'},
+{id:'hand',n:'✍ 手書きの試練',d:'カードを使うたびに手書き問題（20字から出題）。不正解は不発＋HP4ダメージ。敵のHP+20%'},
+{id:'poi',n:'🩸 毒の血',d:'毎ターン開始時にHPが3減る（階層ごとに+1）。敵のHP+20%'},
+{id:'vul',n:'🪶 脆弱の体',d:'常に受けるダメージ1.5倍。敵の筋力+1、敵のHP+20%'},
+{id:'wk',n:'🥀 弱体の呪い',d:'常に与えるダメージ0.75倍。敵のHP+40%'},
+{id:'en',n:'🔋 枯渇',d:'毎ターンのエナジーが2。敵の筋力+1、敵のHP+20%'},
+{id:'hp',n:'💔 脆い命',d:'最大HPが4割で開始。敵のHP+20%'});
+ACH.find(a=>a.id==='ch_all').d='7つのチャレンジをすべて制覇する';ACH.find(a=>a.id==='ch_all').name='塔の挑戦王';
+function cuChal(k){CU.chal=CU.chal&&CU.chal[0]===k?[]:[k];if(typeof CH!=='undefined'&&CH)CH.sel=CU.chal[0]||null;chalView()}
+var CH=null;
+function chalOpen(){CH={ch:0,sel:null};CU={ch:0,deck:cnt(CHARS[0].deck),rel:[],chal:[]};G={scr:'chal'};render()}
+function chalChar(i){CH.ch=i;chalView()}
+function chalView(){if(!CH)CH={ch:0,sel:null};const c=CHARS[CH.ch],sel=CH.sel;
+ $('#app').innerHTML=`<div class="overlay"><h2>🔥 チャレンジモード</h2><p class="stat">キャラを選び、縛りを1つ選んで挑戦。デッキは選んだキャラの初期デッキ、レリックなし。塔を制覇すると専用の実績が解除されます（通常の実績はカスタム同様解除されません）</p>
+<h3>キャラ</h3><div class="dex">${CHARS.map((x,i)=>`<button class="dx${CH.ch===i?' on':''}" style="border-color:${HCOL[i]};border-width:2px;${CH.ch===i?'background:'+HCOL[i]+';color:#fff':'color:'+HCOL[i]}" onclick="chalChar(${i})">${x.k}</button>`).join('')}</div><p class="stat">${c.name}：HP${c.hp}／能力「${c.ab}」${c.d}</p>
+<p class="stat">初期デッキ：${Object.entries(cnt(c.deck)).map(([k,n])=>k+'×'+n).join(' ')}</p>
+<h3>チャレンジ（1つだけ選べる）</h3><div class="btns">${CHALS.map(x=>`<button class="main off rlb${sel===x.id?' on':''}" onclick="CH.sel='${x.id}';chalView()">${sel===x.id?'✔ ':''}${x.n}${ACHS.includes('ch_'+x.id)?' 🏆':''}<small>${x.d}</small></button>`).join('')}</div>
+<div class="btns"><button class="main" ${sel?'':'disabled'} onclick="chalGo()">この条件で挑戦</button><button class="main off" onclick="customOpen()">もどる</button></div></div>`;window.scrollTo(0,0)}
+function chalGo(){if(!CH||!CH.sel)return;CU={ch:CH.ch,deck:cnt(CHARS[CH.ch].deck),rel:[],chal:[CH.sel],f:{t:'',r:'',c:'',q:''}};customStart()}
+{const _r=render;render=function(){if(G&&G.scr==='chal'){chalView();return}return _r.apply(this,arguments)}}
+function chalHtml(){return ''}
+{const _cv=customView;customView=function(){const r=_cv.apply(this,arguments);try{const h2=document.querySelector('.overlay h2');if(h2&&!document.getElementById('chbtn'))h2.insertAdjacentHTML('afterend','<p><button id="chbtn" class="main" onclick="chalOpen()">🔥 チャレンジモードへ</button></p>')}catch(e){}return r}}
+/* harder: apply at battle start */
+{const _st=startTurn;startTurn=function(){try{if(G&&G.custom&&G.chal&&G.chal.length&&G.scr==='battle'&&G.turn===0&&G.e&&!G.e.chD){G.e.chD=1;const f=chOn('wk')?1.4:1.2,sc=o=>{o.maxhp=Math.round(o.maxhp*f);o.cur=Math.round(o.cur*f)};sc(G.e);(G.e.ex||[]).forEach(sc);if(chOn('vul')||chOn('en')){G.e.str=(G.e.str||0)+1;(G.e.ex||[]).forEach(x=>x.str=(x.str||0)+1)}}
+ if(G&&G.chal&&chOn('poi')&&G.scr==='battle'&&G.turn>0&&G.hp>1){G.hp=Math.max(1,G.hp-Math.max(0,(G.floor||1)-1))}}catch(e){}return _st.apply(this,arguments)}}
+{const _cs=customStart;customStart=function(){const c=[...(CU.chal||[])];_cs.apply(this,arguments);if(G&&G.custom&&c.includes('hp')){G.max=Math.max(8,Math.round(CHARS[CU.ch].hp*.4));G.hp=G.max;render()}}}
+
+/* v5.10.25 harder handwriting kanji (junior-high style) with point-cloud matching */
+const TH=(()=>{const box=(a,b,c,d)=>[[[a,b],[a,d]],[[a,b],[c,b],[c,d]],[[a,d],[c,d]]];
+ const tree=(cx,cy,w,h)=>[[[cx-w/2,cy-h*.1],[cx+w/2,cy-h*.1]],[[cx,cy-h/2],[cx,cy+h/2]],[[cx,cy-h*.05],[cx-w/2,cy+h/2]],[[cx,cy-h*.05],[cx+w/2,cy+h/2]]];
+ const day=(a,b,c,d)=>[...box(a,b,c,d),[[a,(b+d)/2],[c,(b+d)/2]]];
+ const yue=(a,b,c,d)=>{const h=d-b;return[[[a,b],[a-.02,d]],[[a,b],[c,b],[c,d]],[[a,b+h*.33],[c,b+h*.33]],[[a,b+h*.66],[c,b+h*.66]]]};
+ const tian=(a,b,c,d)=>[...box(a,b,c,d),[[(a+c)/2,b],[(a+c)/2,d]],[[a,(b+d)/2],[c,(b+d)/2]]];
+ const huo=(cx,cy,s)=>[[[cx-.22*s,cy-.16*s],[cx-.3*s,cy]],[[cx+.22*s,cy-.16*s],[cx+.3*s,cy]],[[cx,cy-.32*s],[cx-.4*s,cy+.4*s]],[[cx,cy],[cx+.4*s,cy+.4*s]]];
+ return{
+ 林:[...tree(.27,.5,.46,.85),...tree(.73,.5,.46,.85)],
+ 森:[...tree(.5,.25,.44,.46),...tree(.27,.74,.44,.46),...tree(.73,.74,.44,.46)],
+ 品:[...box(.3,.05,.7,.4),...box(.05,.55,.45,.92),...box(.55,.55,.95,.92)],
+ 晶:[...day(.3,.04,.7,.46),...day(.04,.54,.46,.96),...day(.54,.54,.96,.96)],
+ 明:[...day(.04,.1,.44,.9),...yue(.56,.06,.96,.94)],
+ 朋:[...yue(.05,.08,.45,.92),...yue(.55,.08,.95,.92)],
+ 男:[...tian(.12,.04,.88,.52),[[.12,.62],[.88,.62],[.84,.9]],[[.52,.32],[.4,.96]]],
+ 回:[...box(.05,.05,.95,.95),...box(.3,.3,.7,.7)],
+ 国:[...box(.05,.05,.95,.95),[[.28,.28],[.72,.28]],[[.32,.5],[.68,.5]],[[.28,.72],[.72,.72]],[[.5,.28],[.5,.72]],[[.62,.6],[.7,.66]]],
+ 困:[...box(.05,.05,.95,.95),...tree(.5,.5,.5,.6)],
+ 田:tian(.1,.1,.9,.9),
+ 古:[[[.1,.25],[.9,.25]],[[.5,.05],[.5,.55]],...box(.22,.58,.78,.95)],
+ 石:[[[.1,.3],[.9,.3]],[[.52,.08],[.12,.72]],...box(.35,.58,.85,.95)],
+ 町:[...tian(.05,.15,.5,.85),[[.58,.2],[.95,.2]],[[.78,.2],[.78,.9]]],
+ 同:[[[.12,.08],[.12,.95]],[[.12,.08],[.88,.08],[.88,.95]],[[.32,.38],[.68,.38]],...box(.32,.5,.68,.78)],
+ 玉:[[[.2,.15],[.8,.15]],[[.28,.5],[.72,.5]],[[.1,.88],[.9,.88]],[[.5,.15],[.5,.88]],[[.65,.62],[.75,.7]]],
+ 月:yue(.15,.05,.85,.95),
+ 炎:[...huo(.5,.27,.9),...huo(.5,.72,.9)],
+ 岩:[[[.5,.04],[.5,.28]],[[.28,.12],[.28,.3],[.72,.3]],[[.72,.12],[.72,.3]],[[.1,.5],[.9,.5]],[[.52,.38],[.15,.72]],...box(.35,.62,.85,.95)],
+ 凶:[[[.12,.12],[.12,.92]],[[.12,.92],[.88,.92],[.88,.12]],[[.35,.3],[.65,.7]],[[.65,.3],[.35,.7]]]}})();
+const HQ3={林:'はやし',森:'もり',品:'しな（品物）',晶:'しょう（結晶）',明:'あかるい',男:'おとこ',回:'まわる',国:'くに',困:'こまる',田:'た（田んぼ）',古:'ふるい',石:'いし',町:'まち',同:'おなじ',玉:'たま',月:'つき',炎:'ほのお',朋:'とも（朋友）',岩:'いわ',凶:'きょう（大凶）'};
+function clOf(strokes,N){const ss=strokes.filter(s=>s&&s.length>=2&&hwLen(s)>.001),L=ss.reduce((a,s)=>a+hwLen(s),0);if(!ss.length||!(L>0))return null;let pts=[];ss.forEach(s=>{const n=Math.max(3,Math.round(N*hwLen(s)/L));pts.push(...hwResample(s,n))});let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;pts.forEach(p=>{x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)});const S=Math.max(x1-x0,y1-y0,1e-6),SX=Math.max(x1-x0,.4*S),SY=Math.max(y1-y0,.4*S),cx=(x0+x1)/2,cy=(y0+y1)/2;const q=pts.map(p=>({x:(p.x-cx)/SX,y:(p.y-cy)/SY}));return{p:q,n:ss.length,L:ss.reduce((a,s)=>a+hwLen(s.map(p=>({x:(p.x)/SX,y:p.y/SY}))),0)}}
+function chm(A,B){let s1=0,s2=0;for(const a of A){let m=9;for(const b of B){const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<m)m=d}s1+=m}for(const b of B){let m=9;for(const a of A){const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<m)m=d}s2+=m}return(s1/A.length+s2/B.length)/2}
+const THC={};Object.keys(TH).forEach(k=>{THC[k]=clOf(TH[k].map(s=>s.map(p=>({x:p[0],y:p[1]}))),90)});Object.keys(HT).forEach(k=>{if(!THC[k])THC[k]=clOf(HT[k].map(s=>s.map(p=>({x:p[0],y:p[1]}))),90)});
+function tcJudge(strokes,target){const u=clOf(strokes,90);if(!u)return{state:'empty'};const ds={};Object.keys(THC).forEach(k=>{ds[k]=chm(u.p,THC[k].p)+.008*Math.abs(u.n-THC[k].n)+.035*Math.abs(Math.log(u.L/THC[k].L))});let best=null,sec=null;Object.keys(ds).sort((a,b)=>ds[a]-ds[b]).forEach(k=>{if(!best)best=k;else if(!sec)sec=k});const dt=ds[target];
+ if(best===target&&dt<TCT.ok&&ds[sec]-dt>=TCT.mg)return{state:'ok',ch:target,dt,ds};if(best!==target&&ds[best]<TCT.ok&&ds[target]-ds[best]>TCT.mg)return{state:'ng',ch:best,dt,ds};return dt<TCT.hold?{state:'hold',ch:target,dt,ds}:{state:'ng',ch:best,dt,ds}}
+var TCT={ok:.09,mg:.004,hold:.12};
+function hqJudge(){if(HW.dend||!HQ)return;const m=document.getElementById('hdm'),r=tcJudge(HW.st,HQ.t);
+ if(r.state==='empty'){m.textContent='何も書かれていません';return}
+ if(r.state==='ok')hqEnd(true,'⭕ 「'+HQ.t+'」正解！');else if(r.state==='ng')hqEnd(false,'❌ '+(r.ch&&r.ch!==HQ.t?'「'+r.ch+'」と判定。':'判定できず…')+'正解は「'+HQ.t+'」');
+ else{HW.dtry++;if(HW.dtry>=3)hqEnd(false,'❌ 判定できず…正解は「'+HQ.t+'」');else{m.textContent='⚠ 判定保留：もう少しはっきり書いてみよう（'+HW.dtry+'/3）';hdClear()}}}
+{const _a=hqAsk;hqAsk=function(cb){_a.apply(this,arguments);const ks=Object.keys(HQ3),t=ks[rnd(ks.length)];HQ.t=t;HW.dtg=t;const p=document.querySelector('#hd p');if(p)p.textContent='「'+HQ3[t]+'」を表す漢字を書こう'}}
+CHALS.forEach(x=>{x.d=x.d.replace('20字から出題','中学レベルの漢字20字から出題')});
+CARDS['写'].d='手書きクイズ。中学レベルの漢字を書く。正解で16ダメージ';
+
+/* v5.10.26 handwriting: adapt to user style + learn from correct answers + kanji practice */
+var LRN={};try{LRN=JSON.parse(localStorage.getItem('kanjiLrn')||'{}')||{}}catch(e){LRN={}}
+var LRNC={};
+function lrnBuild(){LRNC={};Object.keys(LRN).forEach(k=>{LRNC[k]=(LRN[k]||[]).map(st=>clOf(st.map(s=>s.map(p=>({x:p[0],y:p[1]}))),90)).filter(Boolean)})}
+lrnBuild();
+function lrnSave(){try{localStorage.setItem('kanjiLrn',JSON.stringify(LRN))}catch(e){}lrnBuild()}
+function lrnAdd(k,strokes){const ss=strokes.filter(s=>s&&s.length>=2&&hwLen(s)>.001).map(s=>hwResample(s,24).map(p=>[+p.x.toFixed(3),+p.y.toFixed(3)]));if(!ss.length)return;(LRN[k]=LRN[k]||[]).push(ss);if(LRN[k].length>6)LRN[k].shift();lrnSave()}
+var PRF={n:-1,tol:0,ok:.09};
+function tcProf(){const S=(HWD&&HWD.samples||[]).filter(s=>s.label==='ok');if(PRF.n===S.length)return PRF;PRF={n:S.length,tol:0,ok:.09};if(S.length>=3){const w=[],c=[];S.forEach(s=>{const t=THC[s.ch],u=clOf(s.strokes,90);if(!t||!u)return;let a=0;u.p.forEach(p=>{let m=9;t.p.forEach(q=>{const d=Math.hypot(p.x-q.x,p.y-q.y);if(d<m)m=d});a+=m});w.push(a/u.p.length);c.push(chm(u.p,t.p))});
+ if(w.length>=3){w.sort((a,b)=>a-b);c.sort((a,b)=>a-b);const mw=w[w.length>>1],mc=c[c.length>>1];PRF.tol=Math.min(.03,Math.max(0,mw*.6-.004));PRF.ok=.09+Math.min(.04,Math.max(0,mc-.03)*.8)}}return PRF}
+function chm2(A,B,tol){let s1=0,s2=0;for(const a of A){let m=9;for(const b of B){const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<m)m=d}s1+=Math.max(0,m-tol)}for(const b of B){let m=9;for(const a of A){const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<m)m=d}s2+=Math.max(0,m-tol)}return(s1/A.length+s2/B.length)/2}
+function icpFit(A,B){let P=A.map(p=>({x:p.x,y:p.y}));for(let it=0;it<3;it++){const pr=P.map(p=>{let m=9,q=null;for(const b of B){const d=(p.x-b.x)**2+(p.y-b.y)**2;if(d<m){m=d;q=b}}return q});let sxx=0,sxy=0,sx=0,syy=0,sy=0,n=P.length,bx=[0,0,0],by=[0,0,0];P.forEach((p,i)=>{const q=pr[i];sxx+=p.x*p.x;sxy+=p.x*p.y;sx+=p.x;syy+=p.y*p.y;sy+=p.y;bx[0]+=p.x*q.x;bx[1]+=p.y*q.x;bx[2]+=q.x;by[0]+=p.x*q.y;by[1]+=p.y*q.y;by[2]+=q.y});
+ const M=[[sxx,sxy,sx],[sxy,syy,sy],[sx,sy,n]],det=m=>m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])-m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])+m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]),D=det(M);if(Math.abs(D)<1e-9)break;
+ const sol=v=>[0,1,2].map(c=>{const T=M.map((r,i)=>r.map((x,j)=>j===c?v[i]:x));return det(T)/D});const ax=sol(bx),ay=sol(by);
+ const sc=Math.hypot(ax[0],ay[0]),sc2=Math.hypot(ax[1],ay[1]);if(sc<.8||sc>1.25||sc2<.8||sc2>1.25||Math.abs(ax[1])>.25||Math.abs(ay[0])>.25)break;
+ P=P.map(p=>({x:p.x+.75*((ax[0]*p.x+ax[1]*p.y+ax[2])-p.x),y:p.y+.75*((ay[0]*p.x+ay[1]*p.y+ay[2])-p.y)}))}return P}
+function tcJudge(strokes,target){const u=clOf(strokes,90);if(!u)return{state:'empty'};const P=tcProf(),tol=P.tol,ds={};
+ const f=(c)=>chm2(icpFit(u.p,c.p),c.p,tol)+.008*Math.abs(u.n-c.n)+.035*Math.abs(Math.log(u.L/c.L));
+ Object.keys(THC).forEach(k=>{const d0=f(THC[k]);let d=d0;(LRNC[k]||[]).forEach(c=>{const e=(d0+f(c))/2;if(e<d)d=e});ds[k]=d});
+ let best=null,sec=null;Object.keys(ds).sort((a,b)=>ds[a]-ds[b]).forEach(k=>{if(!best)best=k;else if(!sec)sec=k});const dt=ds[target],OK=P.ok,MG=TCT.mg,HD=OK+.03;
+ if(best===target&&dt<OK&&ds[sec]-dt>=MG)return{state:'ok',ch:target,dt,ds};if(best!==target&&ds[best]<OK&&ds[target]-ds[best]>MG)return{state:'ng',ch:best,dt,ds};return dt<HD?{state:'hold',ch:target,dt,ds}:{state:'ng',ch:best,dt,ds}}
+{const _j=hqJudge;hqJudge=function(){const st=HW.st.map(s=>s.slice()),t=HQ&&HQ.t;_j.apply(this,arguments);try{if(HW.dend&&t&&tcJudge(st,t).state==='ok')lrnAdd(t,st)}catch(e){}}}
+/* practice */
+var KP=null;
+function kpOpen(){closeDeck();if(document.getElementById('hd'))return;KP={n:0,ok:0};kpNext()}
+function kpNext(){const old=document.getElementById('hd');if(old)old.remove();const ks=Object.keys(HQ3),t=ks[rnd(ks.length)];KP.t=t;KP.done=false;HW.dend=false;HW.dtry=0;HW.st=[];HQ=null;
+ const o=document.createElement('div');o.id='hd';o.className='modal';o.innerHTML=`<div class="mbox" style="max-width:420px;text-align:center"><h2>✍ 漢字テスト（中学レベル20字）</h2><p>「${HQ3[t]}」を表す漢字を書こう</p><canvas id="hdc"></canvas><div id="hdm" class="stat"></div><div class="btns"><button class="main off" onclick="hdClear()">書き直し</button><button class="main" onclick="kpJudge()">判定</button></div><div class="btns" id="kpb"></div><div class="stat" id="kps"></div><div class="btns"><button class="main off" onclick="kpReset()">学習データを消す</button><button class="main off" onclick="kpClose()">閉じる</button></div></div>`;
+ document.body.appendChild(o);const cv=document.getElementById('hdc'),sz=Math.min(280,(window.innerWidth||320)-60),dp=window.devicePixelRatio||1;cv.style.width=sz+'px';cv.style.height=sz+'px';cv.width=Math.floor(sz*dp);cv.height=Math.floor(sz*dp);HW.cv=cv;hwBind(cv);hwDraw();kpStat()}
+function kpStat(){const e=document.getElementById('kps');if(!e)return;const P=tcProf(),n=Object.values(LRN).reduce((a,l)=>a+l.length,0);e.textContent='成績 '+KP.ok+'/'+KP.n+'　学習データ '+n+'件　筆跡への適応：'+(P.tol>0?'あり(ゆるさ'+(P.tol*100).toFixed(1)+')':'手書きテストを5種類×数回やると適応されます')}
+function kpJudge(){if(!KP||KP.done)return;const m=document.getElementById('hdm'),r=tcJudge(HW.st,KP.t);if(r.state==='empty'){m.textContent='何も書かれていません';return}
+ KP.n++;const b=document.getElementById('kpb');
+ if(r.state==='ok'){KP.ok++;KP.done=true;lrnAdd(KP.t,HW.st);m.textContent='⭕ 「'+KP.t+'」正解！（学習しました）';b.innerHTML='<button class="main" onclick="kpNext()">次の問題</button>'}
+ else{KP.done=true;m.textContent=(r.state==='ng'?'❌ '+(r.ch!==KP.t?'「'+r.ch+'」と判定。':'判定できず…'):'⚠ 判定保留…')+' 正解は「'+KP.t+'」';KP.st=HW.st.map(s=>s.slice());b.innerHTML='<button class="main" onclick="kpLearn()">これは正解のつもり（登録）</button><button class="main off" onclick="kpNext()">次の問題</button>'}
+ kpStat()}
+function kpLearn(){if(!KP||!KP.st)return;lrnAdd(KP.t,KP.st);KP.st=null;document.getElementById('hdm').textContent='登録しました。この書き方も正解になります';document.getElementById('kpb').innerHTML='<button class="main" onclick="kpNext()">次の問題</button>';kpStat()}
+function kpReset(){LRN={};lrnSave();kpStat()}
+function kpClose(){const o=document.getElementById('hd');if(o)o.remove();HW.cv=null;KP=null}
+{const _ob=optBody;optBody=function(){let h=_ob.apply(this,arguments);if(OT==='vol')return h;const m=h.indexOf('onclick="hwOpen()"');if(m<0)return h;const b=h.lastIndexOf('<button',m);return h.slice(0,b)+'<button class="main off" onclick="kpOpen()">✍ 漢字テスト（中学レベル20字・学習して精度UP）</button>'+h.slice(b)}}
+
+/* v5.10.27 expansion packs (load JSON file in browser) */
+var PK=[];try{PK=JSON.parse(localStorage.getItem('kanjiPacks')||'[]')||[]}catch(e){PK=[]}
+var PKADD=[];
+const PKSAMPLE={format:'kanjitower-pack',version:1,name:'サンプルパック',author:'',description:'拡張パックの見本です。コピーして問題を書き換えて使えます。',questions:[
+{type:'choice',q:'「漢」の部首はどれ？',options:['さんずい','しんにょう','くさかんむり','きへん'],answer:0},
+{type:'read',kanji:'憂鬱',answer:'ゆううつ',wrong:['ゆうゆう','ゆうそう','うゆううつ']},
+{type:'rad',kanji:'海',answer:'さんずい',wrong:['にすい','ごんべん','きへん']},
+{type:'hw',kanji:'川',hint:'かわ（この字はゲーム内のお手本を使います）'},
+{type:'hw',kanji:'士',hint:'さむらい（武士の字）',strokes:[[[.1,.3],[.9,.3]],[[.5,.08],[.5,.92]],[[.25,.9],[.75,.9]]]}]};
+function pkEsc(s){return String(s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])).slice(0,200)}
+function pkValidate(o){const err=[];if(!o||typeof o!=='object'||Array.isArray(o)||!Array.isArray(o.questions))return{err:['"questions" の配列がありません']};if(o.questions.length>500)return{err:['問題が多すぎます(最大500問)']};const qs=[];
+ o.questions.forEach((x,i)=>{const n='問'+(i+1)+'：';if(!x||typeof x!=='object'){err.push(n+'形式が違います');return}const t=x.type;
+  if(t==='choice'){if(typeof x.q!=='string'||!Array.isArray(x.options)||x.options.length<2||x.options.length>6||x.options.some(v=>typeof v!=='string'||!v)||!Number.isInteger(x.answer)||x.answer<0||x.answer>=x.options.length){err.push(n+'choice は q・options(2〜6個)・answer(番号)が必要です');return}qs.push({t:'choice',q:pkEsc(x.q),o:x.options.map(pkEsc),a:x.answer,cat:['read','rad','ord'].includes(x.cat)?x.cat:''})}
+  else if(t==='read'||t==='rad'){if(typeof x.kanji!=='string'||typeof x.answer!=='string'||!x.answer){err.push(n+t+' は kanji と answer が必要です');return}const w=Array.isArray(x.wrong)?x.wrong.filter(v=>typeof v==='string'&&v&&v!==x.answer).slice(0,5):[];qs.push({t,k:pkEsc(x.kanji),ans:pkEsc(x.answer),w:w.map(pkEsc)})}
+  else if(t==='hw'){const k=Array.from(String(x.kanji||''));if(k.length!==1){err.push(n+'hw の kanji は1文字です');return}let st=null;if(x.strokes!==undefined){if(!Array.isArray(x.strokes)||x.strokes.length<1||x.strokes.length>12||x.strokes.some(s=>!Array.isArray(s)||s.length<2||s.length>100||s.some(p=>!Array.isArray(p)||p.length!==2||!Number.isFinite(p[0])||!Number.isFinite(p[1])||p[0]<-.5||p[0]>1.5||p[1]<-.5||p[1]>1.5))){err.push(n+'strokes の形式が違います');return}st=x.strokes.map(s=>s.map(p=>[+(+p[0]).toFixed(3),+(+p[1]).toFixed(3)]))}
+   qs.push({t:'hw',k:k[0],hint:pkEsc(x.hint||'この漢字'),st})}
+  else err.push(n+'type は choice / read / rad / hw のどれかです')});
+ if(!qs.length)err.push('使える問題が1つもありません');return{err,qs}}
+function pkSave(){try{localStorage.setItem('kanjiPacks',JSON.stringify(PK))}catch(e){toast('保存できませんでした(容量不足)')}}
+function pkApply(){PKADD.forEach(k=>{delete HQ3[k];if(!HT[k]&&!TH[k])delete THC[k];else if(TH[k]===undefined&&HT[k])THC[k]=clOf(HT[k].map(s=>s.map(p=>({x:p[0],y:p[1]}))),90)});PKADD=[];window._pkTH=window._pkTH||{};Object.keys(window._pkTH).forEach(k=>{delete THC[k]});window._pkTH={};
+ PK.filter(p=>p.on).forEach(p=>p.qs.forEach(q=>{if(q.t!=='hw'||HQ3[q.k])return;if(q.st){THC[q.k]=clOf(q.st.map(s=>s.map(pt=>({x:pt[0],y:pt[1]}))),90);window._pkTH[q.k]=1;HQ3[q.k]=q.hint;PKADD.push(q.k)}else if(THC[q.k]){HQ3[q.k]=q.hint;PKADD.push(q.k)}}))}
+pkApply();
+function pkPick(cat){const l=[];PK.filter(p=>p.on).forEach(p=>p.qs.forEach(q=>{if(q.t==='choice'){if(!q.cat||q.cat===cat)l.push(q)}else if(q.t===cat)l.push(q)}));return l}
+function pkMake(q,cat){if(q.t==='choice'){const o=q.o.slice(),a=o[q.a];const s=sh(o);return{q:q.q,o:s,a:s.indexOf(a)}}
+ const pool=[];PK.filter(p=>p.on).forEach(p=>p.qs.forEach(x=>{if(x.t===q.t&&x!==q)pool.push(x.ans)}));let w=q.w.slice();const bi=q.t==='read'?Object.values(RD):[...new Set(Object.values(RADS))];while(w.length<3){const c=(pool.length&&Math.random()<.5?pool:bi)[rnd((pool.length&&Math.random()<.5?pool:bi).length)];if(c&&c!==q.ans&&!w.includes(c))w.push(c)}
+ const o=sh([q.ans,...w.slice(0,3)]);return{q:q.t==='read'?`「${q.k}」の読みは？`:`「${q.k}」の部首は？`,o,a:o.indexOf(q.ans)}}
+[['mkQuiz','ord'],['mkRead','read'],['mkRad','rad']].forEach(([fn,cat])=>{const orig=window[fn];if(typeof orig!=='function')return;window[fn]=function(){try{const l=pkPick(cat);if(l.length&&Math.random()<.5)return pkMake(l[rnd(l.length)],cat)}catch(e){}return orig.apply(this,arguments)}});
+/* UI */
+function pkOpen(){closeDeck();if(document.getElementById('pkm'))return;const o=document.createElement('div');o.id='pkm';o.className='modal';document.body.appendChild(o);pkView()}
+function pkView(msg){const o=document.getElementById('pkm');if(!o)return;o.innerHTML=`<div class="mbox" style="max-width:460px"><h2>📦 拡張パック</h2><p class="stat">JSONファイルを読み込むと、問題が追加されます。追加した問題は、必殺クイズ・チャレンジ・漢字テストに混ざって出ます。データはこのブラウザに保存されます。</p>
+<div class="btns"><button class="main" onclick="document.getElementById('pkf').click()">📂 ファイルを選んで読み込む</button><button class="main off" onclick="pkSampleDl()">見本をダウンロード</button></div>
+<input type="file" id="pkf" accept=".json,application/json" multiple style="display:none" onchange="pkLoad(this.files)">
+${msg?`<div class="stat" style="white-space:pre-wrap;color:var(--red);margin:6px 0">${msg}</div>`:''}
+<h3>読み込み済み（${PK.length}）</h3>${PK.map((p,i)=>`<div class="own"><span style="flex:1;text-align:left"><b>${p.name}</b>${p.author?'／'+p.author:''}<br><small>${p.desc||''} 問題${p.qs.length}件</small></span><button class="main off cf" onclick="pkTog(${i})">${p.on?'✔ オン':'オフ'}</button><button class="main off cf" onclick="pkDel(${i})">削除</button></div>`).join('')||'<div class="stat">まだありません</div>'}
+<div class="btns"><button class="main" onclick="document.getElementById('pkm').remove()">閉じる</button></div></div>`}
+async function pkLoad(files){let msg='';for(const f of files){try{if(f.size>2e6){msg+=f.name+'：ファイルが大きすぎます(2MBまで)\n';continue}const o=JSON.parse(await f.text()),r=pkValidate(o);if(!r.qs||!r.qs.length){msg+=f.name+'：読み込めません\n'+r.err.join('\n')+'\n';continue}const name=pkEsc(o.name||f.name.replace(/\.json$/i,'')),i=PK.findIndex(p=>p.name===name),p={name,author:pkEsc(o.author||''),desc:pkEsc(o.description||''),on:true,qs:r.qs};if(i>=0)PK[i]=p;else PK.push(p);msg+=f.name+'：'+r.qs.length+'問を読み込みました'+(r.err.length?'（'+r.err.length+'件は使えず除外）\n'+r.err.slice(0,5).join('\n'):'')+'\n'}catch(e){msg+=f.name+'：JSONとして読めません（'+e.message+'）\n'}}
+ pkSave();pkApply();pkView(msg.trim())}
+function pkTog(i){PK[i].on=!PK[i].on;pkSave();pkApply();pkView()}
+function pkDel(i){PK.splice(i,1);pkSave();pkApply();pkView()}
+function pkSampleDl(){const b=new Blob([JSON.stringify(PKSAMPLE,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='sample-pack.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+{const _ob=optBody;optBody=function(){let h=_ob.apply(this,arguments);if(OT==='vol')return h;const m=h.indexOf('onclick="hwOpen()"');if(m<0)return h;const b=h.lastIndexOf('<button',m);return h.slice(0,b)+'<button class="main off" onclick="pkOpen()">📦 拡張パック（問題の追加）</button>'+h.slice(b)}}
+
+/* v5.10.28 per-type pack templates */
+const PKT={
+choice:{file:'pack-template-4択.json',label:'4択',d:{format:'kanjitower-pack',version:1,name:'4択問題パック（名前を変えてね）',author:'あなたの名前',description:'4択問題のテンプレート',_説明:'questions に問題を足していく。type は choice。options は2〜6個、answer は正解の番号(0から数える)。cat は省略可(read/rad/ord にすると、その種類のクイズカードで優先して出る)',questions:[
+{type:'choice',q:'「海」の部首はどれ？',options:['さんずい','にすい','きへん','ごんべん'],answer:0,cat:'rad'},
+{type:'choice',q:'「雨降って地固まる」と同じ意味のことわざは？',options:['災い転じて福となす','急がば回れ','猿も木から落ちる','石の上にも三年'],answer:0}]}},
+read:{file:'pack-template-読み.json',label:'読み',d:{format:'kanjitower-pack',version:1,name:'読み問題パック（名前を変えてね）',author:'あなたの名前',description:'読み問題のテンプレート',_説明:'type は read。kanji は読みを問う語、answer は正しい読み、wrong は間違いの選択肢(最大5個・省略可、足りない分は自動で補う)',questions:[
+{type:'read',kanji:'憂鬱',answer:'ゆううつ',wrong:['ゆうゆう','ゆうそう','うゆううつ']},
+{type:'read',kanji:'躊躇',answer:'ちゅうちょ'}]}},
+rad:{file:'pack-template-部首.json',label:'部首',d:{format:'kanjitower-pack',version:1,name:'部首問題パック（名前を変えてね）',author:'あなたの名前',description:'部首問題のテンプレート',_説明:'type は rad。kanji は部首を問う漢字、answer は正しい部首名、wrong は間違いの選択肢(最大5個・省略可、足りない分は自動で補う)',questions:[
+{type:'rad',kanji:'潮',answer:'さんずい',wrong:['つき','にすい','くさかんむり']},
+{type:'rad',kanji:'窓',answer:'あなかんむり'}]}},
+hw:{file:'pack-template-手書き.json',label:'手書き',d:{format:'kanjitower-pack',version:1,name:'手書き問題パック（名前を変えてね）',author:'あなたの名前',description:'手書き問題のテンプレート',_説明:'type は hw。kanji は書かせる漢字(1文字)、hint は読みなどのヒント。strokes は お手本の線(省略可)。線は[[x,y],...]の並びで、x・yは0〜1(左上が0,0、右下が1,1)。ゲーム内に元からお手本がある字(一二三十人入八大小山川口日土上下木水火中、林森品晶明男回国困田古石町同玉月炎朋岩凶)は strokes を省略できる',questions:[
+{type:'hw',kanji:'川',hint:'かわ（元のお手本を使う）'},
+{type:'hw',kanji:'士',hint:'さむらい（武士の字）',strokes:[[[.1,.3],[.9,.3]],[[.5,.08],[.5,.92]],[[.25,.9],[.75,.9]]]}]}}};
+function pkTplDl(k){const t=PKT[k],b=new Blob([JSON.stringify(t.d,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=t.file;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+{const _v=pkView;pkView=function(){_v.apply(this,arguments);try{const bs=document.querySelector('#pkm .btns');if(bs&&!document.getElementById('pkt'))bs.insertAdjacentHTML('afterend','<div id="pkt"><div class="stat">問題タイプ別のテンプレートをダウンロード：</div><div class="btns">'+Object.keys(PKT).map(k=>`<button class="main off cf" onclick="pkTplDl('${k}')">${PKT[k].label}</button>`).join('')+'</div></div>')}catch(e){}}}
+
+/* v5.10.29 handwriting data pack (KanjiVG etc.) */
+var HWDB=new Map(),HWP=[],HWCC={},HWGR={},HWREADY=false,HWPEND=null;
+function hdbOpen(){return new Promise((res,rej)=>{try{const r=indexedDB.open('kanjiHW',1);r.onupgradeneeded=()=>r.result.createObjectStore('packs',{keyPath:'name'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
+async function hdbAll(){const d=await hdbOpen();return new Promise((res,rej)=>{const q=d.transaction('packs').objectStore('packs').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)})}
+async function hdbPut(p){const d=await hdbOpen();return new Promise((res,rej)=>{const t=d.transaction('packs','readwrite');t.objectStore('packs').put(p);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})}
+async function hdbDel(n){const d=await hdbOpen();return new Promise((res,rej)=>{const t=d.transaction('packs','readwrite');t.objectStore('packs').delete(n);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})}
+function hwdbRebuild(){HWDB=new Map();HWCC={};HWGR={};HWP.filter(p=>p.on).forEach(p=>{Object.keys(p.glyphs).forEach(k=>{if(!HWDB.has(k))HWDB.set(k,p.glyphs[k])})});try{pkApply()}catch(e){}}
+hdbAll().then(l=>{HWP=l;HWREADY=true;hwdbRebuild()}).catch(()=>{HWREADY=true});
+function hwdbCloud(k){if(THC[k])return THC[k];if(HWCC[k])return HWCC[k];const g=HWDB.get(k);if(!g)return null;const c=clOf(g.map(s=>{const a=[];for(let i=0;i+1<s.length;i+=2)a.push({x:s[i],y:s[i+1]});return a}),90);if(c)HWCC[k]=c;return c}
+function gridOf(p){const g=new Array(64).fill(0);p.forEach(q=>{const x=Math.min(7,Math.max(0,Math.floor((q.x+.5)*8))),y=Math.min(7,Math.max(0,Math.floor((q.y+.5)*8)));g[y*8+x]++});const n=p.length;return g.map(v=>v/n)}
+function hwdbGrid(k){return HWGR[k]||(HWGR[k]=gridOf(hwdbCloud(k).p))}
+function tcJudge(strokes,target){const u=clOf(strokes,90);if(!u)return{state:'empty'};const P=tcProf(),tol=P.tol,ds={};
+ const f=(c)=>chm2(icpFit(u.p,c.p),c.p,tol)+.008*Math.abs(u.n-c.n)+.035*Math.abs(Math.log(u.L/c.L));
+ const keys=new Set(Object.keys(THC));if(HWDB.size){const ug=gridOf(u.p),sc=[];HWDB.forEach((g,k)=>{if(THC[k])return;const gr=hwdbGrid(k);let d=0;for(let i=0;i<64;i++)d+=Math.abs(gr[i]-ug[i]);sc.push([d,k])});sc.sort((a,b)=>a[0]-b[0]).slice(0,30).forEach(x=>keys.add(x[1]));keys.add(target)}
+ if(!hwdbCloud(target))return{state:'ng',ch:null,dt:9,ds};
+ keys.forEach(k=>{const c0=hwdbCloud(k);if(!c0)return;const d0=f(c0);let d=d0;(LRNC[k]||[]).forEach(c=>{const e=(d0+f(c))/2;if(e<d)d=e});ds[k]=d});
+ let best=null,sec=null;Object.keys(ds).sort((a,b)=>ds[a]-ds[b]).forEach(k=>{if(!best)best=k;else if(!sec)sec=k});const dt=ds[target],OK=P.ok,MG=TCT.mg,HD=OK+.03;
+ if(best===target&&dt<OK&&ds[sec]-dt>=MG)return{state:'ok',ch:target,dt,ds};if(best!==target&&ds[best]<OK&&ds[target]-ds[best]>MG)return{state:'ng',ch:best,dt,ds};return dt<HD?{state:'hold',ch:target,dt,ds}:{state:'ng',ch:best,dt,ds}}
+/* apply: allow hw questions without strokes if glyph exists in an enabled data pack */
+pkApply=function(){PKADD.forEach(k=>{delete HQ3[k];if(!HT[k]&&!TH[k])delete THC[k];else if(TH[k]===undefined&&HT[k])THC[k]=clOf(HT[k].map(s=>s.map(p=>({x:p[0],y:p[1]}))),90)});PKADD=[];window._pkTH=window._pkTH||{};Object.keys(window._pkTH).forEach(k=>{delete THC[k]});window._pkTH={};
+ PK.filter(p=>p.on).forEach(p=>p.qs.forEach(q=>{if(q.t!=='hw'||HQ3[q.k])return;if(q.st){THC[q.k]=clOf(q.st.map(s=>s.map(pt=>({x:pt[0],y:pt[1]}))),90);window._pkTH[q.k]=1;HQ3[q.k]=q.hint;PKADD.push(q.k)}else if(THC[q.k]||HWDB.has(q.k)){HQ3[q.k]=q.hint;PKADD.push(q.k)}}))};
+pkApply();
+function pkValidateGlyphs(o){const err=[];if(!o||typeof o.glyphs!=='object'||Array.isArray(o.glyphs)||!o.glyphs)return{err:['"glyphs" がありません']};const out={};let n=0;
+ for(const k of Object.keys(o.glyphs)){if(Array.from(k).length!==1){err.push('「'+k+'」：キーは1文字です');continue}const g=o.glyphs[k];if(!Array.isArray(g)||g.length<1||g.length>30||g.some(s=>!Array.isArray(s)||s.length<4||s.length>240||s.length%2||s.some(v=>!Number.isFinite(v)||v<-.5||v>1.5))){err.push('「'+k+'」：線データの形式が違います');continue}out[k]=g.map(s=>s.map(v=>+(+v).toFixed(3)));n++;if(n>9000)break}
+ if(!n)err.push('使える漢字データがありません');return{err,glyphs:out,n}}
+pkLoad=async function(files){let msg='';for(const f of files){try{if(f.size>16e6){msg+=f.name+'：ファイルが大きすぎます(16MBまで)\n';continue}const o=JSON.parse(await f.text());
+  if(o&&(o.format==='kanjitower-hwpack'||o.glyphs)){const r=pkValidateGlyphs(o);if(!r.n){msg+=f.name+'：読み込めません\n'+r.err.slice(0,5).join('\n')+'\n';continue}HWPEND={name:pkEsc(o.name||f.name.replace(/\.json$/i,'')),license:pkEsc(o.license||''),source:pkEsc(o.source||''),glyphs:r.glyphs,n:r.n,bad:r.err.length,file:f.name};continue}
+  if(f.size>2e6){msg+=f.name+'：ファイルが大きすぎます(問題パックは2MBまで)\n';continue}
+  const r=pkValidate(o);if(!r.qs||!r.qs.length){msg+=f.name+'：読み込めません\n'+r.err.join('\n')+'\n';continue}const name=pkEsc(o.name||f.name.replace(/\.json$/i,'')),i=PK.findIndex(p=>p.name===name),p={name,author:pkEsc(o.author||''),desc:pkEsc(o.description||''),on:true,qs:r.qs};if(i>=0)PK[i]=p;else PK.push(p);msg+=f.name+'：'+r.qs.length+'問を読み込みました'+(r.err.length?'（'+r.err.length+'件は使えず除外）\n'+r.err.slice(0,5).join('\n'):'')+'\n'}catch(e){msg+=f.name+'：JSONとして読めません（'+e.message+'）\n'}}
+ pkSave();pkApply();if(HWPEND)pkWarn(msg.trim());else pkView(msg.trim())};
+function pkWarn(msg){const o=document.getElementById('pkm');if(!o||!HWPEND)return;const p=HWPEND;o.innerHTML=`<div class="mbox" style="max-width:460px"><h2>⚠ 手書きシステムが変わります</h2>
+<p><b>${p.name}</b>（${p.n}字${p.bad?'／'+p.bad+'字は除外':''}）を読み込もうとしています。</p>
+<div class="stat" style="text-align:left;line-height:1.6">・手書き問題で、<b>お手本のない字</b>も出題できるようになります（問題パックの hw 問題で strokes を省略した字）。<br>・判定の比較対象が増えるため、<b>いまの20字の判定も、少し変わる可能性</b>があります（似た字と取り違えやすくなる／判定に時間がかかる）。<br>・データはこのブラウザの保存領域(IndexedDB)に入り、読み込みに数秒かかることがあります。<br>・元に戻すには、読み込んだ手書きデータを「削除」します。<br>${p.license?'・ライセンス：'+p.license+'<br>':''}${p.source?'・出典：'+p.source+'<br>':''}</div>
+${msg?`<div class="stat" style="white-space:pre-wrap">${msg}</div>`:''}
+<div class="btns"><button class="main" onclick="pkWarnOk()">理解して読み込む</button><button class="main off" onclick="HWPEND=null;pkView()">やめる</button></div></div>`}
+async function pkWarnOk(){const p=HWPEND;HWPEND=null;if(!p)return;const rec={name:p.name,license:p.license,source:p.source,n:p.n,on:true,glyphs:p.glyphs};try{await hdbPut(rec);const i=HWP.findIndex(x=>x.name===rec.name);if(i>=0)HWP[i]=rec;else HWP.push(rec);hwdbRebuild();pkView(p.name+'：'+p.n+'字を読み込みました')}catch(e){pkView('保存できませんでした：'+(e&&e.message||e)+'\n(プライベートモードや容量不足の可能性があります)')}}
+async function hwpTog(i){HWP[i].on=!HWP[i].on;try{await hdbPut(HWP[i])}catch(e){}hwdbRebuild();pkView()}
+async function hwpDel(i){const n=HWP[i].name;HWP.splice(i,1);try{await hdbDel(n)}catch(e){}hwdbRebuild();pkView()}
+pkView=function(msg){const o=document.getElementById('pkm');if(!o)return;const hwq=p=>p.qs.filter(q=>q.t==='hw'&&!q.st&&!THC[q.k]&&!HWDB.has(q.k)).length;
+ o.innerHTML=`<div class="mbox" style="max-width:460px"><h2>📦 拡張パック</h2><p class="stat">JSONファイルを読み込むと、問題が追加されます。追加した問題は、必殺クイズ・チャレンジ・漢字テストに混ざって出ます。データはこのブラウザに保存されます。</p>
+<div class="btns"><button class="main" onclick="document.getElementById('pkf').click()">📂 ファイルを選んで読み込む</button><button class="main off" onclick="pkSampleDl()">見本をダウンロード</button></div>
+<div id="pkt"><div class="stat">テンプレートをダウンロード：</div><div class="btns">${Object.keys(PKT).map(k=>`<button class="main off cf" onclick="pkTplDl('${k}')">${PKT[k].label}</button>`).join('')}</div></div>
+<input type="file" id="pkf" accept=".json,application/json" multiple style="display:none" onchange="pkLoad(this.files)">
+${msg?`<div class="stat" style="white-space:pre-wrap;color:var(--red);margin:6px 0">${msg}</div>`:''}
+<h3>問題パック（${PK.length}）</h3>${PK.map((p,i)=>{const w=hwq(p);return `<div class="own"><span style="flex:1;text-align:left"><b>${p.name}</b>${p.author?'／'+p.author:''}<br><small>${p.desc||''} 問題${p.qs.length}件${w?`<br><span style="color:var(--red)">手書き${w}件は、お手本がなく出題されません</span>`:''}</small></span><button class="main off cf" onclick="pkTog(${i})">${p.on?'✔ オン':'オフ'}</button><button class="main off cf" onclick="pkDel(${i})">削除</button></div>`}).join('')||'<div class="stat">まだありません</div>'}
+<h3>手書きデータパック（${HWP.length}）</h3><div class="stat">全漢字の手書き判定に使う、漢字の線データです（KanjiVGなどから変換したもの）。読み込むと手書きシステムが拡張されます。</div>${HWP.map((p,i)=>`<div class="own"><span style="flex:1;text-align:left"><b>${p.name}</b><br><small>${p.n}字 ${p.license||''}</small></span><button class="main off cf" onclick="hwpTog(${i})">${p.on?'✔ オン':'オフ'}</button><button class="main off cf" onclick="hwpDel(${i})">削除</button></div>`).join('')||'<div class="stat">まだありません</div>'}
+<div class="btns"><button class="main" onclick="document.getElementById('pkm').remove()">閉じる</button></div></div>`};
+PKT.hwdata={file:'pack-template-手書きデータ編.json',label:'手書きデータ',d:{format:'kanjitower-hwpack',version:1,name:'手書きデータ（名前を変えてね）',license:'CC BY-SA 3.0 (KanjiVG)',source:'https://kanjivg.tagaini.net/',_説明:'glyphs に「漢字1文字: 線のリスト」を入れる。線は[x1,y1,x2,y2,...]の平らな数字の並び。x,yは0〜1(左上が0,0)。通常は付属の変換スクリプト kanjivg_to_pack.py で KanjiVG から作る',glyphs:{士:[[.1,.3,.9,.3],[.5,.08,.5,.92],[.25,.9,.75,.9]],干:[[.2,.2,.8,.2],[.1,.5,.9,.5],[.5,.08,.5,.95]]}}};
+
+/* v5.10.30 in-game pack catalog (packs/index.json on the site) */
+var PKNET={list:null,err:'',f:'',busy:false};
+function pkRelOk(s){return typeof s==='string'&&s&&!/^[a-z][a-z0-9+.-]*:/i.test(s)&&!s.startsWith('/')&&!s.startsWith('\\')&&!s.includes('..')&&!s.includes('//')&&s.length<200}
+function pkItems(o){const a=Array.isArray(o)?o:(o&&(o.packs||o.items||o.list||o.data))||[];return Array.isArray(a)?a:[]}
+function pkItem(it){if(!it||typeof it!=='object')return null;const file=it.file||it.path||it.url||it.href||it.download||it.src;if(!pkRelOk(file))return null;let ty=it.type||it.types||it.kind||it.category||'';if(Array.isArray(ty))ty=ty.join('・');return{file,name:pkEsc(it.name||it.title||file),author:pkEsc(it.author||it.by||''),type:pkEsc(ty),count:it.count!=null?it.count:(it.questions!=null?it.questions:(it.n!=null?it.n:'')),desc:pkEsc(it.description||it.desc||it.summary||''),license:pkEsc(it.license||''),size:it.size}}
+async function pkNetLoad(){if(PKNET.busy)return;PKNET.busy=true;PKNET.err='';pkNetRender();
+ try{const r=await fetch('packs/index.json',{cache:'no-cache'});if(!r.ok)throw new Error('HTTP '+r.status);const t=await r.text();if(t.length>1e6)throw new Error('一覧が大きすぎます');const l=pkItems(JSON.parse(t)).map(pkItem).filter(Boolean).slice(0,300);PKNET.list=l;if(!l.length)PKNET.err='一覧にパックがありません'}
+ catch(e){PKNET.list=null;PKNET.err='一覧を取得できませんでした（'+(e&&e.message||e)+'）。サイト上で開いているときだけ使えます'}
+ PKNET.busy=false;pkNetRender()}
+function pkNetF(v){PKNET.f=v;pkNetRender()}
+async function pkNetGet(i){const it=(PKNET.list||[])[i];if(!it)return;const e=document.getElementById('pkn'+i);if(e)e.disabled=true;
+ try{let r=await fetch(it.file,{cache:'no-cache'});if(!r.ok&&!it.file.startsWith('packs/'))r=await fetch('packs/'+it.file,{cache:'no-cache'});if(!r.ok)throw new Error('HTTP '+r.status);const b=await r.blob();if(b.size>16e6)throw new Error('ファイルが大きすぎます');const f=new File([b],it.file.split('/').pop(),{type:'application/json'});await pkLoad([f])}
+ catch(x){pkView('「'+it.name+'」を取得できませんでした（'+(x&&x.message||x)+'）')}}
+function pkNetRender(){const o=document.getElementById('pkn');if(!o)return;const tys=['4択','読み','部首','手書き'];
+ let h=`<h3>🌐 みんなのパック（サイトの一覧）</h3><div class="btns"><button class="main" onclick="pkNetLoad()">${PKNET.busy?'読み込み中…':PKNET.list?'一覧を更新':'一覧を取得する'}</button><a class="main off" href="packs.html" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;padding:8px 14px;border-radius:8px">packs.html をひらく（新しいタブ）</a></div>`;
+ if(PKNET.err)h+=`<div class="stat" style="color:var(--red)">${PKNET.err}</div>`;
+ if(PKNET.list&&PKNET.list.length){h+=`<input class="cq" placeholder="名前・作者・タイプで絞り込み" value="${PKNET.f.replace(/"/g,'&quot;')}" oninput="pkNetF(this.value)" style="width:100%;margin:6px 0">`;const q=PKNET.f.trim();
+  h+=PKNET.list.map((it,i)=>({it,i})).filter(x=>!q||(x.it.name+x.it.author+x.it.type+x.it.desc).includes(q)).map(({it,i})=>{const have=PK.some(p=>p.name===it.name)||HWP.some(p=>p.name===it.name);return `<div class="own"><span style="flex:1;text-align:left"><b>${it.name}</b>${it.author?'／'+it.author:''}<br><small>${it.type?'['+it.type+'] ':''}${it.count!==''?'問題'+pkEsc(it.count)+'件 ':''}${it.license?'ライセンス：'+it.license+' ':''}${it.desc?'<br>'+it.desc:''}</small></span><button id="pkn${i}" class="main off cf" onclick="pkNetGet(${i})">${have?'再取得':'追加'}</button></div>`}).join('')||'<div class="stat">該当なし</div>'}
+ h+=`<div class="stat">投稿されたパックは、管理人が確認したものです。内容は、問題の文章として表示するだけで、安全のため、HTMLとしては扱いません。</div>`;o.innerHTML=h}
+{const _v=pkView;pkView=function(){_v.apply(this,arguments);try{const m=document.querySelector('#pkm .mbox');if(m&&!document.getElementById('pkn')){const h3=m.querySelector('h3'),d=document.createElement('div');d.id='pkn';if(h3)m.insertBefore(d,h3);else m.appendChild(d);pkNetRender()}}catch(e){}}}
 
 newGame();
 </script>
