@@ -1,0 +1,93 @@
+name: パックの投稿
+description: 作った拡張パックを、ダウンロードページに載せたい
+title: "[パック投稿] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        投稿ありがとうございます。この内容は、**公開されます**(GitHubの名前も、見えます)。
+        名前、連絡先などの個人情報は、書かないでください。
+        管理人が、内容を確認してから、ダウンロードページに載せます。時間がかかることがあります。
+  - type: input
+    id: name
+    attributes:
+      label: パックの名前
+      placeholder: 例)四字熟語 穴埋め 30問
+    validations:
+      required: true
+  - type: input
+    id: author
+    attributes:
+      label: 作者の表示名
+      description: ページに表示する名前です。本名でなくてかまいません。
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: 問題のタイプ(いちばん近いもの)
+      options:
+        - 4択
+        - 読み
+        - 部首
+        - 手書き
+        - 手書きデータ(線のデータ)
+        - その他
+    validations:
+      required: true
+  - type: input
+    id: count
+    attributes:
+      label: 問題の数
+      placeholder: 例)30
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 説明
+      description: どんな問題が入っているか、短く書いてください。
+    validations:
+      required: true
+  - type: dropdown
+    id: license
+    attributes:
+      label: ライセンス(配るときの条件)
+      description: 迷ったら、CC BY 4.0 をおすすめします。KanjiVGを元にした場合は、CC BY-SA が必要です。
+      options:
+        - CC0(自由に使ってよい)
+        - CC BY 4.0(作者名を表示すれば、自由に使ってよい)
+        - CC BY-SA 4.0 / 3.0(同じ条件で配る)
+        - その他(下の欄に書く)
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: 出典・参考にしたもの
+      description: 自作なら「自作」と書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: json
+    attributes:
+      label: パックの中身(JSON)
+      description: |
+        ファイルの中身を、そのまま貼り付けてください。
+        長くて入らない場合は、zipにして、送信後のコメント欄に貼り付けるか、ダウンロードできるリンクを書いてください。
+      render: json
+  - type: checkboxes
+    id: agree
+    attributes:
+      label: 確認
+      options:
+        - label: 自分で作った、または、再配布を許可されているものです。
+          required: true
+        - label: 教科書、ドリル、問題集などの、問題文や図を、そのまま写したものではありません。
+          required: true
+        - label: 個人情報、広告、リンク、画像、HTMLなどを、含んでいません。
+          required: true
+        - label: 読みや意味などを、確認しました(AIで作った場合も、確認しました)。
+          required: true
+        - label: 内容と、GitHubの名前が、公開されることに同意します。
+          required: true
