@@ -1,4 +1,3 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -1735,9 +1734,41 @@ SFX.block=[['n',0,.035,'hi',.16],[2600,0,.05,'square',.05],[3400,.01,.04,'square
  window.keyPc=pc;
 })();
 
+/* ---- v4.0 BGMを音声ファイルから読み込む(無ければ合成音) ---- */
+(function(){
+ const FILES={battle:'audio/battle.mp3',boss:'audio/boss.mp3',finalboss:'audio/finalboss.mp3'};
+ const T={};let curW=null,mode=null,src=null,gn=null,seq=0;
+ AU.run=false;
+ function load(n){const t=T[n]||(T[n]={s:'idle'});if(t.p)return t.p;t.s='loading';
+  t.p=Promise.resolve().then(()=>fetch(FILES[n])).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(ab=>{if(!ab||!ab.byteLength)throw 0;t.raw=ab;t.s='fetched'}).catch(()=>{t.s='missing'});return t.p}
+ function decode(n){const t=T[n];if(!t)return Promise.resolve(null);if(t.s==='ready')return Promise.resolve(t.buf);if(t.s!=='fetched'||!AU.ctx)return Promise.resolve(null);if(t.d)return t.d;
+  t.d=new Promise(res=>{const ok=b=>{t.buf=b;t.s='ready';t.raw=null;res(b)},ng=()=>{t.s='missing';res(null)};try{const r=AU.ctx.decodeAudioData(t.raw.slice(0),ok,ng);if(r&&r.then)r.then(ok,ng)}catch(e){ng()}});return t.d}
+ function wantTrack(){try{if(G&&G.scr==='battle'&&G.e){if(typeof BIG!=='undefined'&&BIG.some(b=>b.k===G.e.k))return'finalboss';if(G.node&&G.node.t==='boss')return'boss'}}catch(e){}return'battle'}
+ function stopFile(fade){if(!src)return;const s=src,g=gn,c=AU.ctx;src=null;gn=null;try{const t=c.currentTime;g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(0,t+fade);s.stop(t+fade+.05);setTimeout(()=>{try{g.disconnect()}catch(e){}},(fade+.2)*1000)}catch(e){try{s.stop()}catch(x){}}}
+ function stopSynth(){clearInterval(AU.bt);AU.bt=null}
+ function playFile(buf){stopSynth();stopFile(.6);try{const c=AU.ctx,s=c.createBufferSource(),g=c.createGain();s.buffer=buf;s.loop=true;g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(1,c.currentTime+.8);s.connect(g);AU.ch='bgm';try{g.connect(outN())}finally{AU.ch='se'}s.start();src=s;gn=g;mode='file'}catch(e){playSynth()}}
+ function playSynth(){stopFile(.4);if(AU.bt)return;mode='synth';AU.bt=setInterval(bgmTick,1600);bgmTick()}
+ function sync(){if(!AU.run||!AU.bgm||!AU.ctx||document.hidden)return;const w=wantTrack();if(w===curW)return;curW=w;const my=++seq;const t=T[w];
+  if(t&&t.s==='ready'){playFile(t.buf);return}if(t&&t.s==='missing'){playSynth();return}
+  load(w).then(()=>decode(w)).then(b=>{if(my!==seq)return;b?playFile(b):playSynth()})}
+ window.bgmSync=sync;
+ bgmStart=function(){if(!AU.bgm||!auCtx())return;AU.run=true;curW=null;sync()};
+ bgmStop=function(){AU.run=false;curW=null;seq++;stopSynth();stopFile(.3);mode=null};
+ const _r=render;render=function(){const r=_r.apply(this,arguments);try{sync()}catch(e){}return r};
+ // 画面を離れたら止める・戻ったら再開
+ function away(){if(!AU.ctx)return;stopSynth();try{AU.ctx.suspend()}catch(e){}}
+ function back(){if(!AU.ctx)return;try{AU.ctx.resume()}catch(e){}if(AU.run&&AU.bgm){if(mode==='synth'&&!AU.bt){AU.bt=setInterval(bgmTick,1600)}else if(!mode){curW=null}sync()}}
+ document.addEventListener('visibilitychange',()=>document.hidden?away():back());
+ window.addEventListener('pagehide',away);window.addEventListener('pageshow',back);
+ // 先読み(起動を遅くしないよう、ページが落ち着いてから)
+ function pre(){load('battle').then(()=>load('boss')).then(()=>load('finalboss')).then(()=>{if(AU.ctx)decode('battle').then(()=>decode('boss')).then(()=>decode('finalboss'))})}
+ const kick=()=>{(window.requestIdleCallback||((f)=>setTimeout(f,1200)))(pre)};
+ if(document.readyState==='complete')kick();else window.addEventListener('load',kick);
+ // 最初のタップのあとに、まだ読んでいない曲を変換しておく
+ document.addEventListener('pointerdown',()=>{setTimeout(()=>{['battle','boss','finalboss'].reduce((p,n)=>p.then(()=>decode(n)),Promise.resolve())},300)},{once:true});
+})();
+
 newGame();
 </script>
 </body>
 </html>
-
-</body></html>
