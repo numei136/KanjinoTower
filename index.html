@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -404,6 +405,14 @@ body.hflat .hand.bh .card{height:auto;aspect-ratio:104/184}
 .vol{display:flex;align-items:center;gap:8px;justify-content:center;font-size:13px}
 .vol input[type=range]{flex:1;max-width:170px}
 .keyb{font-weight:700}
+
+.otabs{display:flex;gap:6px;margin:6px 0 10px}
+.otabs button{flex:1;font:inherit;font-weight:700;padding:8px 4px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);cursor:pointer}
+.otabs button.on{background:var(--fg);color:var(--bg)}
+.vol .vn{min-width:28px;text-align:right}
+
+#infolink{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:8px;z-index:40;height:40px;line-height:38px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:13px;font-weight:700;padding:0 12px;text-decoration:none;white-space:nowrap}
+a.infoa{display:block;text-align:center;text-decoration:none;box-sizing:border-box}
 </style>
 </head>
 <body>
@@ -681,7 +690,7 @@ $('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeD
 }
 function closeDeck(){$('#modal').innerHTML=''}
 function optMenu(c){
-$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:340px;text-align:center"><h2>オプション</h2>${c?`<p>タイトルに戻りますか？<br>進行状況は、直前のマップ画面まで自動で保存されています。</p><div class="btns"><button class="main" onclick="closeDeck();newGame()">タイトルへ</button><button class="main off" onclick="optMenu()">やめる</button></div>`:`<div class="btns" style="flex-direction:column"><button class="main" onclick="closeDeck()">ゲームに戻る</button><button class="main off" onclick="togAu('on')">効果音：${AU.on?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.se*100)}" oninput="setVol('se',this.value)" onchange="volTest()"></div><button class="main off" onclick="togAu('bgm')">BGM：${AU.bgm?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.bgm*100)}" oninput="setVol('bgm',this.value)"></div>${keyPc?`<button class="main off keyb" onclick="keyStart()">${keyCap()?'キー／ボタンを押してください(Escで中止)':'ターン終了ショートカット：'+keyName()}</button>${keyCap()?'':'<small style="opacity:.7;cursor:pointer" onclick="keyReset()">初期(右クリック)に戻す</small>'}`:''}<button class="main off" onclick="togHand()">手札の並べ方：${HL.flat?'広げる(旧版)':'重ねる'}</button><button class="main off" onclick="optMenu(1)">タイトルに戻る</button><button class="main off" onclick="hwOpen()">🧪 テスト専用：手書き認識テスト</button></div>`}</div></div>`}
+$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:340px;text-align:center"><h2>オプション</h2>${c?`<p>タイトルに戻りますか？<br>進行状況は、直前のマップ画面まで自動で保存されています。</p><div class="btns"><button class="main" onclick="closeDeck();newGame()">タイトルへ</button><button class="main off" onclick="optMenu()">やめる</button></div>`:optBody()}</div></div>`}
 function sumInfo(i){const s=G.sums[i];if(!s)return;const d=SUMS[s.k];$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:320px;text-align:center"><div class="kanji sm">${s.k}</div><h2>${s.k}の召喚獣</h2><p>${d.d}</p><p class="stat">${d.hp?'HP '+s.hp+'／'+d.hp:'残り '+s.left+' ターン'}</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
 function dexInfo(k){const c=CARDS[k]||{name:k+'の記録',cost:'-'},d=SUMS[k]||{d:'倒した強敵の記録'};$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:320px;text-align:center"><div class="kanji sm">${k}</div><h2>${c.name}</h2><p>コスト${c.cost}／${d.d}</p><p class="stat">${CARDS[k]?'倒した敵の漢字。その挑戦のあいだ、報酬や店に使役カードが並ぶ。':'倒した強敵の漢字。'}</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
 const BOSSES=[ENEMIES[2],
@@ -1272,7 +1281,7 @@ function hdJudge(){if(HW.dend)return;const r=hwRecog(HW.st,HW.dtg),m=document.ge
 if(r.state==='ok')hdEnd(true,'⭕ 防御成功！ダメージ半減');else if(r.state==='ng')hdEnd(false,'❌ 失敗…ダメージをそのまま受ける');else{HW.dtry++;if(HW.dtry>=3)hdEnd(false,'❌ 判定できず…ダメージをそのまま受ける');else{m.textContent='⚠ 判定保留：書き直してください（'+HW.dtry+'/3）';hdClear()}}}
 function hdGive(){if(HW.dend)return;hdEnd(false,'防御をあきらめた…')}
 function hdEnd(ok,msg){HW.dend=true;const m=document.getElementById('hdm');if(m)m.textContent=msg;sfx(ok?'ok':'ng');G.hwHalf=ok;setTimeout(()=>{const o=document.getElementById('hd');if(o)o.remove();HW.cv=null;G.busy=false;const cb=HW.dcb;HW.dcb=null;if(cb)cb()},900)}
-function selectView(){$('#app').innerHTML=`<div class="overlay"><button id="tutbtn" onclick="tutStart()">❓ チュートリアル</button><h2>漢字の塔</h2>${contHtml()}<p><button class="main off" onclick="customOpen()">🛠 カスタムモード（実績は解除されない）</button></p><p>戦う漢字を選ぶ</p><div class="hand">${CHARS.map((c,i)=>`<button class="card sk chr" onclick="choose(${i})"><div class="k">${c.k}</div><div class="n">${c.name}</div><div class="d">HP${c.hp}<br>能力「${c.ab}」<br>${c.d}</div></button>`).join('')}</div><p><button class="main" onclick="achOpen()">🏆 実績・倒した敵の一覧</button></p></div>`}
+function selectView(){$('#app').innerHTML=`<div class="overlay"><button id="tutbtn" onclick="tutStart()">❓ チュートリアル</button><a id="infolink" href="info.html" target="_blank" rel="noopener">ℹ 調整点・利用上の注意</a><h2>漢字の塔</h2>${contHtml()}<p><button class="main off" onclick="customOpen()">🛠 カスタムモード（実績は解除されない）</button></p><p>戦う漢字を選ぶ</p><div class="hand">${CHARS.map((c,i)=>`<button class="card sk chr" onclick="choose(${i})"><div class="k">${c.k}</div><div class="n">${c.name}</div><div class="d">HP${c.hp}<br>能力「${c.ab}」<br>${c.d}</div></button>`).join('')}</div><p><button class="main" onclick="achOpen()">🏆 実績・倒した敵の一覧</button></p></div>`}
 function achOpen(){$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:520px;text-align:center"><h2>🏆 実績・倒した敵</h2>${achHtml()}<h3>倒した敵 ${DEX.length}/${DEXLIST.length}</h3><div class="dex">${DEXLIST.map(k=>DEX.includes(k)?`<button class="dx" onclick="dexInfo('${k}')">${k}</button>`:`<span class="dx off">？</span>`).join('')}</div><p class="stat">倒した漢字を押すと、くわしく見られます。</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
 
 /* ---- v2.6 ---- */
@@ -1768,7 +1777,19 @@ SFX.block=[['n',0,.035,'hi',.16],[2600,0,.05,'square',.05],[3400,.01,.04,'square
  document.addEventListener('pointerdown',()=>{setTimeout(()=>{['battle','boss','finalboss'].reduce((p,n)=>p.then(()=>decode(n)),Promise.resolve())},300)},{once:true});
 })();
 
+/* ---- v4.1 オプションをタブ分け ---- */
+let OT='game';
+function setOt(t){OT=t;optMenu()}
+function optBody(){
+ const title=G&&G.scr==='select';
+ const tabs=`<div class="otabs"><button class="${OT==='game'?'on':''}" onclick="setOt('game')">ゲーム設定</button><button class="${OT==='vol'?'on':''}" onclick="setOt('vol')">音量調整</button></div>`;
+ const vol=`<div class="btns" style="flex-direction:column"><button class="main off" onclick="togAu('on')">効果音：${AU.on?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.se*100)}" oninput="setVol('se',this.value);this.nextElementSibling.textContent=this.value" onchange="volTest()"><span class="vn">${Math.round(AV.se*100)}</span></div><button class="main off" onclick="togAu('bgm')">BGM：${AU.bgm?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.bgm*100)}" oninput="setVol('bgm',this.value);this.nextElementSibling.textContent=this.value"><span class="vn">${Math.round(AV.bgm*100)}</span></div></div>`;
+ const game=`<div class="btns" style="flex-direction:column">${keyPc?`<button class="main off keyb" onclick="keyStart()">${keyCap()?'キー／ボタンを押してください(Escで中止)':'ターン終了ショートカット：'+keyName()}</button>${keyCap()?'':'<small style="opacity:.7;cursor:pointer" onclick="keyReset()">初期(右クリック)に戻す</small>'}`:''}<button class="main off" onclick="togHand()">手札の並べ方：${HL.flat?'広げる(旧版)':'重ねる'}</button>${title?'':'<button class="main off" onclick="optMenu(1)">タイトルに戻る</button>'}${title?'<a class="main off infoa" href="info.html" target="_blank" rel="noopener">ℹ 調整点・利用上の注意</a>':''}<button class="main off" onclick="hwOpen()">🧪 テスト専用：手書き認識テスト</button></div>`;
+ return tabs+(OT==='vol'?vol:game)+`<div class="btns" style="margin-top:10px"><button class="main" onclick="closeDeck()">${title?'閉じる':'ゲームに戻る'}</button></div>`}
+
 newGame();
 </script>
 </body>
 </html>
+
+</body></html>
