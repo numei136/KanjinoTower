@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>漢字の塔 調整点</title>
+<style>
+  :root{
+    --bg:#15120e; --fg:#f2eee6; --muted:#b9b2a5; --line:#5a554c; --panel:#1d1913;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:"Hiragino Sans","Yu Gothic","Meiryo",system-ui,sans-serif;line-height:1.8;}
+  main{max-width:680px;margin:0 auto;padding:40px 16px 64px;}
+  h1{text-align:center;font-size:28px;margin:8px 0 20px;letter-spacing:.08em}
+  .go{text-align:center;margin-bottom:28px}
+  .go a{display:inline-block;background:#fff;color:#15120e;text-decoration:none;
+    font-size:14px;font-weight:700;padding:10px 22px;border-radius:4px}
+  .go a:hover,.go a:focus-visible{background:#ffe9a8;outline:none}
+  .lead{text-align:center;color:var(--muted);font-size:13px;margin:0 0 24px}
+
+  details{border-bottom:1px solid var(--line)}
+  summary{cursor:pointer;list-style:none;font-weight:700}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:" ▽";font-weight:400}
+  details[open]>summary::after{content:" △"}
+  summary:focus-visible{outline:2px solid #ffe9a8;outline-offset:2px}
+
+  details.top>summary{text-align:center;font-size:18px;padding:18px 0}
+  .ver{border:0;border-bottom:1px solid #3a352d}
+  .ver>summary{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+    font-size:15px;padding:12px 4px}
+  .ver>summary::after{margin-left:auto}
+  .ver .tag{color:var(--muted);font-weight:400;font-size:13px}
+  .ver .body{padding:0 4px 14px;font-size:14px}
+  .body ul{margin:6px 0;padding-left:1.3em}
+  .body li{margin:2px 0}
+  .body ul ul{margin:2px 0}
+
+  section.terms{margin-top:44px}
+  section.terms h2{font-size:17px;margin:0 0 10px}
+  section.terms h3{font-size:14px;margin:22px 0 4px}
+  section.terms p,section.terms li{font-size:13px;margin:4px 0}
+  section.terms ul{padding-left:1.3em;margin:4px 0}
+  .note{background:var(--panel);border-radius:4px;padding:10px 12px}
+  footer{text-align:center;margin-top:40px}
+  footer a{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<main>
+  <h1>調整点</h1>
+  <p class="go"><a href="index.html">ゲームをあそぶ</a></p>
+  <p class="lead">遊びながら、少しずつ調整しています。数値や内容は、これからも変わることがあります。</p>
+
+  <details class="top">
+    <summary>調整</summary>
+
+    <!-- 新しい版は、このすぐ下(いちばん上)に、同じ形で足します -->
+
+    <details class="ver">
+      <summary>ver3.6<span class="tag">キャラ専用レリック</span></summary>
+      <div class="body"><ul>
+        <li>各キャラ2個、全部で12個の専用レリックが入りました。</li>
+        <li>レリックの一覧は、折りたたみ式になり、キャラごとに分かれます。カスタムモードも同じです。</li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver3.4〜3.5<span class="tag">キャラの色とカスタム</span></summary>
+      <div class="body"><ul>
+        <li>剣・盾・薬・術・召・合の6キャラに、それぞれの色がつきました。キャラ専用カードには、そのキャラの色のバッジがつきます。</li>
+        <li>カスタムモードでは、キャラを選ぶまで、専用カードが出ません。「専用のみ」の絞り込みも入りました。</li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver3.3<span class="tag">パワーカード</span></summary>
+      <div class="body"><ul>
+        <li>各キャラに2〜3枚、使うと戦闘中ずっと効果が続く「パワーカード」が入りました(全部で17枚)。</li>
+        <li>例: 守護者は、シールドが毎ターン消えずに、たまっていきます。</li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver3.1〜3.2<span class="tag">守護者の「攻防一体」</span></summary>
+      <div class="body"><ul>
+        <li>書いた字が、すぐに効くようになりました。
+          <ul>
+            <li>一: シールド3と、カード2枚ドロー</li>
+            <li>十: シールド12</li>
+            <li>人: HPを2ずつ、3ターン回復</li>
+            <li>大: 敵に12ダメージ</li>
+            <li>水: コスト0のカードパック(ランダム3枚から1枚選ぶ)</li>
+          </ul>
+        </li>
+        <li>書き損じると、ランダムな効果になります。その中に「大凶」(自分に5、敵に10ダメージ)が入っています。</li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver3.0<span class="tag">レリックとイベントの追加</span></summary>
+      <div class="body"><ul>
+        <li>レリックが8個、イベントが6個増えました。</li>
+        <li>オリジナルカード作成イベント: 漢字を1文字、タイトルを自由に決め、コストと効果の数字を選んで、自分だけのカードを作れます。強いほど高くつき、弱いと少しお金がもらえます。強すぎるカードは、作れません。</li>
+        <li>「大」の手書き認識を、ゆるくしました。</li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver2.9<span class="tag">チュートリアル</span></summary>
+      <div class="body"><ul>
+        <li>タイトル画面に、チュートリアルのボタンが増えました。</li>
+        <li>専用の戦闘で、画面の一か所だけを明るく見せながら、ボタン、カード、スキルを説明します。</li>
+        <li>召喚獣を右に置いた場合と左に置いた場合の違い、合体と進化も、体験できます。</li>
+        <li>最後は、固定のマップで、アイコンごとに説明します。</li>
+        <li>スマホのドラッグは、指で隠れないよう、触った場所より左上にカードが表示されます。</li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver2.7〜2.8<span class="tag">スマホで遊びやすく</span></summary>
+      <div class="body"><ul>
+        <li>カードをドラッグすると、字だけでなく、カード全体が動きます。</li>
+        <li>スマホでは、召喚獣が画面の真ん中に並びます。</li>
+        <li>ポーションが、並び替えボタンと同じ段に入りました。</li>
+        <li>並び替えを「なし」にすると、最初に引いた順に戻ります。</li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver2.4〜2.6<span class="tag">手書き防御と属性</span></summary>
+      <div class="body"><ul>
+        <li>守護者の手書き防御を、作り直しました。書いた字によって、効果が変わります。</li>
+        <li>火水木土の「属性カード(秘策)」と、手札を一枚取っておける「保留ボックス」が入りました。</li>
+        <li>新しいレリック: 墨壺、属性の鏡、福の鈴、癒しの盃、商人の財布。</li>
+        <li>カスタムモードで、カードの絞り込みができるようになりました。</li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver2.3<span class="tag">ドラッグ&amp;ドロップと合成師の調整</span></summary>
+      <div class="body"><ul>
+        <li>手札の召喚カードを、召喚獣の列へ、ドラッグして置けるようになりました。緑の線は合体、黄色は通常、赤は枠がいっぱいです。同じ召喚獣の左に置くと合体し、右に置くと合体しません。タップしたときは、いちばん左に出ます。</li>
+        <li>福笑いのパーツを、枠へドラッグして入れられます。入れ替えや、枠の外へ戻すこともできます。</li>
+        <li>合成師の初期カードを、調整しました。
+          <ul>
+            <li>日: エナジー+2(コスト1)</li>
+            <li>月: コスト0でブロック4</li>
+            <li>女: ブロック3と、次のターンもブロック3</li>
+            <li>田: 4ダメージと、手札を1枚捨てる</li>
+            <li>山: コスト2でブロック10</li>
+            <li>石: 1ダメージ×5</li>
+            <li>夕: 3ダメージ×2</li>
+            <li>明: 次のターン開始時にブロック8と2枚ドロー</li>
+            <li>好: 回復が3に変わりました</li>
+          </ul>
+        </li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver2.2<span class="tag">召喚のリワークと遊びやすさ</span></summary>
+      <div class="body"><ul>
+        <li>召喚獣の名前が変わりました。火は剣、水は盾、木は布です。進化は、剣が大剣、盾が大盾、布が法衣です。</li>
+        <li>同じ召喚獣の左に置くと、合体して、レベルが上がります(効果は1.5倍、2倍)。レベル3で進化します。進化しないものは、シールド5を得ます。</li>
+        <li>新しい召喚で、古い召喚獣が消えなくなりました。枠がいっぱいのときは、召喚獣は出ません(カードは使えます)。</li>
+        <li>犠牲系カード(召喚師の報酬): 殉教の供物、祈りの供物、捧げもの、盟約の供物、全生贄、身代わり。</li>
+        <li>召喚師の専用レリック: 召喚陣(枠+1)、供物の香(犠牲にするたびブロック+2)。</li>
+        <li>合成: 剣と、新カード「火炎」を合成すると、「火剣」になります。</li>
+        <li>福笑いの難易度が、3段階になりました(制限時間は45秒・35秒・25秒)。問題が39問に増えました。</li>
+        <li>イベント: 鍛冶屋(カード1枚を強化)と、僧(カード1枚を削除)を追加しました。</li>
+        <li>画面: 地図ボタン、手札の並び替え(コスト順、種類順)、攻撃カードのダメージ予想の表示が入りました。</li>
+        <li>音: 通常戦闘とボス戦で、BGMが変わります。多段攻撃には、専用の効果音が付きました。カードや選択肢に触れると、小さな「ぽこっ」が鳴ります。</li>
+        <li>カード選択の「スキップ」を消しました。ボスの必殺技に、内容と数値の説明が付きました。</li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver2.1<span class="tag">演出・必殺技の拡張</span></summary>
+      <div class="body"><ul>
+        <li>体力ゲージの中に、数値(例: 34/34)が出ます。</li>
+        <li>スマホ版: ポーションと召喚獣が、同じ高さに並びます。手札が画面からはみ出すときは、端に矢印(◀▶)が出ます。</li>
+        <li>撃破演出: とどめを刺すと、敵の漢字が20個のかけらに割れて、飛び散ります。画面が白くフラッシュして、爆発音が鳴ります。</li>
+        <li>ボスを倒したあとも、通常と同じ報酬画面が出ます。ゴールド、レリック1つ、レアカード確定(3枚すべてレア)です。</li>
+        <li>必殺技(全キャラ共通の4種)
+          <ul>
+            <li>筆順: ブロック12と追加効果</li>
+            <li>福笑い: 20ダメージ+ブロック6</li>
+            <li>読み: 3枚ドロー+エナジー+1</li>
+            <li>部首: 12ダメージ+HP6回復</li>
+          </ul>
+        </li>
+        <li>キャラごとの必殺技(6種): 居合斬り(剣)、不動の構え(盾)、万能薬(薬)、奥義詠唱(術)、契約(召)、創字(合)。</li>
+        <li>福笑い: パーツを並べて、漢字を完成させます。よみがなだけが出て、パーツは10個の中から選びます。</li>
+        <li>問題が増えました。筆順28問、画数77字、読み43字(新)、部首19字(新)。</li>
+        <li>カスタムモード: 開始時のキャラ、デッキ(5〜30枚)、レリック(最大3つ)を、自分で決められます。実績・図鑑・記録は、残りません。</li>
+        <li>カードのタイプ: アタック(赤)、スキル(青)、召喚(紫)の色帯とタイプ名が付きました。</li>
+        <li>ボスの必殺技: 体力ゲージの真ん中に、HP半分の目印が付きました。警告が出て、発動の演出はゆっくりです。</li>
+        <li>連撃: 1発ずつの間隔を、広げました。</li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver2.0<span class="tag">階層・ボス・成長要素</span></summary>
+      <div class="body"><ul>
+        <li>階層: 最大3階層で、3階層目は大ボス(神か滅)です。倒すと、エンドレスモードが解放されます。階層が上がると、敵のHPが約30%ずつ、筋力が+1ずつ増えます。</li>
+        <li>ボス: 通常ボス6体(龍・炎・氷・雷・闇・獅)と、大ボス2体。技名は、漢字だけの2・4・8文字です。HPが半分以下で覚醒し、必殺技を使います。</li>
+        <li>6人目のキャラ: 合成師「合」。手札の2枚を合成して、新しい漢字カードにします。</li>
+        <li>必殺・筆順: 小1〜小3相当の漢字の、筆順と画数のクイズです。</li>
+        <li>カード: 強化(＋)、レア度(コモン・アンコモン・レア)、キャラごとの固有カード(3枚)。連撃は、1発ずつ別々に当たります。</li>
+        <li>報酬画面: ゴールド・ポーション・レリック・カードが一覧で出ます。受け取るものを選び、「進む」で次へ進みます。</li>
+        <li>召喚: 火が3体そろうと、炎に進化します。ほかの召喚獣は、3体そろうと、シールド5を得ます。召喚師の専用カード(生贄・総召喚・送還)があります。</li>
+        <li>保存・記録: 途中保存(続きから)、図鑑、実績11個、クリアタイムとシェアボタン。</li>
+        <li>音: 効果音とBGMを、ブラウザで作って鳴らします。⚙メニューで、オンとオフを切り替えられます。</li>
+        <li>イベントが、12種に増えました。</li>
+        <li>体力ゲージにシールドが出ます。ダメージ数字は黄色です。エナジーは、大きな枠で出ます。とどめのときは、ザザザッ、シュッという音が鳴ります。</li>
+        <li>スマホ版: 画面が狭いときだけ、敵のパネルが画面の上に残ります。マナの右に、スキルとターン終了のボタンが並びます。手札のカードを、小さくしました。</li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver1.5<span class="tag">ゲーム構成の拡張</span></summary>
+      <div class="body"><ul>
+        <li>マップ: 分岐するマップから、戦(敵)・強(強敵)・？(イベント)・店・休(焚き火)・ボスを選びます。ゴールドが入りました。</li>
+        <li>店と焚き火: 店は、カード・レリック・ポーションを売り、カードの削除もできます。焚き火は、HP回復か、最大HPアップです。</li>
+        <li>イベント: 4種(泉、石碑、賢者、賭け)。</li>
+        <li>キャラ(5人): 剣(一閃)、盾(堅守)、薬(調合)、術(集中)、召(号令)。それぞれ固有の能力があります。</li>
+        <li>召喚師: 火・水・土・木の召喚獣が出ます。召喚獣をクリックすると、能力が見られます。</li>
+        <li>敵の固有技: 技名が付きました。蛇は毒を与え、魔は「呪」カードを混ぜます。蘇は、子分の屍を蘇生します。</li>
+        <li>技名の演出: 敵が攻撃するとき、技名の漢字が、トランプの配置(2枚は左右、4枚は四隅、8枚は周囲)で、周りに出ます。</li>
+        <li>レリック(8種)とポーション(5種): レリックは、強敵やボスで入手します。ポーションは、3つまで持てます。</li>
+        <li>図鑑と使役: 倒した敵が、タイトル画面の図鑑に並びます。倒した敵を召喚する「使役カード」が出ます。</li>
+        <li>強敵: 各階層に、最低2か所は、必ず出ます。</li>
+        <li>バランス調整: 毒カードを毒5から4に、薬師の「調合」を毒4から2に、弱めました。調合は、2回使うと次のターンが休止します。召喚師の初期デッキは、召喚カードを火2枚だけにしました。</li>
+      </ul></div>
+    </details>
+
+    <details class="ver">
+      <summary>ver1.0<span class="tag">基礎システム(最初の試作)</span></summary>
+      <div class="body"><ul>
+        <li>戦闘: 漢字の敵と戦う、デッキ構築型。エナジーは毎ターン3、手札は5枚、山札と捨て札があります。敵の次の行動が予告されます。</li>
+        <li>敵: 鬼・蛇・龍の3体。</li>
+        <li>カード10種: 斬、盾、連、炎、毒、力、癒、禅、壁、雷。</li>
+        <li>報酬: 勝つと、3枚から1枚を選んで、デッキに加えます。</li>
+        <li>演出
+          <ul>
+            <li>攻撃時、敵の漢字が縮んでから巨大化し、ゆっくり元に戻ります。</li>
+            <li>待機中は、漢字がふわふわ浮遊します。</li>
+            <li>ダメージを与えると、漢字が点滅し、ダメージ数字が出ます。毒は、緑色で左右に斜めに揺れます。</li>
+            <li>手札のドロー演出、次の行動の色分け(攻撃は赤、防御は青、強化は紫)。</li>
+            <li>体力ゲージが減ると、減った分が半透明で残り、ゆっくり縮みます。</li>
+          </ul>
+        </li>
+        <li>画面: デッキ確認ボタン、左上の⚙(タイトルに戻る)。</li>
+      </ul></div>
+    </details>
+  </details>
+
+  <section class="terms" id="terms">
+    <h2>利用上の注意(規約案)</h2>
+    <p class="note">これは、個人が趣味で作ったゲームのための、ひな形です。公開先や運営の事情に合わせて、直して使ってください。法律の専門家による確認は、受けていません。</p>
+
+    <h3>1. 基本</h3>
+    <p>本ゲーム「漢字の塔」(以下「本ゲーム」)は、無料で遊べる個人制作のゲームです。遊ぶことで、以下の内容に同意したものとみなします。</p>
+
+    <h3>2. 保証について</h3>
+    <ul>
+      <li>本ゲームは、現状のまま提供します。動作、表示、音、保存の正常な動作は、保証しません。</li>
+      <li>本ゲームの利用や、不具合、データの消失によって生じた損害に、制作者は責任を負いません。</li>
+      <li>予告なく、内容の変更、更新、公開の終了を行うことがあります。</li>
+    </ul>
+
+    <h3>3. プレイデータの保存</h3>
+    <ul>
+      <li>保存データ(進行状況、図鑑、実績、設定)は、お使いのブラウザの中に保存されます。</li>
+      <li>ブラウザの履歴やデータの削除、別の端末やブラウザへの切り替えで、保存データは消えます。</li>
+      <li>本ゲーム自体は、プレイデータを外部のサーバーに送信しません。ただし、公開しているサービスが取るアクセス記録などは、本ゲームでは管理できません。</li>
+    </ul>
+
+    <h3>4. 学習内容について</h3>
+    <ul>
+      <li>筆順と画数のクイズは、一般的な内容を参考にしたものです。学校、教材、地域によって、筆順の扱いが異なる場合があります。</li>
+      <li>学習用の正確性は、保証しません。正確な内容は、教科書などで確認してください。</li>
+    </ul>
+
+    <h3>5. 禁止事項</h3>
+    <ul>
+      <li>本ゲームを、不正な方法で改変、再配布、転載すること。</li>
+      <li>他の利用者や第三者の迷惑になる方法で、結果を共有すること。</li>
+      <li>そのほか、公序良俗に反する使い方をすること。</li>
+    </ul>
+
+    <h3>6. 著作権など</h3>
+    <ul>
+      <li>本ゲームのプログラム、文章、デザインの権利は、制作者に帰属します。</li>
+      <li>本ゲームは、画像素材を使わず、文字(漢字)と、ブラウザで作った音だけで構成されています。</li>
+    </ul>
+
+    <h3>7. 変更</h3>
+    <p>本規約は、必要に応じて、予告なく変更することがあります。</p>
+  </section>
+
+  <footer><a href="index.html">ゲームをあそぶ</a></footer>
+</main>
+</body>
+</html>
