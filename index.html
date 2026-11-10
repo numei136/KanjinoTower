@@ -1843,7 +1843,7 @@ function optBody(){
 })();
 
 /* v4.8 title: play button */
-var TM=0;const VER='5.10.20';
+var TM=0;const VER='5.10.22';
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.tw{position:relative;display:inline-block}.ver{position:absolute;right:0;top:100%;margin-top:-2px;font-size:clamp(9px,2vw,13px);opacity:.65;letter-spacing:.05em;font-weight:700}.ttsub{display:inline-block;animation:ttbob 2.8s ease-in-out infinite}@keyframes ttbob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}@media (prefers-reduced-motion:reduce){.ttsub{animation:none}}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
 function titleGo(){TM=1;render()}
 function titleBack(){TM=0;render()}
@@ -2105,6 +2105,51 @@ function fitBattle(){try{const ap=document.getElementById('app');if(!ap)return;i
  if(s>=1)ap.style.zoom=''}catch(x){}}
 {const _r=render;render=function(){const r=_r.apply(this,arguments);fitBattle();return r}}
 window.addEventListener('resize',()=>{if(G&&G.scr==='battle')setTimeout(fitBattle,30)});
+
+/* v5.10.21 custom: own cards / debug / keep scroll */
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:
+'.mkf{border:1px dashed var(--line);border-radius:10px;padding:8px;margin:6px 0;text-align:left}.mkf label{display:inline-block;margin:3px 8px 3px 0;font-size:13px}.mkf input,.mkf select{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:3px 5px;width:64px}.mkf input.w{width:110px}.mkf .own{display:flex;align-items:center;gap:6px;font-size:13px;margin-top:4px}#dbgb{position:fixed;left:10px;top:64px;z-index:700;border-radius:50%;width:40px;height:40px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:20px;cursor:pointer;opacity:.85}#dbgp{position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center}#dbgp .mbox{max-width:420px}#dbgp .btns{flex-wrap:wrap}#dbgp select{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:4px;max-width:100%}'}));
+var OWN=[];try{OWN=JSON.parse(localStorage.getItem('kanjiOwn')||'[]')||[]}catch(e){OWN=[]}
+function ownDesc(o){const p=[];if(o.dmg)p.push(o.dmg+'ダメージ'+(o.hits>1?'×'+o.hits:''));if(o.blk)p.push('ブロック'+o.blk);if(o.poi)p.push('毒を'+o.poi+'与える');if(o.str)p.push('筋力+'+o.str);if(o.heal)p.push('HP'+o.heal+'回復');if(o.draw)p.push(o.draw+'枚引く');if(o.en)p.push('エナジー+'+o.en);return p.join('／')||'効果なし'}
+function ownReg(o){const c={n:o.k,name:o.name,cost:o.cost,t:o.t,own:1};['dmg','hits','blk','poi','str','heal','draw','en'].forEach(f=>{if(o[f])c[f]=o[f]});c.d=ownDesc(o);CARDS[o.k]=c;RAR[o.k]='c'}
+function ownSave(){try{localStorage.setItem('kanjiOwn',JSON.stringify(OWN))}catch(e){}}
+OWN.forEach(o=>{try{if(!CARDS[o.k]||CARDS[o.k].own)ownReg(o)}catch(e){}});
+function cuDr(el){CU.dr=CU.dr||{};CU.dr[el.name]=el.value}
+function cuMk(){CU.mk=!CU.mk;customView()}
+function cuMake(){const d=CU.dr||{},k=Array.from((d.k||'').trim());const n=x=>Math.max(0,Math.min(99,Math.floor(+d[x]||0)));
+ if(k.length!==1){toast('漢字は1文字で入力してね');return}
+ const kk=k[0];if(CARDS[kk]&&!CARDS[kk].own){toast('「'+kk+'」は既存のカードで使われています');return}
+ if([...ENEMIES,...POOL,ELITE,...(typeof BOSSES!=='undefined'?BOSSES:[]),...(typeof BIG!=='undefined'?BIG:[])].some(e=>e&&e.k===kk)){toast('「'+kk+'」は敵の漢字なので使えません');return}
+ const o={k:kk,name:(d.name||'').trim()||kk,cost:Math.min(3,n('cost')),dmg:n('dmg'),hits:Math.max(1,n('hits')||1),blk:n('blk'),poi:n('poi'),str:n('str'),heal:n('heal'),draw:n('draw'),en:n('en')};
+ if(!o.dmg)o.hits=1;if(!(o.dmg||o.blk||o.poi||o.str||o.heal||o.draw||o.en)){toast('効果を1つ以上入れてね');return}
+ o.t=d.t==='atk'?'atk':(o.blk&&!(o.dmg||o.poi||o.str||o.heal||o.draw||o.en)?'def':'sk');
+ const i=OWN.findIndex(x=>x.k===kk);if(i>=0)OWN[i]=o;else OWN.push(o);ownReg(o);ownSave();CU.dr={t:d.t};toast('「'+kk+'」を作成！下のカード一覧で選べます');customView()}
+function cuOwnDel(k){OWN=OWN.filter(o=>o.k!==k);delete CARDS[k];delete RAR[k];delete CU.deck[k];ownSave();customView()}
+function ownHtml(){const d=CU.dr||{},v=x=>(d[x]==null?'':String(d[x]).replace(/"/g,'&quot;')),f=(x,l,w)=>`<label>${l}<input${w?' class="w"':''} name="${x}" value="${v(x)}" oninput="cuDr(this)"${w?' maxlength="8"':' inputmode="numeric"'}></label>`;
+ return `<h3><button class="main off cf" onclick="cuMk()">${CU.mk?'▼':'▶'} ✏ オリジナルカードを作る（作成済み${OWN.length}枚）</button></h3>`+(CU.mk?`<div class="mkf">${f('k','漢字(1文字)',1)}${f('name','名前',1)}<label>タイプ<select name="t" onchange="cuDr(this)"><option value="atk"${d.t==='atk'?' selected':''}>アタック</option><option value="sk"${d.t==='sk'?' selected':''}>スキル</option></select></label>${f('cost','コスト0〜3')}<br>${f('dmg','ダメージ')}${f('hits','回数')}${f('blk','ブロック')}${f('poi','毒')}${f('str','筋力')}${f('heal','回復')}${f('draw','ドロー')}${f('en','エナジー')}<div><button class="main" onclick="cuMake()">作成</button></div><div class="stat">作ったカードは下の一覧に出ます。このブラウザに保存され、カスタムモードでのみ使えます(通常のプレイには出ません)。</div>${OWN.map(o=>`<div class="own"><b style="font-size:22px">${o.k}</b><span>${o.name}・コスト${o.cost}・${ownDesc(o)}</span><button class="main off cf" onclick="cuOwnDel('${o.k}')">削除</button></div>`).join('')}</div>`:'')}
+{const _cv=customView;customView=function(){const ap=document.getElementById('app'),sp=[];const rec=()=>{sp.length=0;sp.push([window.scrollX,window.scrollY]);['#app','#app .overlay','.cl','#cuRows'].forEach(s=>{const e=document.querySelector(s);sp.push(e?e.scrollTop:0)})};rec();const wy=sp[0],ev=sp.slice(1);
+ const r=_cv.apply(this,arguments);try{
+  const cf=document.querySelector('.cfb');if(cf)cf.insertAdjacentHTML('beforebegin',ownHtml());
+  const bt=document.querySelector('.overlay>.btns:last-child');if(bt)bt.insertAdjacentHTML('beforebegin',`<p><label style="font-size:14px"><input type="checkbox" ${CU.dbg?'checked':''} onchange="CU.dbg=this.checked"> 🐞 デバッグ機能を使う（戦闘・マップ中に🐞ボタンでHP回復・エナジー追加・敵撃破・好きなカード追加など）</label></p>`);
+  window.scrollTo(wy[0],wy[1]);['#app','#app .overlay','.cl','#cuRows'].forEach((s,i)=>{const e=document.querySelector(s);if(e)e.scrollTop=ev[i]})}catch(e){}return r}}
+{const _cs=customStart;customStart=function(){const d=!!(CU&&CU.dbg);_cs.apply(this,arguments);if(G&&G.custom){G.dbg=d;render()}}}
+function dbgOpen(){if(document.getElementById('dbgp'))return;const b=G.scr==='battle',ids=Object.keys(CARDS).filter(k=>!k.endsWith('+')&&k!=='呪'&&CARDS[k].cost<9);
+ const p=document.createElement('div');p.id='dbgp';p.innerHTML=`<div class="mbox"><h3>🐞 デバッグ</h3><div class="btns"><button class="main off" onclick="dbg('hp')">HP全回復</button><button class="main off" onclick="dbg('mhp')">最大HP+10</button><button class="main off" onclick="dbg('gold')">💰+100</button>${b?'<button class="main off" onclick="dbg(\'en\')">エナジー+3</button><button class="main off" onclick="dbg(\'draw\')">5枚引く</button><button class="main off" onclick="dbg(\'e1\')">敵HPを1に</button><button class="main off" onclick="dbg(\'kill\')">敵を全滅</button><button class="main off" onclick="dbg(\'blk\')">ブロック+20</button>':''}</div><p>カード追加：<select id="dbgc">${ids.map(k=>`<option value="${k}">${k} ${CARDS[k].name}</option>`).join('')}</select></p><div class="btns">${b?'<button class="main off" onclick="dbg(\'cardh\')">手札に追加</button>':''}<button class="main off" onclick="dbg(\'cardd\')">デッキに追加</button></div><div class="btns"><button class="main" onclick="dbgClose()">閉じる</button></div></div>`;document.body.appendChild(p)}
+function dbgClose(){const p=document.getElementById('dbgp');if(p)p.remove()}
+function dbg(a){if(!G||!G.custom)return;const b=G.scr==='battle',sel=document.getElementById('dbgc'),id=sel?sel.value:'';
+ if(a==='hp')G.hp=G.max;else if(a==='mhp'){G.max+=10;G.hp+=10}else if(a==='gold')G.gold+=100;
+ else if(b&&!G.busy&&a==='en')G.en+=3;else if(b&&!G.busy&&a==='draw')drawN(5);else if(b&&a==='blk')G.blk+=20;
+ else if(b&&!G.busy&&a==='e1'){G.e.cur=1;(G.e.ex||[]).forEach(x=>{if(x.cur>0)x.cur=1});(G.e.mins||[]).forEach(x=>{if(x.cur>0)x.cur=1})}
+ else if(b&&!G.busy&&a==='kill'){dbgClose();(G.e.ex||[]).forEach(x=>x.cur=0);G.e.cur=0;winSoon();return}
+ else if(a==='cardh'&&b&&G.hand.length<10)G.hand.push(id);else if(a==='cardd'){G.deck.push(id);if(b)G.disc.push(id);toast(CARDS[id].name+'をデッキに追加')}
+ render()}
+{const _r=render;render=function(){const r=_r.apply(this,arguments);try{const o=document.getElementById('dbgb'),on=G&&G.custom&&G.dbg&&(G.scr==='battle'||G.scr==='map');if(on&&!o){const b=document.createElement('button');b.id='dbgb';b.textContent='🐞';b.onclick=dbgOpen;document.body.appendChild(b)}else if(!on&&o)o.remove()}catch(e){}return r}}
+
+/* v5.10.22 shield number at center of shield gauge */
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bar .shn.cs{transform:translate(-50%,-50%)}'}));
+function shnFix(){try{document.querySelectorAll('.bar').forEach(b=>{const n=b.querySelector('.shn'),d=b.querySelector('.shd');if(!n||!d)return;if(!n.textContent){return}const l=parseFloat(d.style.left)||0,w=parseFloat(d.style.width)||0;n.classList.add('cs');n.style.left=(l+w/2)+'%'})}catch(e){}}
+{const _r=render;render=function(){const r=_r.apply(this,arguments);shnFix();return r}}
+try{new MutationObserver(()=>shnFix()).observe(document.getElementById('app'),{childList:true,subtree:true})}catch(e){}
 
 newGame();
 </script>
