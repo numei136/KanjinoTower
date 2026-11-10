@@ -1,6 +1,0 @@
-blank_issues_enabled: false
-# Googleフォームを作ったら、下の3行の「#」を外して、URLを入れてください。
-# contact_links:
-#   - name: アカウントなしで送る(Googleフォーム)
-#     url: https://forms.gle/ここにURL
-#     about: GitHubのアカウントがない方は、こちらから送れます。
