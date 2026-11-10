@@ -1843,7 +1843,7 @@ function optBody(){
 })();
 
 /* v4.8 title: play button */
-var TM=0;const VER='5.10.06';
+var TM=0;const VER='5.10.08';
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.tw{position:relative;display:inline-block}.ver{position:absolute;right:0;top:100%;margin-top:-2px;font-size:clamp(9px,2vw,13px);opacity:.65;letter-spacing:.05em;font-weight:700}.ttsub{display:inline-block;animation:ttbob 2.8s ease-in-out infinite}@keyframes ttbob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}@media (prefers-reduced-motion:reduce){.ttsub{animation:none}}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
 function titleGo(){TM=1;render()}
 function titleBack(){TM=0;render()}
@@ -1991,14 +1991,32 @@ function shareImgGo(){if(!SHC)return;const t=`漢字の塔を全クリア！\n�
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.promo{display:block;position:relative;width:min(100%,170px);aspect-ratio:1/1;margin:10px auto 0;border:2px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card);color:inherit;text-decoration:none}.promo img{width:100%;height:100%;object-fit:cover;display:block}.promo.empty{display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:700;opacity:.45;border-style:dashed}.promo .pr{position:absolute;right:4px;top:4px;font-size:10px;background:rgba(0,0,0,.55);color:#fff;border-radius:6px;padding:0 5px;line-height:1.5}.promo .pt2{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:3px 6px;text-align:center}'}));
 let PROMO=null;/* null=未読込 / {items:[],show:true} */
 function promoLoad(){if(PROMO)return Promise.resolve(PROMO);return fetch('promo.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(j=>{const it=Array.isArray(j&&j.items)?j.items.filter(x=>x&&typeof x.image==='string'&&x.image):[];PROMO={items:it,show:!(j&&j.show===false)}}).catch(()=>{PROMO={items:[],show:true}}).then(()=>PROMO)}
-function promoImg(f){return /^https?:\/\//i.test(f)?f:'promo/'+f.split('/').map(encodeURIComponent).join('/')}
+function promoCands(f){if(/^https?:\/\//i.test(f))return [f];const e=f.split('/').map(encodeURIComponent).join('/');return ['promo/'+e,'Promo/'+e,e,'promo/'+e.toLowerCase()]}
+function promoErr(im){const c=JSON.parse(im.dataset.c),i=+im.dataset.i+1;if(i<c.length){im.dataset.i=i;im.src=c[i];return}const p=im.parentNode;p.className='promo empty';p.removeAttribute('href');p.innerHTML='？<small style="position:absolute;left:4px;right:4px;bottom:4px;font-size:10px;font-weight:400;opacity:1;line-height:1.3;word-break:break-all">画像が読めません：'+c[0].replace(/</g,'')+'</small>'}
 function promoHtml(){const P=PROMO;if(P&&!P.show)return '';
  if(!P||!P.items.length)return '<div id="promo" class="promo empty">？</div>';
- const it=P.pick||(P.pick=P.items[Math.floor(Math.random()*P.items.length)]),u=typeof it.url==='string'&&/^https?:\/\//i.test(it.url)?it.url:'',inner=`<img src="${promoImg(it.image)}" alt="${(it.alt||'').replace(/"/g,'')}" onerror="this.parentNode.className='promo empty';this.parentNode.removeAttribute('href');this.parentNode.textContent='？'"><span class="pr">PR</span>${it.title?`<span class="pt2">${String(it.title).replace(/</g,'&lt;')}</span>`:''}`;
+ const it=P.pick||(P.pick=P.items[Math.floor(Math.random()*P.items.length)]),u=typeof it.url==='string'&&/^https?:\/\//i.test(it.url)?it.url:'',cs=promoCands(it.image),inner=`<img src="${cs[0]}" data-c='${JSON.stringify(cs).replace(/'/g,'%27')}' data-i="0" alt="${(it.alt||'').replace(/"/g,'')}" onerror="promoErr(this)"><span class="pr">PR</span>${it.title?`<span class="pt2">${String(it.title).replace(/</g,'&lt;')}</span>`:''}`;
  return u?`<a id="promo" class="promo" href="${u}" target="_blank" rel="noopener noreferrer">${inner}</a>`:`<div id="promo" class="promo">${inner}</div>`}
 {const _ob=optBody;optBody=function(){let h=_ob.apply(this,arguments);if(!(G&&G.scr==='select'))return h;const m=h.lastIndexOf('<div class="btns" style="margin-top:10px">');if(m<0)return h;
  if(!PROMO)promoLoad().then(()=>{const e=document.getElementById('promo');if(e&&document.querySelector('#modal .otabs')){const t=document.createElement('div');t.innerHTML=promoHtml();if(t.firstChild)e.replaceWith(t.firstChild);else e.remove()}});
  return h.slice(0,m)+promoHtml()+h.slice(m)}}
+
+/* v5.10.08 状態表示をHPバーの中にまとめる/パワーの詳細 */
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.me .stat{display:none!important}.bst{position:absolute;right:4px;top:0;bottom:0;display:flex;align-items:center;gap:3px;z-index:4}.bst b{font-size:11px;font-weight:700;background:rgba(0,0,0,.55);color:#fff;border-radius:8px;padding:0 5px;line-height:16px;white-space:nowrap;cursor:help}.bst b.pwb{background:rgba(120,60,170,.8)}.bhero{position:absolute;left:3px;top:50%;transform:translateY(-50%);z-index:4;font-size:12px;font-weight:900;background:rgba(0,0,0,.6);color:#fff;border-radius:50%;width:18px;height:18px;text-align:center;line-height:18px}.me .bar.p.hb .shn{left:26px}'}));
+function pwCard(n){const id=Object.keys(CARDS).find(k=>CARDS[k].pw&&CARDS[k].name===n);return id?CARDS[id]:null}
+function barBadges(){try{const bar=document.querySelector('.me .bar.p');if(!bar||!G||G.scr!=='battle')return;bar.querySelectorAll('.bst,.bhero').forEach(e=>e.remove());bar.classList.add('hb');
+ const B=[];const T=(t,tip,c)=>B.push(`<b${c?' class="'+c+'"':''} data-tip="${tip.replace(/"/g,'&quot;')}">${t}</b>`);
+ if(G.ppoi)T('☠毒'+G.ppoi,'<b>毒</b>：毎ターンの始めに'+G.ppoi+'ダメージ。1ずつ減っていく');
+ if(G.dbl)T('✦一閃','<b>一閃</b>：次の攻撃カードのダメージが2倍');
+ if(G.regen)T('💚'+G.regen.v+'×'+G.regen.t+'T','<b>継続回復</b>：毎ターン'+G.regen.v+'回復(あと'+G.regen.t+'ターン)');
+ if(G.str)T('筋力+'+G.str,'<b>筋力+'+G.str+'</b>：攻撃カードのダメージが+'+G.str);
+ if(G.pvul>0)T('💢脆弱'+G.pvul,'<b>脆弱</b>：受けるダメージが1.5倍(あと'+G.pvul+'ターン)');
+ if(G.pwk>0)T('💧弱体'+G.pwk,'<b>弱体</b>：与えるダメージが25%減る(あと'+G.pwk+'ターン)');
+ (G.pwN||[]).forEach(n=>{const c=pwCard(n);T('✨'+(c?c.n:n),'<b>'+n+'</b>：'+(c?c.d.replace(/^パワー：/,'').replace(/\(この戦闘のあいだ\)/,'')+'<br><small>この戦闘のあいだ続くパワー</small>':'パワー'),'pwb')});
+ const h=document.createElement('span');h.className='bhero';h.textContent=G.ch.k;bar.appendChild(h);
+ if(B.length){const d=document.createElement('span');d.className='bst';d.innerHTML=B.join('');bar.appendChild(d)}}catch(e){}}
+{const _r=render;render=function(){const r=_r.apply(this,arguments);barBadges();return r}}
+{const _rp=refreshPBar;refreshPBar=function(){const r=_rp.apply(this,arguments);barBadges();return r}}
 
 newGame();
 </script>
