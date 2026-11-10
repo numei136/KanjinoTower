@@ -1,4 +1,3 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -1709,7 +1708,7 @@ SFX.block=[['n',0,.035,'hi',.16],[2600,0,.05,'square',.05],[3400,.01,.04,'square
 /* ---- v3.9 ツールチップ・ショートカット・音量 ---- */
 (function(){
  // 音量
- const V={se:1,bgm:1};try{const v=JSON.parse(localStorage.getItem('kanjiVol')||'{}');if(typeof v.se==='number')V.se=v.se;if(typeof v.bgm==='number')V.bgm=v.bgm}catch(e){}
+ const V={se:.5,bgm:.5};try{const v=JSON.parse(localStorage.getItem('kanjiVol')||'{}');if(typeof v.se==='number')V.se=v.se;if(typeof v.bgm==='number')V.bgm=v.bgm}catch(e){}
  window.AV=V;const G2={};
  window.outN=function(){const c=AU.ctx,k=AU.ch==='bgm'?'bgm':'se';if(!G2[k]||G2[k].c!==c){const g=c.createGain();g.connect(c.destination);G2[k]={c,g}}G2[k].g.gain.value=V[k];return G2[k].g};
  const _bt=bgmTick;bgmTick=function(){AU.ch='bgm';try{return _bt.apply(this,arguments)}finally{AU.ch='se'}};
@@ -1763,6 +1762,7 @@ SFX.block=[['n',0,.035,'hi',.16],[2600,0,.05,'square',.05],[3400,.01,.04,'square
  function pick(c){const a=files(c);if(!a.length)return null;if(a.length===1)return a[0];const b=a.filter(x=>x!==last[c]);return b[Math.floor(Math.random()*b.length)]}
  function loadList(){if(listP)return listP;listP=Promise.resolve().then(()=>fetch('music.json',{cache:'no-cache'})).then(r=>{if(!r.ok)throw 0;return r.json()}).then(j=>{LIST=(j&&typeof j==='object')?j:{}}).catch(()=>{LIST={}});return listP}
  let NOSYN=false;try{NOSYN=localStorage.getItem('kanjiNoSyn')==='1'}catch(e){}
+ let SRC='folder';try{SRC=localStorage.getItem('kanjiBgmSrc')==='synth'?'synth':'folder'}catch(e){}
  const part={},done={};let TOT=[];const SEB={};
  const bar=document.createElement('div');bar.id='bgload';document.body.appendChild(bar);
  function barUpdate(){if(!TOT.length)return;let s=0;TOT.forEach(u=>s+=done[u]?1:(part[u]||0));const p=s/TOT.length;bar.style.opacity=1;bar.style.width=(p*100)+'%';if(p>=1)setTimeout(()=>{bar.style.opacity=0},900)}
@@ -1775,18 +1775,18 @@ SFX.block=[['n',0,.035,'hi',.16],[2600,0,.05,'square',.05],[3400,.01,.04,'square
  function ensureNext(c){if(!nxt[c]||bad.has(url(c,nxt[c])))nxt[c]=pick(c);const f=nxt[c];if(f){const u=url(c,f);getRaw(u).then(ab=>{if(!ab){bad.add(u);if(nxt[c]===f)nxt[c]=null}})}}
  function stopSynth(){clearInterval(AU.bt);AU.bt=null}
  function stopFile(fade){if(!src)return;const s=src,g=gn,c=AU.ctx;src=null;gn=null;try{const t=c.currentTime;g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(0,t+fade);s.stop(t+fade+.05);setTimeout(()=>{try{g.disconnect()}catch(e){}},(fade+.2)*1000)}catch(e){try{s.stop()}catch(x){}}}
- function playSynth(){stopFile(.4);curU=null;if(NOSYN){stopSynth();mode='silent';return}if(AU.bt)return;mode='synth';AU.bt=setInterval(bgmTick,1600);bgmTick()}
+ function playSynth(){stopFile(.4);curU=null;if(NOSYN&&SRC!=='synth'){stopSynth();mode='silent';return}if(AU.bt)return;mode='synth';AU.bt=setInterval(bgmTick,1600);bgmTick()}
  function playFile(buf,u){stopSynth();stopFile(.6);try{const c=AU.ctx,s=c.createBufferSource(),g=c.createGain();s.buffer=buf;s.loop=true;g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(1,c.currentTime+1);s.connect(g);AU.ch='bgm';try{g.connect(outN())}finally{AU.ch='se'}s.start();src=s;gn=g;mode='file';curU=u}catch(e){playSynth()}}
  // 新しい曲を選んで鳴らす(戦闘のはじまりごと・種類が変わるとき)
- function begin(c){const my=++seq;curCat=c;prevCat=c;const f=(nxt[c]&&!bad.has(url(c,nxt[c])))?nxt[c]:pick(c);nxt[c]=null;
+ function begin(c){const my=++seq;curCat=c;prevCat=c;if(SRC==='synth'){if(mode!=='synth'||!AU.bt)playSynth();return}const f=(nxt[c]&&!bad.has(url(c,nxt[c])))?nxt[c]:pick(c);nxt[c]=null;
   if(!f){playSynth();return}
   const u=url(c,f);last[c]=f;
   if(u===curU&&mode==='file'){ensureNext(c);return}
   getBuf(u).then(b=>{if(my!==seq)return;if(!b){bad.add(u);begin(c);return}playFile(b,u);ensureNext(c)})}
  function wantCat(){if(!G)return null;if(G.scr==='battle'&&G.e){if(typeof BIG!=='undefined'&&BIG.some(b=>b.k===G.e.k))return'finalboss';const t=G.node&&G.node.t;return t==='boss'?'boss':t==='elite'?'elite':'battle'}if(G.scr==='select'||G.scr==='custom')return'title';if(G.scr==='map')return'map';return null}
  function sync(){if(!AU.run||!AU.bgm||!AU.ctx||document.hidden)return;
-  if(!LIST){if(!mode)playSynth();loadList().then(()=>{curCat=null;lastE=null;sync()});return}
-  let c=wantCat();const hasMap=files('map').length>0;if(c==='map'&&!hasMap)c=null;
+  if(!LIST&&SRC!=='synth'){if(!mode)playSynth();loadList().then(()=>{curCat=null;lastE=null;sync()});return}
+  let c=wantCat();const hasMap=SRC!=='synth'&&LIST&&files('map').length>0;if(c==='map'&&!hasMap)c=null;
   if(c===null){if(hasMap&&['battle','elite','boss','finalboss'].includes(curCat)){seq++;stopSynth();stopFile(1.2);mode=null;curU=null;curCat='quiet';return}if(!curCat)begin(prevCat||'title');return}
   if(G.scr==='battle'&&G.e){if(G.e!==lastE){lastE=G.e;begin(c)}else if(c!==curCat)begin(c);return}
   lastE=null;if(c!==curCat)begin(c)}
@@ -1794,7 +1794,8 @@ SFX.block=[['n',0,.035,'hi',.16],[2600,0,.05,'square',.05],[3400,.01,.04,'square
  window.bgmInfo=function(){const n=c=>LIST&&Array.isArray(LIST[c])?LIST[c].length:0;
   const l=!LIST?'music.json：読み込み中…':(Object.keys(LIST).length?'music.json：読めた':'music.json：読めない／空');
   const cnt=['title','battle','elite','boss','finalboss'].map(c=>c+'='+n(c)).join(' ');
-  const m=!AU.run?'BGM：停止中(画面をタップすると始まります)':mode==='file'?'再生中(ファイル)：'+decodeURIComponent(curU||''):mode==='synth'?'再生中(合成音)':'準備中';
+  if(SRC==='synth')return 'BGMの種類：デフォルト(合成音)<br>'+(!AU.run?'BGM：停止中(画面をタップすると始まります)':'再生中(合成音)');
+  const m=!AU.run?'BGM：停止中(画面をタップすると始まります)':mode==='file'?'再生中(ファイル)：'+decodeURIComponent(curU||'').replace(/^audio\//,'audio/'):mode==='synth'?'再生中(合成音)':'準備中';
   const b=bad.size?'<br>読めなかった曲：'+[...bad].map(decodeURIComponent).join('、'):'';
   return l+'<br>曲の数 '+cnt+'<br>'+m+b};
  bgmStart=function(){if(!AU.bgm||!auCtx())return;AU.run=true;curCat=null;lastE=null;sync()};
@@ -1817,6 +1818,8 @@ SFX.block=[['n',0,.035,'hi',.16],[2600,0,.05,'square',.05],[3400,.01,.04,'square
  document.addEventListener('pointerdown',()=>{loadList().then(()=>setTimeout(decodeSE,400))},{once:true});
  const _sfx=sfx;sfx=function(n,o){if(n==='block')window.blkT=Date.now();const a=SEB[n];if(a&&a.length&&AU.on&&auCtx()){try{const c=AU.ctx,s=c.createBufferSource();s.buffer=a[Math.floor(Math.random()*a.length)];AU.ch='se';s.connect(outN());s.start(c.currentTime+(o||0));return}catch(e){}}return _sfx.apply(this,arguments)};
  window.noSyn=()=>NOSYN;
+ window.bgmSrc=()=>SRC;
+ window.setBgmSrc=function(v){SRC=v;try{localStorage.setItem('kanjiBgmSrc',v)}catch(e){}seq++;stopSynth();stopFile(.3);mode=null;curU=null;curCat=null;lastE=null;if(AU.run)sync();optMenu()};
  window.setNoSyn=function(){NOSYN=!NOSYN;try{localStorage.setItem('kanjiNoSyn',NOSYN?'1':'0')}catch(e){}if(NOSYN&&mode==='synth'){stopSynth();mode='silent'}else if(!NOSYN&&AU.run){curCat=null;lastE=null;sync()}optMenu()};
 })();
 /* ---- v4.1 オプションをタブ分け ---- */
@@ -1825,8 +1828,8 @@ function setOt(t){OT=t;optMenu()}
 function optBody(){
  const title=G&&G.scr==='select';
  const tabs=`<div class="otabs"><button class="${OT==='game'?'on':''}" onclick="setOt('game')">ゲーム設定</button><button class="${OT==='vol'?'on':''}" onclick="setOt('vol')">音量調整</button></div>`;
- const vol=`<div class="btns" style="flex-direction:column"><button class="main off" onclick="togAu('on')">効果音：${AU.on?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.se*100)}" oninput="setVol('se',this.value);this.nextElementSibling.textContent=this.value" onchange="volTest()"><span class="vn">${Math.round(AV.se*100)}</span></div><button class="main off" onclick="togAu('bgm')">BGM：${AU.bgm?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.bgm*100)}" oninput="setVol('bgm',this.value);this.nextElementSibling.textContent=this.value"><span class="vn">${Math.round(AV.bgm*100)}</span></div><button class="main off" onclick="setNoSyn()">合成音のBGM：${noSyn()?'流さない':'流す'}</button><small style="opacity:.7">「流さない」にすると、曲のファイルを読み込むまで・ファイルが無い間は、無音になります</small><p class="stat" style="font-size:11px;opacity:.8;text-align:left;word-break:break-all">${typeof bgmInfo==='function'?bgmInfo():''}</p></div>`;
- const game=`<div class="btns" style="flex-direction:column">${keyPc?`<button class="main off keyb" onclick="keyStart()">${keyCap()?'キー／ボタンを押してください(Escで中止)':'ターン終了ショートカット：'+keyName()}</button>${keyCap()?'':'<small style="opacity:.7;cursor:pointer" onclick="keyReset()">初期(右クリック)に戻す</small>'}`:''}<button class="main off" onclick="togHand()">手札の並べ方：${HL.flat?'広げる(旧版)':'重ねる'}</button>${title?'<a class="main off infoa" href="info.html" target="_blank" rel="noopener">ℹ 調整点・利用上の注意</a>':''}<button class="main off" onclick="hwOpen()">🧪 テスト専用：手書き認識テスト</button></div>`;
+ const vol=`<div class="btns" style="flex-direction:column"><button class="main off" onclick="togAu('on')">効果音：${AU.on?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.se*100)}" oninput="setVol('se',this.value);this.nextElementSibling.textContent=this.value" onchange="volTest()"><span class="vn">${Math.round(AV.se*100)}</span></div><button class="main off" onclick="togAu('bgm')">BGM：${AU.bgm?'ON':'OFF'}</button><div class="vol">音量<input type="range" min="0" max="100" value="${Math.round(AV.bgm*100)}" oninput="setVol('bgm',this.value);this.nextElementSibling.textContent=this.value"><span class="vn">${Math.round(AV.bgm*100)}</span></div><div class="btns" style="flex-direction:row;gap:6px"><button class="main ${bgmSrc()==='folder'?'':'off'}" onclick="setBgmSrc('folder')">フォルダのBGM</button><button class="main ${bgmSrc()==='synth'?'':'off'}" onclick="setBgmSrc('synth')">デフォルトBGM</button></div>${bgmSrc()==='folder'?`<button class="main off" onclick="setNoSyn()">合成音のBGM：${noSyn()?'流さない':'流す'}</button><small style="opacity:.7">「流さない」にすると、曲のファイルを読み込むまで・ファイルが無い間は、無音になります</small>`:''}<p id="bgminfo" class="stat" style="font-size:11px;opacity:.8;text-align:left;word-break:break-all">${typeof bgmInfo==='function'?bgmInfo():''}</p></div>`;
+ const game=`<div class="btns" style="flex-direction:column">${keyPc?`<button class="main off keyb" onclick="keyStart()">${keyCap()?'キー／ボタンを押してください(Escで中止)':'ターン終了ショートカット：'+keyName()}</button>${keyCap()?'':'<small style="opacity:.7;cursor:pointer" onclick="keyReset()">初期(右クリック)に戻す</small>'}`:''}<button class="main off" onclick="togHand()">手札の並べ方：${HL.flat?'広げる(旧版)':'重ねる'}</button>${title?`<button class="main off" onclick="togSnow()">タイトルの雪：${snowOn()?'ON':'OFF'}</button>`:''}${title?'<a class="main off infoa" href="info.html" target="_blank" rel="noopener">ℹ 調整点・利用上の注意</a>':''}<button class="main off" onclick="hwOpen()">🧪 テスト専用：手書き認識テスト</button></div>`;
  return tabs+(OT==='vol'?vol:game)+`<div class="btns" style="margin-top:10px"><button class="main" onclick="closeDeck()">${title?'閉じる':'ゲームに戻る'}</button>${title?'':'<button class="main off" onclick="optMenu(1)">タイトルに戻る</button>'}</div>`}
 
 /* ---- v4.7 スマホ: デッキ確認ボタンを上の段(地図の右)へ ---- */
@@ -1837,9 +1840,36 @@ function optBody(){
    if(d&&t){const span=[...t.children].filter(x=>x.tagName==='SPAN').pop();d.innerHTML='📚'+G.draw.length+'/'+G.disc.length+'/'+holdN();d.title='山札/捨て札/保留';t.insertBefore(d,span||null)}}}catch(x){}return r};
 })();
 
+/* v4.8 title: play button */
+var TM=0;
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
+function titleGo(){TM=1;selectView()}
+function titleBack(){TM=0;selectView()}
+function selectView(){
+ const top=`<button id="tutbtn" onclick="tutStart()">❓ チュートリアル</button><a id="infolink" href="info.html" target="_blank" rel="noopener">ℹ 調整点・利用上の注意</a>`;
+ if(!TM){$('#app').innerHTML=`<div class="overlay">${top}<div class="ttwrap"><h1 class="bigtitle">漢字の塔</h1><div class="ttsub">KANJI TOWER</div>${contHtml()}<p><button class="main playbtn" onclick="titleGo()">▶ プレイ</button></p><p><button class="main off" onclick="achOpen()">🏆 実績・倒した敵の一覧</button></p></div></div>`;return}
+ $('#app').innerHTML=`<div class="overlay">${top}<h2>漢字の塔</h2>${contHtml()}<p><button class="main off" onclick="customOpen()">🛠 カスタムモード（実績は解除されない）</button></p><p>戦う漢字を選ぶ</p><div class="hand">${CHARS.map((c,i)=>`<button class="card sk chr" onclick="choose(${i})"><div class="k">${c.k}</div><div class="n">${c.name}</div><div class="d">HP${c.hp}<br>能力「${c.ab}」<br>${c.d}</div></button>`).join('')}</div><p><button class="main off" onclick="titleBack()">← タイトルへ</button> <button class="main" onclick="achOpen()">🏆 実績・倒した敵の一覧</button></p></div>`}
+
+{const _ng=newGame;newGame=function(){TM=0;return _ng()}}
+setInterval(()=>{const e=document.getElementById('bgminfo');if(e&&typeof bgmInfo==='function'){const t=bgmInfo();if(e.innerHTML!==t)e.innerHTML=t}},700);
+/* v4.9 title snow */
+(function(){
+ let ON=true;try{ON=localStorage.getItem('kanjiSnow')!=='0'}catch(e){}
+ let cv=null,cx=null,fl=[],raf=0,W=0,H=0;
+ function mk(init){return{x:Math.random()*W,y:init?Math.random()*H:-10,r:1+Math.random()*2.6,v:.5+Math.random()*1.1,p:Math.random()*6.28,s:.3+Math.random()*.7}}
+ function size(){const d=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0);const n=Math.round(Math.min(130,W*H/9000));while(fl.length<n)fl.push(mk(1));fl.length=n}
+ function frame(t){raf=0;if(!cv)return;cx.clearRect(0,0,W,H);
+  for(const f of fl){f.y+=f.v;f.x+=Math.sin(t/1200+f.p)*f.s;if(f.y>H+10){Object.assign(f,mk(0))}
+   cx.beginPath();cx.arc(f.x,f.y,f.r,0,6.283);cx.fillStyle='rgba(255,255,255,.9)';cx.shadowColor='rgba(110,140,190,.55)';cx.shadowBlur=4;cx.fill()}
+  raf=requestAnimationFrame(frame)}
+ function start(){if(cv)return;cv=document.createElement('canvas');cv.id='snow';cv.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:30';document.body.appendChild(cv);cx=cv.getContext('2d');size();raf=requestAnimationFrame(frame)}
+ function stop(){if(raf)cancelAnimationFrame(raf);raf=0;if(cv){cv.remove();cv=null;cx=null}}
+ function chk(){const want=ON&&G&&G.scr==='select'&&!document.hidden&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);if(want)start();else stop()}
+ setInterval(chk,400);window.addEventListener('resize',()=>{if(cv)size()});
+ window.snowOn=()=>ON;window.togSnow=function(){ON=!ON;try{localStorage.setItem('kanjiSnow',ON?'1':'0')}catch(e){}chk();optMenu()};
+})();
+
 newGame();
 </script>
 </body>
 </html>
-
-</body></html>
