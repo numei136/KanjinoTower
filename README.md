@@ -21,6 +21,11 @@ https://numei136.github.io/KanjinoTower/
 - パックを投稿するには、[パック投稿フォーム](https://github.com/numei136/KanjinoTower/issues/new?template=pack.yml)を使います(GitHubのアカウントが必要です)。管理人が、内容を確認してから、載せます。
 - 投稿した内容と、GitHubの名前は、公開されます。個人情報は、書かないでください。
 
+### 手書きデータ(KanjiVG)
+- [KanjiVG](https://kanjivg.tagaini.net/)などの線のデータを読み込むと、どの漢字でも、手書き問題にできます。変換スクリプト(`kanjivg_to_pack.py`)も、あります。
+- 読み込むと、手書きの判定の仕組みが変わります(読み込み時に、注意が出ます)。
+- KanjiVGは、CC BY-SA 3.0で配られています。出典の表示が必要で、これを元にしたパックも、同じ条件(CC BY-SA)で配ります。
+
 ## 更新の記録・要望
 - 調整点(更新の記録)・利用上の注意: https://numei136.github.io/KanjinoTower/info.html
 - 不具合の報告・要望: [Issues](https://github.com/numei136/KanjinoTower/issues/new/choose)
@@ -32,4 +37,3 @@ https://numei136.github.io/KanjinoTower/
 
 ## 素材
 - BGM・効果音: [ブラウザで合成した音です / 使った生成AIの名前と、確認した利用条件]
-- 手書きの線のデータ(拡張パックで使う場合): [KanjiVG](https://kanjivg.tagaini.net/)(CC BY-SA 3.0)を元にしています。
