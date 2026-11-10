@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>漢字の塔 拡張パック</title>
+<style>
+  :root{
+    --bg:#15120e; --fg:#f2eee6; --muted:#b9b2a5; --line:#5a554c; --panel:#1d1913; --accent:#ffe9a8;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:"Hiragino Sans","Yu Gothic","Meiryo",system-ui,sans-serif;line-height:1.8;}
+  main{max-width:720px;margin:0 auto;padding:40px 16px 64px;}
+  h1{text-align:center;font-size:28px;margin:8px 0 12px;letter-spacing:.08em}
+  .lead{text-align:center;color:var(--muted);font-size:13px;margin:0 0 28px}
+  h2{font-size:18px;margin:40px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{font-size:14px;margin:18px 0 4px;color:var(--accent)}
+  p,li{font-size:14px}
+  ol,ul{padding-left:1.4em;margin:6px 0}
+  a{color:var(--accent)}
+  a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .steps{counter-reset:s;list-style:none;padding:0}
+  .steps li{counter-increment:s;background:var(--panel);border-radius:6px;padding:10px 12px 10px 44px;
+    margin:8px 0;position:relative}
+  .steps li::before{content:counter(s);position:absolute;left:12px;top:10px;width:22px;height:22px;
+    border-radius:50%;background:var(--accent);color:#15120e;font-weight:700;font-size:13px;
+    display:flex;align-items:center;justify-content:center;line-height:1}
+
+  .bar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:6px 0 12px;font-size:13px;color:var(--muted)}
+  select{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-size:13px}
+
+  .card{background:var(--panel);border:1px solid #3a352d;border-radius:8px;padding:14px 14px 12px;margin:12px 0}
+  .card h3{margin:0 0 2px;color:var(--fg);font-size:16px}
+  .meta{color:var(--muted);font-size:12px;margin:0 0 6px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+  .chip{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted)}
+  .desc{margin:6px 0 10px;font-size:14px;white-space:pre-wrap}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .btn{display:inline-block;background:#fff;color:#15120e;text-decoration:none;font-size:13px;
+    font-weight:700;padding:8px 18px;border-radius:4px}
+  .btn:hover,.btn:focus-visible{background:var(--accent);outline:none}
+  .sub{font-size:12px;color:var(--muted)}
+  .empty,.err{background:var(--panel);border-radius:6px;padding:14px;text-align:center;color:var(--muted);font-size:14px}
+  .err{color:#ffb4a8}
+
+  .note{background:var(--panel);border-radius:6px;padding:10px 12px;font-size:13px}
+  footer{text-align:center;margin-top:44px;font-size:13px}
+  code{background:#2a251d;border-radius:3px;padding:1px 5px;font-size:12px}
+</style>
+</head>
+<body>
+<main>
+  <h1>拡張パック</h1>
+  <p class="lead">問題を足して、遊びを広げよう。みんなが作ったパックを、ここからダウンロードできます。</p>
+
+  <h2>使い方</h2>
+  <ol class="steps">
+    <li>下の一覧から、ほしいパックの「ダウンロード」を押して、ファイル(.json)を保存します。</li>
+    <li>ゲームのタイトル画面で、オプション →「📦 拡張パック」を開きます。</li>
+    <li>保存したファイルを、読み込みます。パックごとに、オンとオフを切り替えられます。</li>
+  </ol>
+
+  <h2>パック一覧</h2>
+  <div class="bar">
+    <span id="count">読み込み中…</span>
+    <label>タイプ: <select id="filter" aria-label="タイプで絞り込む"><option value="">すべて</option></select></label>
+  </div>
+  <div id="list" aria-live="polite"></div>
+
+  <h2>自分で作る</h2>
+  <p>テンプレートや、AIに問題を作らせるプロンプトを使うと、自分のパックを作れます。</p>
+  <div id="tools"></div>
+  <div class="note">
+    AIが作った問題には、読みや意味の間違いが、混ざることがあります。配る前に、必ず、人の目で確認してください。
+  </div>
+
+  <h2>パックを投稿する</h2>
+  <p>作ったパックは、このページに載せられます。次の流れです。</p>
+  <ol>
+    <li>下の「パックを投稿する」を押して、フォームに、必要なことを書きます。</li>
+    <li>管理人が、内容を確認します(読み・意味、著作権、個人情報、危険な内容がないか)。</li>
+    <li>問題がなければ、一覧に載ります。確認には、時間がかかることがあります。</li>
+  </ol>
+  <p class="row"><a class="btn" href="https://github.com/numei136/KanjinoTower/issues/new?template=pack.yml" target="_blank" rel="noopener">パックを投稿する</a>
+  <span class="sub">GitHubのアカウント(無料)が必要です。</span></p>
+
+  <h3>載せられる条件</h3>
+  <ul>
+    <li>自分で作ったもの、または、再配布を許可されているものです。</li>
+    <li>教科書、ドリル、問題集などの、問題文や図を、そのまま写したものは、載せられません。</li>
+    <li>個人情報、広告、リンク、画像、HTMLなどの、問題と関係のない内容は、入れないでください。</li>
+    <li>投稿した内容と、GitHubの名前は、公開されます。</li>
+    <li>ライセンス(利用条件)を、フォームに書いてください。書いてない場合は、載せられないことがあります。</li>
+    <li>管理人の判断で、載せない、または、あとから外すことがあります。</li>
+  </ul>
+
+  <h2>注意</h2>
+  <ul>
+    <li>パックは、利用者が、自分の責任で、読み込んでください。内容の正確さや、動作は、保証しません。</li>
+    <li>「手書きデータ」のパックを読み込むと、手書きの判定の仕組みが変わります。読み込み時に、注意が出ます。</li>
+    <li>読み込んだパックの内容は、お使いのブラウザの中に保存されます。ブラウザのデータを消すと、消えます。</li>
+    <li>パックの問題に、間違いを見つけたときは、下の「間違いを報告する」から、お知らせください。</li>
+  </ul>
+
+  <h3>出典</h3>
+  <ul>
+    <li>手書きの線のデータは、<a href="https://kanjivg.tagaini.net/" target="_blank" rel="noopener">KanjiVG</a>(クリエイティブ・コモンズ 表示-継承 3.0, CC BY-SA 3.0)を元にしたものを使うことがあります。そのデータを元にしたパックも、同じ条件(CC BY-SA)で配られます。</li>
+  </ul>
+
+  <p class="row" style="margin-top:14px"><a class="btn" href="https://github.com/numei136/KanjinoTower/issues/new/choose" target="_blank" rel="noopener">間違いを報告する</a></p>
+
+  <footer><a href="info.html">調整点・利用上の注意</a></footer>
+</main>
+
+<script>
+(function(){
+  "use strict";
+  var INDEX_URL = "packs/index.json";
+  var SAFE_PATH = /^[A-Za-z0-9_\-\/\.]+$/;   // 相対パスだけを許す(javascript: などを防ぐ)
+
+  function el(tag, cls, text){
+    var e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(text != null) e.textContent = text;    // 文字としてだけ入れる(HTMLとして扱わない)
+    return e;
+  }
+  function safePath(p){
+    return typeof p === "string" && SAFE_PATH.test(p) && p.indexOf("..") === -1 && p.charAt(0) !== "/";
+  }
+  function fmtDate(s){ return (typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s)) ? s.replace(/-/g,"/") : ""; }
+
+  var listEl = document.getElementById("list");
+  var countEl = document.getElementById("count");
+  var filterEl = document.getElementById("filter");
+  var toolsEl = document.getElementById("tools");
+  var packs = [];
+
+  function render(){
+    var f = filterEl.value;
+    listEl.textContent = "";
+    var shown = packs.filter(function(p){ return !f || (p.types||[]).indexOf(f) >= 0; });
+    countEl.textContent = shown.length + "件";
+    if(!shown.length){
+      listEl.appendChild(el("div","empty", packs.length ? "このタイプのパックは、まだありません。" : "まだ、パックがありません。最初の1つを、投稿してみませんか。"));
+      return;
+    }
+    shown.forEach(function(p){
+      var c = el("div","card");
+      c.appendChild(el("h3",null,p.name));
+      var meta = [];
+      if(p.author) meta.push("作者: " + p.author);
+      if(p.count) meta.push(p.count + "問");
+      var d = fmtDate(p.added); if(d) meta.push("追加: " + d);
+      c.appendChild(el("p","meta",meta.join("  ・  ")));
+      var chips = el("div","chips");
+      (p.types||[]).forEach(function(t){ chips.appendChild(el("span","chip",t)); });
+      if(p.license) chips.appendChild(el("span","chip","ライセンス: " + p.license));
+      c.appendChild(chips);
+      if(p.description) c.appendChild(el("p","desc",p.description));
+      var row = el("div","row");
+      if(safePath(p.file)){
+        var a = el("a","btn","ダウンロード");
+        a.href = p.file; a.setAttribute("download","");
+        row.appendChild(a);
+      }
+      if(p.source) row.appendChild(el("span","sub","出典: " + p.source));
+      c.appendChild(row);
+      listEl.appendChild(c);
+    });
+  }
+
+  function renderTools(items){
+    toolsEl.textContent = "";
+    if(!items.length){ toolsEl.appendChild(el("p","sub","(準備中です)")); return; }
+    items.forEach(function(t){
+      if(!safePath(t.file)) return;
+      var c = el("div","card");
+      c.appendChild(el("h3",null,t.name));
+      if(t.description) c.appendChild(el("p","desc",t.description));
+      var a = el("a","btn","ダウンロード");
+      a.href = t.file; a.setAttribute("download","");
+      c.appendChild(a);
+      toolsEl.appendChild(c);
+    });
+  }
+
+  function fail(msg){
+    countEl.textContent = "";
+    listEl.textContent = "";
+    listEl.appendChild(el("div","err",msg));
+    renderTools([]);
+  }
+
+  fetch(INDEX_URL, {cache:"no-cache"}).then(function(r){
+    if(!r.ok) throw new Error(r.status);
+    return r.json();
+  }).then(function(data){
+    packs = Array.isArray(data.packs) ? data.packs.filter(function(p){ return p && typeof p.name === "string"; }) : [];
+    packs.sort(function(a,b){ return String(b.added||"").localeCompare(String(a.added||"")); });
+    var seen = {};
+    packs.forEach(function(p){ (p.types||[]).forEach(function(t){
+      if(!seen[t]){ seen[t] = 1; var o = el("option",null,t); o.value = t; filterEl.appendChild(o); }
+    }); });
+    render();
+    renderTools(Array.isArray(data.tools) ? data.tools : []);
+  }).catch(function(){
+    fail("一覧を読み込めませんでした。公開されているページ(https://…)で、開き直してください。");
+  });
+
+  filterEl.addEventListener("change", render);
+})();
+</script>
+</body>
+</html>

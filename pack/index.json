@@ -1,0 +1,16 @@
+{
+  "updated": "2026-11-10",
+  "packs": [],
+  "tools": [
+    {
+      "name": "AIに問題を作らせるプロンプト",
+      "description": "AI(Claudeなど)に貼り付けて、パックの問題を作らせるための文章です。作った問題は、必ず人の目で確認してください。",
+      "file": "tools/pack-ai-prompt.md"
+    },
+    {
+      "name": "手書きデータの変換スクリプト",
+      "description": "KanjiVGなどの線データを、手書きパックに変換する、Pythonのスクリプトです。出典表示(CC BY-SA)が必要です。",
+      "file": "tools/kanjivg_to_pack.py"
+    }
+  ]
+}
