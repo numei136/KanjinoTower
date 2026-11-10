@@ -1,9 +1,9 @@
 {
   "battle": ["Battle.mp3"],
   "elite": [],
-  "boss": [],
+  "boss": ["半目の猛攻.mp3"],
   "finalboss": [],
-  "title": [],
+  "title": ["静かな扉.mp3"],
   "map":["map1.mp3"],
   "se": {}
 }
