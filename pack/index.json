@@ -1,16 +1,42 @@
 {
   "updated": "2026-11-10",
-  "packs": [],
+  "packs": [
+    {
+      "name": "KanjiVG 手書きデータ(常用漢字)",
+      "author": "KanjiVG(変換: 漢字の塔)",
+      "types": [
+        "手書きデータ"
+      ],
+      "count": 2136,
+      "unit": "字",
+      "size": "約2.4MB",
+      "description": "常用漢字2136字の、手書きの線のデータです。読み込むと、これらの字を、手書き問題で判定できるようになります。\n手書きデータだけでは、問題は増えません。出題する字は、別の「手書き問題パック」で指定します。",
+      "file": "packs/kanjivg-joyo.json",
+      "license": "CC BY-SA 3.0 (KanjiVG)",
+      "source": "https://kanjivg.tagaini.net/",
+      "added": "2026-11-10"
+    },
+    {
+      "name": "KanjiVG 手書きデータ(全漢字)",
+      "author": "KanjiVG(変換: 漢字の塔)",
+      "types": [
+        "手書きデータ"
+      ],
+      "count": 6413,
+      "unit": "字",
+      "size": "約8.3MB",
+      "description": "全漢字6413字の、手書きの線のデータです。ファイルが大きいので、ふつうは、常用漢字のほうを、おすすめします。\n手書きデータだけでは、問題は増えません。出題する字は、別の「手書き問題パック」で指定します。",
+      "file": "packs/kanjivg-all.json",
+      "license": "CC BY-SA 3.0 (KanjiVG)",
+      "source": "https://kanjivg.tagaini.net/",
+      "added": "2026-11-10"
+    }
+  ],
   "tools": [
     {
       "name": "AIに問題を作らせるプロンプト",
       "description": "AI(Claudeなど)に貼り付けて、パックの問題を作らせるための文章です。作った問題は、必ず人の目で確認してください。",
       "file": "tools/pack-ai-prompt.md"
-    },
-    {
-      "name": "手書きデータの変換スクリプト",
-      "description": "KanjiVGなどの線データを、手書きパックに変換する、Pythonのスクリプトです。出典表示(CC BY-SA)が必要です。",
-      "file": "tools/kanjivg_to_pack.py"
     }
   ]
 }
