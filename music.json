@@ -4,5 +4,6 @@
   "boss": [],
   "finalboss": [],
   "title": [],
-  "map":["map1.mp3"]
+  "map":["map1.mp3"],
+  "se": {}
 }
