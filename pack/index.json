@@ -1,6 +1,70 @@
 {
-  "updated": "2026-11-10",
+  "updated": "2026-11-11",
   "packs": [
+    {
+      "name": "お試しパック Lv1(小学6年生まで)",
+      "author": "Claude",
+      "types": [
+        "4択",
+        "読み",
+        "部首",
+        "手書き"
+      ],
+      "count": 30,
+      "description": "対象: 小学6年生まで。30問の、お試しパックです(4択8・読み8・部首6・手書き8)。\nAIが作った問題です。間違いを見つけたら、報告してください。",
+      "file": "packs/kakutyou/kanjitower_lv1_shogaku.json",
+      "license": "CC0",
+      "source": "AI(Claude)が作成",
+      "added": "2026-11-11"
+    },
+    {
+      "name": "お試しパック Lv2(中学3年まで)",
+      "author": "Claude",
+      "types": [
+        "4択",
+        "読み",
+        "部首",
+        "手書き"
+      ],
+      "count": 30,
+      "description": "対象: 中学3年まで。30問の、お試しパックです(4択8・読み8・部首6・手書き8)。\nAIが作った問題です。間違いを見つけたら、報告してください。",
+      "file": "packs/kakutyou/kanjitower_lv2_chugaku.json",
+      "license": "CC0",
+      "source": "AI(Claude)が作成",
+      "added": "2026-11-11"
+    },
+    {
+      "name": "お試しパック Lv3(高校〜)",
+      "author": "Claude",
+      "types": [
+        "4択",
+        "読み",
+        "部首",
+        "手書き"
+      ],
+      "count": 30,
+      "description": "対象: 高校〜。30問の、お試しパックです(4択8・読み8・部首6・手書き8)。\nAIが作った問題です。間違いを見つけたら、報告してください。",
+      "file": "packs/kakutyou/kanjitower_lv3_koukou.json",
+      "license": "CC0",
+      "source": "AI(Claude)が作成",
+      "added": "2026-11-11"
+    },
+    {
+      "name": "お試しパック Lv4(社会でよく使う漢字)",
+      "author": "Claude",
+      "types": [
+        "4択",
+        "読み",
+        "部首",
+        "手書き"
+      ],
+      "count": 30,
+      "description": "対象: 社会でよく使う漢字。30問の、お試しパックです(4択8・読み8・部首6・手書き8)。\nAIが作った問題です。間違いを見つけたら、報告してください。",
+      "file": "packs/kakutyou/kanjitower_lv4_shakai.json",
+      "license": "CC0",
+      "source": "AI(Claude)が作成",
+      "added": "2026-11-11"
+    },
     {
       "name": "KanjiVG 手書きデータ(常用漢字)",
       "author": "KanjiVG(変換: 漢字の塔)",
