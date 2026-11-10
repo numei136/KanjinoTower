@@ -1843,7 +1843,7 @@ function optBody(){
 })();
 
 /* v4.8 title: play button */
-var TM=0;const VER='5.10.34';
+var TM=0;const VER='5.10.36';
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.tw{position:relative;display:inline-block}.ver{position:absolute;right:0;top:100%;margin-top:-2px;font-size:clamp(9px,2vw,13px);opacity:.65;letter-spacing:.05em;font-weight:700}.ttsub{display:inline-block;animation:ttbob 2.8s ease-in-out infinite}@keyframes ttbob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}@media (prefers-reduced-motion:reduce){.ttsub{animation:none}}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
 function titleGo(){TM=1;render()}
 function titleBack(){TM=0;render()}
@@ -2154,7 +2154,7 @@ CARDS['写']={n:'写',name:'必殺・書き取り',cost:1,t:'atk',d:'手書き�
 ACH.push({id:'ch_quiz',name:'博識の挑戦者',d:'チャレンジ「全カード問題付き」で塔を制覇'},{id:'ch_hand',name:'筆の達人',d:'チャレンジ「手書きの試練」で塔を制覇'},{id:'ch_poi',name:'毒を飲む者',d:'チャレンジ「毒の血」で塔を制覇'},{id:'ch_vul',name:'薄氷を踏む',d:'チャレンジ「脆弱の体」で塔を制覇'},{id:'ch_wk',name:'非力の英雄',d:'チャレンジ「弱体の呪い」で塔を制覇'},{id:'ch_en',name:'節約の達人',d:'チャレンジ「枯渇」で塔を制覇'},{id:'ch_hp',name:'紙の装甲',d:'チャレンジ「脆い命」で塔を制覇'},{id:'ch_all',name:'塔の挑戦王',d:'チャレンジを3つ以上同時に選んで塔を制覇'});
 const CHALS=[
 {id:'quiz',n:'📝 全カード問題付き',d:'手札のカードを使うたびに問題(読み・部首・筆順・手書き)。正解で効果発動、不正解だと効果なし(コストは消費)'},
-{id:'hand',n:'✍ 手書きの試練',d:'カードを使うたびに手書き問題。読みに合う漢字を書けたら効果発動'},
+{id:'hand',n:'✍ 手書きの試練',d:'攻撃カードを使うたびに手書き問題。読みに合う漢字を書けたら効果発動'},
 {id:'poi',n:'🩸 毒の血',d:'毎ターン開始時、HPが2減る(1までは減る)'},
 {id:'vul',n:'🪶 脆弱の体',d:'常に脆弱状態。受けるダメージ1.5倍'},
 {id:'wk',n:'🥀 弱体の呪い',d:'常に弱体状態。与えるダメージ0.75倍'},
@@ -2183,12 +2183,12 @@ function hqEnd(ok,msg){if(HW.dend||!HQ)return;HW.dend=true;const m=document.getE
 {const _oq=openQuiz;openQuiz=function(c){if(c&&c.quiz==='hw'){G.qc=c;hqAsk((ok,t)=>finishQuiz(ok,t));return}return _oq.apply(this,arguments)}}
 function chAsk(i,args){const id=G.hand[i],c=CARDS[id];G.busy=true;CHQ={i,args,id};
  const fin=ok=>{G.busy=false;const q=CHQ;CHQ=null;if(ok){G.chOK=true;const cc0=CARDS[q.id],pd=G.dbl;if(has('倍')&&cc0.t==='atk'){G.dbl=true;toast('📖 博識の印：ダメージ2倍！')}try{play.apply(null,q.args)}finally{G.chOK=false;if(!cc0.dmg)G.dbl=pd}}else{const cc=CARDS[q.id];if(G.hand[q.i]===q.id){G.en-=cc.cost;G.hand.splice(q.i,1);G.disc.push(q.id)}G.log='不正解…「'+cc.name+'」は不発！(HP-4)';toast('❌ 不発…HP-4');G.hp-=4;if(G.hp<=0){G.hp=0;G.scr='lose';return render()}render()}};
- const kinds=chOn('hand')?['hw']:['read','rad','ord','hw'],k=kinds[rnd(kinds.length)];
+ const kinds=chKinds(),k=kinds[rnd(kinds.length)];
  if(k==='hw'){hqAsk((ok)=>fin(ok));return}
  const Q=k==='read'?mkRead():k==='rad'?mkRad():mkQuiz();CHQ.qz=Q;
  $('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:360px;text-align:center"><h2>📝 ${c.name}の問題</h2><p>${Q.q}</p><div class="btns" style="flex-direction:column">${Q.o.map((x,j)=>`<button class="main off" onclick="chAns(${j})">${x}</button>`).join('')}</div></div></div>`;CHQ.fin=fin}
 function chAns(j){if(!CHQ||!CHQ.qz)return;const Q=CHQ.qz,ok=j===Q.a,fin=CHQ.fin;CHQ.qz=null;sfx(ok?'ok':'ng');$('#modal').innerHTML=`<div class="modal"><div class="mbox" style="max-width:360px;text-align:center"><h2>${ok?'⭕ 正解！':'❌ ざんねん…'}</h2><p>答え：${Q.o[Q.a]}</p></div></div>`;setTimeout(()=>{$('#modal').innerHTML='';fin(ok)},900)}
-{const _p=play;play=function(i){try{if(G&&G.scr==='battle'&&G.custom&&(chOn('quiz')||chOn('hand'))&&!G.busy&&!G.chOK){const id=G.hand[i],c=CARDS[id];if(c&&!c.quiz&&!c.pack&&c.t!=='def'&&!(c.blk&&!c.dmg)&&c.cost<=G.en&&!(typeof frzOn==='function'&&frzOn(i))){chAsk(i,Array.from(arguments));return}}}catch(e){}return _p.apply(this,arguments)}}
+{const _p=play;play=function(i){try{if(G&&G.scr==='battle'&&G.custom&&(chOn('quiz')||chOn('hand'))&&!G.busy&&!G.chOK){const id=G.hand[i],c=CARDS[id];if(c&&!c.quiz&&!c.pack&&c.t==='atk'&&c.cost<=G.en&&!(typeof frzOn==='function'&&frzOn(i))){chAsk(i,Array.from(arguments));return}}}catch(e){}return _p.apply(this,arguments)}}
 /* clear -> achievements */
 {const _w=win;win=function(){const r=_w.apply(this,arguments);try{if(G&&G.custom&&G.chal&&G.chal.length&&(G.scr==='clear'||G.bossNext==='clear')){G.chal.forEach(k=>chAch('ch_'+k));if(G.chal.length>=3)chAch('ch_all')}}catch(e){}return r}}
 {const _r=render;render=function(){const r=_r.apply(this,arguments);try{if(G&&G.custom&&G.chal&&G.chal.length&&G.scr==='battle'){const t=document.querySelector('.top');if(t&&!document.getElementById('chs'))t.insertAdjacentHTML('afterend','<div id="chs" class="stat" style="text-align:center;margin:0">🔥 '+G.chal.map(k=>CHALS.find(x=>x.id===k).n).join(' ／ ')+'</div>')}}catch(e){}return r}}
@@ -2228,8 +2228,8 @@ function hqJudge(){if(HW.dend||!HQ)return;const old=HW.ch.includes(HQ.t),m=docum
 {const _a=hqAsk;hqAsk=function(cb){const ks=Object.keys(HQ2),t=ks[rnd(ks.length)];const hc=HW.ch;_a.apply(this,arguments);HQ.t=t;HW.dtg=t;const p=document.querySelector('#hd p');if(p)p.textContent='「'+HQ2[t]+'」を表す漢字を書こう'}}
 /* challenge definitions: single + harder */
 CHALS.length=0;CHALS.push(
-{id:'quiz',n:'📝 全カード問題付き',d:'カードを使うたびに問題（読み・部首・筆順・手書き）。正解で効果発動。レリック「博識の印」を持って開始。問題に正解した攻撃カードは、数値の2倍のダメージ。不正解は不発＋HP4ダメージ。シールドカードは問題なし。敵のHP+20%'},
-{id:'hand',n:'✍ 手書きの試練',d:'カードを使うたびに手書き問題（20字から出題）。正解で効果発動。レリック「博識の印」を持って開始。問題に正解した攻撃カードは、数値の2倍のダメージ。不正解は不発＋HP4ダメージ。シールドカードは問題なし。敵のHP+20%'},
+{id:'quiz',n:'📝 全カード問題付き',d:'攻撃カードを使うたびに問題（読み・部首・筆順・手書き）。正解で効果発動。レリック「博識の印」を持って開始。問題に正解した攻撃カードは、数値の2倍のダメージ。不正解は不発＋HP4ダメージ。攻撃カード以外（シールド等）は問題なし。敵のHP+20%'},
+{id:'hand',n:'✍ 手書きの試練',d:'攻撃カードを使うたびに手書き問題（20字から出題）。正解で効果発動。レリック「博識の印」を持って開始。問題に正解した攻撃カードは、数値の2倍のダメージ。不正解は不発＋HP4ダメージ。攻撃カード以外（シールド等）は問題なし。敵のHP+20%'},
 {id:'poi',n:'🩸 毒の血',d:'毎ターン開始時にHPが3減る（階層ごとに+1）。敵のHP+20%'},
 {id:'vul',n:'🪶 脆弱の体',d:'常に受けるダメージ1.5倍。敵の筋力+1、敵のHP+20%'},
 {id:'wk',n:'🥀 弱体の呪い',d:'常に与えるダメージ0.75倍。敵のHP+40%'},
@@ -2294,7 +2294,7 @@ function hqJudge(){if(HW.dend||!HQ)return;const m=document.getElementById('hdm')
  if(r.state==='empty'){m.textContent='何も書かれていません';return}
  if(r.state==='ok')hqEnd(true,'⭕ 「'+HQ.t+'」正解！');else if(r.state==='ng')hqEnd(false,'❌ '+(r.ch&&r.ch!==HQ.t?'「'+r.ch+'」と判定。':'判定できず…')+'正解は「'+HQ.t+'」');
  else{HW.dtry++;if(HW.dtry>=3)hqEnd(false,'❌ 判定できず…正解は「'+HQ.t+'」');else{m.textContent='⚠ 判定保留：もう少しはっきり書いてみよう（'+HW.dtry+'/3）';hdClear()}}}
-{const _a=hqAsk;hqAsk=function(cb){_a.apply(this,arguments);const ks=Object.keys(HQ3),t=ks[rnd(ks.length)];HQ.t=t;HW.dtg=t;const p=document.querySelector('#hd p');if(p)p.textContent='「'+HQ3[t]+'」を表す漢字を書こう'}}
+{const _a=hqAsk;hqAsk=function(cb){_a.apply(this,arguments);const ks=hqKeys(),t=ks[rnd(ks.length)];HQ.t=t;HW.dtg=t;const p=document.querySelector('#hd p');if(p)p.textContent='「'+HQ3[t]+'」を表す漢字を書こう'}}
 CHALS.forEach(x=>{x.d=x.d.replace('20字から出題','中学レベルの漢字20字から出題')});
 CARDS['写'].d='手書きクイズ。中学レベルの漢字を書く。正解で16ダメージ';
 
@@ -2323,8 +2323,8 @@ function tcJudge(strokes,target){const u=clOf(strokes,90);if(!u)return{state:'em
 /* practice */
 var KP=null;
 function kpOpen(){closeDeck();if(document.getElementById('hd'))return;KP={n:0,ok:0};kpNext()}
-function kpNext(){const old=document.getElementById('hd');if(old)old.remove();const ks=Object.keys(HQ3),t=ks[rnd(ks.length)];KP.t=t;KP.done=false;HW.dend=false;HW.dtry=0;HW.st=[];HQ=null;
- const o=document.createElement('div');o.id='hd';o.className='modal';o.innerHTML=`<div class="mbox" style="max-width:420px;text-align:center"><h2>✍ 漢字テスト（中学レベル20字）</h2><p>「${HQ3[t]}」を表す漢字を書こう</p><canvas id="hdc"></canvas><div id="hdm" class="stat"></div><div class="btns"><button class="main off" onclick="hdClear()">書き直し</button><button class="main" onclick="kpJudge()">判定</button></div><div class="btns" id="kpb"></div><div class="stat" id="kps"></div><div class="btns"><button class="main off" onclick="kpReset()">学習データを消す</button><button class="main off" onclick="kpClose()">閉じる</button></div></div>`;
+function kpNext(){const old=document.getElementById('hd');if(old)old.remove();const ks=kpKeys(),t=ks[rnd(ks.length)];KP.t=t;KP.done=false;HW.dend=false;HW.dtry=0;HW.st=[];HQ=null;
+ const o=document.createElement('div');o.id='hd';o.className='modal';o.innerHTML=`<div class="mbox" style="max-width:420px;text-align:center"><h2>✍ 漢字テスト（守護者の5字＋中学20字＋拡張）</h2><p>「${HQ3[t]||HQR[t]}」を表す漢字を書こう</p><canvas id="hdc"></canvas><div id="hdm" class="stat"></div><div class="btns"><button class="main off" onclick="hdClear()">書き直し</button><button class="main" onclick="kpJudge()">判定</button></div><div class="btns" id="kpb"></div><div class="stat" id="kps"></div><div class="btns"><button class="main off" onclick="kpReset()">学習データを消す</button><button class="main off" onclick="kpClose()">閉じる</button></div></div>`;
  document.body.appendChild(o);const cv=document.getElementById('hdc'),sz=Math.min(280,(window.innerWidth||320)-60),dp=window.devicePixelRatio||1;cv.style.width=sz+'px';cv.style.height=sz+'px';cv.width=Math.floor(sz*dp);cv.height=Math.floor(sz*dp);HW.cv=cv;hwBind(cv);hwDraw();kpStat()}
 function kpStat(){const e=document.getElementById('kps');if(!e)return;const P=tcProf(),n=Object.values(LRN).reduce((a,l)=>a+l.length,0);e.textContent='成績 '+KP.ok+'/'+KP.n+'　学習データ '+n+'件　筆跡への適応：'+(P.tol>0?'あり(ゆるさ'+(P.tol*100).toFixed(1)+')':'手書きテストを5種類×数回やると適応されます')}
 function kpJudge(){if(!KP||KP.done)return;const m=document.getElementById('hdm'),r=tcJudge(HW.st,KP.t);if(r.state==='empty'){m.textContent='何も書かれていません';return}
@@ -2522,6 +2522,45 @@ function exSeq(done){const g=G,list=(G.e.ex||[]).map((o,j)=>[o,j]).filter(([o])=
 /* v5.10.34 relic: 博識の印 (quiz challenges only) */
 RELICS['倍']={name:'博識の印',d:'問題に正解した攻撃カードが、数値の2倍のダメージ(クイズ系チャレンジ専用)',ch:'chal'};
 {const _cs=customStart;customStart=function(){_cs.apply(this,arguments);try{if(G&&G.custom&&G.chal&&(G.chal.includes('quiz')||G.chal.includes('hand'))&&!has('倍')){G.rel.push('倍');render()}}catch(e){}}}
+
+/* v5.10.35 attack-only quiz, pack-only setting, load check, learn-on-wrong, merged learning menu */
+var PKONLY=false;try{PKONLY=localStorage.getItem('kanjiPkOnly')==='1'}catch(e){}
+function pkAnyQ(){const l=[];PK.filter(p=>p.on).forEach(p=>p.qs.forEach(q=>{if(q.t!=='hw')l.push(q)}));return l}
+function hqKeys(){return(PKONLY&&PKADD.length)?PKADD.slice():Object.keys(HQ3)}
+function chKinds(){const base=chOn('hand')?['hw']:['read','rad','ord','hw'];if(!PKONLY)return base;const k=[];if(!chOn('hand')&&pkAnyQ().length)k.push('read');if(PKADD.length)k.push('hw');return k.length?k:base}
+[['mkQuiz','ord'],['mkRead','read'],['mkRad','rad']].forEach(([fn,cat])=>{const orig=window[fn];if(typeof orig!=='function')return;window[fn]=function(){try{if(PKONLY){const a=pkAnyQ();if(a.length){const l=pkPick(cat),q=l.length?l[rnd(l.length)]:a[rnd(a.length)];return pkMake(q,q.t==='choice'?'ord':q.t)}}}catch(e){}return orig.apply(this,arguments)}});
+function pkOnlyTog(){PKONLY=!PKONLY;try{localStorage.setItem('kanjiPkOnly',PKONLY?'1':'0')}catch(e){}pkView()}
+function pkStat(){let h='',bad=0;const cnt=p=>{const c={choice:0,read:0,rad:0,hw:0};p.qs.forEach(q=>{c[q.t]=(c[q.t]||0)+1});return c};
+ PK.forEach(p=>{const c=cnt(p),hq=p.qs.filter(q=>q.t==='hw'),miss=hq.filter(q=>!q.st&&!THC[q.k]&&!HWDB.has(q.k)).length;let st=p.on?'✅':'⏸';if(miss){st='⚠';bad++}
+  h+=`<div class="stat" style="text-align:left">${st} <b>${p.name}</b>：4択${c.choice}・読み${c.read}・部首${c.rad}・手書き${c.hw}${miss?`<br><span style="color:var(--red)">手書き${miss}件はお手本がなく出題されません</span>`:''}${p.on?'':'（オフ）'}</div>`});
+ HWP.forEach(p=>{let ok=0,tot=0,ks=Object.keys(p.glyphs||{});ks.slice(0,3).forEach(k=>{tot++;try{const st=p.glyphs[k].map(s=>{const a=[];for(let i=0;i<s.length;i+=2)a.push({x:s[i],y:s[i+1]});return a});if(tcJudge(st,k).state==='ok')ok++}catch(e){}});
+  const good=ok===tot&&tot>0;if(p.on&&!good)bad++;h+=`<div class="stat" style="text-align:left">${!p.on?'⏸':good?'✅':'⚠'} <b>${p.name}</b>：${ks.length}字（試し判定 ${ok}/${tot}）${p.on&&!good?'<br><span style="color:var(--red)">試し判定に失敗。データを確認してください</span>':''}</div>`});
+ const a=pkAnyQ().length;return `<h3>📋 読み込み状況</h3>${h||'<div class="stat">まだありません</div>'}<div class="stat" style="text-align:left">いま出題に使える拡張問題：4択・読み・部首 ${a}件／手書き ${PKADD.length}字${bad?'<br><span style="color:var(--red)">⚠ '+bad+'件に問題があります</span>':PK.length||HWP.length?'<br>✅ 問題なく読み込まれています':''}</div>
+ <div class="btns"><button class="main ${PKONLY?'':'off'}" onclick="pkOnlyTog()">出題：${PKONLY?'拡張パックのみ（標準の問題は出さない）':'標準＋拡張パック'}</button></div>${PKONLY&&!a&&!PKADD.length?'<div class="stat" style="color:var(--red)">拡張の問題がないため、標準の問題が出ます</div>':''}`}
+{const _v=pkView;pkView=function(){_v.apply(this,arguments);try{const m=document.querySelector('#pkm .mbox');if(m&&!document.getElementById('pks')){const bs=m.querySelectorAll(':scope > .btns'),last=bs[bs.length-1],d=document.createElement('div');d.id='pks';d.innerHTML=pkStat();m.insertBefore(d,last)}}catch(e){}}}
+/* wrong handwriting answer: ask whether it was actually correct */
+function hqEnd(ok,msg){if(HW.dend||!HQ)return;HW.dend=true;const m=document.getElementById('hdm');if(m)m.textContent=msg;sfx(ok?'ok':'ng');const q=HQ,st=(HW.st||[]).map(s=>s.slice());
+ const fin=()=>{const o=document.getElementById('hd');if(o)o.remove();HW.cv=null;HQ=null;q.cb(ok,q.t)};
+ if(!ok&&!/^あきらめ/.test(msg)&&st.some(s=>s&&s.length>=2)){q.st=st;q.fin=fin;const b=document.querySelector('#hd .btns');if(b)b.innerHTML='<div class="stat" style="width:100%">今のは正解でしたか？<br><small>（正解なら学習して、次から通りやすくします。今回は不正解のままです）</small></div><button class="main" onclick="hqLearn(1)">正解のつもりだった（学習）</button><button class="main off" onclick="hqLearn(0)">いいえ</button>';else setTimeout(fin,1100);return}
+ setTimeout(fin,1100)}
+function hqLearn(y){if(!HQ||!HQ.fin)return;const q=HQ,f=q.fin;q.fin=null;if(y){try{lrnAdd(q.t,q.st)}catch(e){}const m=document.getElementById('hdm');if(m)m.textContent='学習しました。次からこの書き方も通りやすくなります';const b=document.querySelector('#hd .btns');if(b)b.innerHTML='';setTimeout(f,1100)}else f()}
+/* one learning entry in options */
+function hwmClose(){const o=document.getElementById('hwmn');if(o)o.remove()}
+{const _ob=optBody;optBody=function(){let h=_ob.apply(this,arguments);h=h.replace(/<button[^>]*onclick="kpOpen\(\)"[^>]*>[^<]*<\/button>/,'');return h.replace(/<button([^>]*)onclick="hwOpen\(\)"([^>]*)>[^<]*<\/button>/,'<button$1onclick="hwMenu()"$2>✍ 手書きの練習・学習（テスト）</button>')}}
+
+/* v5.10.35b merged test + learning-data management */
+function kpKeys(){const k=hqKeys();return PKONLY&&PKADD.length?k:[...new Set([...k,...HW.ch])]}
+{const _j=kpJudge;kpJudge=function(){const n0=KP?KP.ok:0,t=KP&&KP.t,st=HW.st.map(s=>s.slice());_j.apply(this,arguments);try{if(KP&&KP.ok>n0&&HW.ch.includes(t)){HWD.samples.push(hwClean({ch:t,label:'ok',strokes:st,ts:new Date().toISOString()}));hwSave()}}catch(e){}}}
+var LDM='';
+function ldCount(){return{l:Object.values(LRN).reduce((a,l)=>a+l.length,0),s:HWD.samples.length}}
+function ldExport(){const t=JSON.stringify({format:'kanjitower-learning',v:1,exported:new Date().toISOString(),lrn:LRN,samples:HWD.samples});try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'application/json'}));a.download='kanjitower-learning.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}catch(e){}LDM='書き出しました（学習'+ldCount().l+'件＋登録'+ldCount().s+'件を1つのファイルに）';hwMenu(1)}
+async function ldImport(f){try{if(!f||f.size>8e6)throw new Error('ファイルが大きすぎます');const o=JSON.parse(await f.text());let nl=0,ns=0;
+ if(o.lrn&&typeof o.lrn==='object')Object.keys(o.lrn).forEach(k=>{if(Array.from(k).length!==1||!Array.isArray(o.lrn[k]))return;o.lrn[k].forEach(st=>{if(!Array.isArray(st)||st.length<1||st.length>30||st.some(s=>!Array.isArray(s)||s.length<2||s.length>60||s.some(p=>!Array.isArray(p)||p.length!==2||!Number.isFinite(p[0])||!Number.isFinite(p[1]))))return;(LRN[k]=LRN[k]||[]).push(st);if(LRN[k].length>6)LRN[k].shift();nl++})});
+ if(Array.isArray(o.samples)){const v=hwValid({samples:o.samples});if(!v.fatal){HWD.samples=HWD.samples.concat(v.ok);ns=v.ok.length}}
+ if(!nl&&!ns)throw new Error('使える学習データがありません');lrnSave();hwSave();PRF.n=-1;LDM='読み込みました（学習'+nl+'件＋登録'+ns+'件）'}catch(e){LDM='読み込めません：'+(e&&e.message||e)}hwMenu(1)}
+function ldReset(b){if(!b.dataset.c){b.dataset.c=1;b.textContent='もう一度押すと全削除';return}LRN={};lrnSave();HWD.samples=[];hwSave();PRF.n=-1;LDM='学習データを全て削除しました';hwMenu(1)}
+function hwMenu(re){if(re)hwmClose();closeDeck();if(document.getElementById('hwmn'))return;const c=ldCount(),o=document.createElement('div');o.id='hwmn';o.className='modal';o.innerHTML=`<div class="mbox" style="max-width:420px;text-align:center"><h2>✍ 手書きの練習・学習</h2><p class="stat">練習で正解した字や「正解のつもり」と答えた字は学習され、あなたの筆跡に合わせて判定が良くなります（クイズ中の学習と共通）。</p><div class="btns" style="flex-direction:column"><button class="main" onclick="hwmClose();kpOpen()">📝 漢字テスト（守護者の5字＋中学レベル20字＋拡張パックの字）</button></div>
+<h3>📁 学習データの管理</h3><div class="stat">学習 ${c.l}件／登録 ${c.s}件（1つのファイルにまとめて書き出し・読み込みできます）</div>${LDM?`<div class="stat" style="color:var(--red)">${LDM}</div>`:''}<div class="btns" style="flex-direction:column"><button class="main off" onclick="ldExport()">💾 書き出す（JSON）</button><button class="main off" onclick="document.getElementById('ldf').click()">📂 読み込む（JSON）</button><input type="file" id="ldf" accept=".json,application/json" style="display:none" onchange="ldImport(this.files[0])"><button class="main off" onclick="ldReset(this)">学習データを全て消す</button></div><div class="btns"><button class="main" onclick="hwmClose()">閉じる</button></div></div>`;document.body.appendChild(o);LDM=''}
 
 newGame();
 </script>
