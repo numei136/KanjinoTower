@@ -1843,7 +1843,7 @@ function optBody(){
 })();
 
 /* v4.8 title: play button */
-var TM=0;const VER='5.10.30';
+var TM=0;const VER='5.10.31';
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.tw{position:relative;display:inline-block}.ver{position:absolute;right:0;top:100%;margin-top:-2px;font-size:clamp(9px,2vw,13px);opacity:.65;letter-spacing:.05em;font-weight:700}.ttsub{display:inline-block;animation:ttbob 2.8s ease-in-out infinite}@keyframes ttbob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}@media (prefers-reduced-motion:reduce){.ttsub{animation:none}}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
 function titleGo(){TM=1;render()}
 function titleBack(){TM=0;render()}
@@ -2467,6 +2467,41 @@ function pkNetRender(){const o=document.getElementById('pkn');if(!o)return;const
   h+=PKNET.list.map((it,i)=>({it,i})).filter(x=>!q||(x.it.name+x.it.author+x.it.type+x.it.desc).includes(q)).map(({it,i})=>{const have=PK.some(p=>p.name===it.name)||HWP.some(p=>p.name===it.name);return `<div class="own"><span style="flex:1;text-align:left"><b>${it.name}</b>${it.author?'／'+it.author:''}<br><small>${it.type?'['+it.type+'] ':''}${it.count!==''?'問題'+pkEsc(it.count)+'件 ':''}${it.license?'ライセンス：'+it.license+' ':''}${it.desc?'<br>'+it.desc:''}</small></span><button id="pkn${i}" class="main off cf" onclick="pkNetGet(${i})">${have?'再取得':'追加'}</button></div>`}).join('')||'<div class="stat">該当なし</div>'}
  h+=`<div class="stat">投稿されたパックは、管理人が確認したものです。内容は、問題の文章として表示するだけで、安全のため、HTMLとしては扱いません。</div>`;o.innerHTML=h}
 {const _v=pkView;pkView=function(){_v.apply(this,arguments);try{const m=document.querySelector('#pkm .mbox');if(m&&!document.getElementById('pkn')){const h3=m.querySelector('h3'),d=document.createElement('div');d.id='pkn';if(h3)m.insertBefore(d,h3);else m.appendChild(d);pkNetRender()}}catch(e){}}}
+
+/* v5.10.31 convert KanjiVG (xml / svg) in the browser */
+function kvSample(d){const toks=[],re=/([MmLlHhVvCcSsQqTtZz])|(-?\d*\.?\d+(?:[eE][-+]?\d+)?)/g;let m;while((m=re.exec(d)))toks.push([m[1],m[2]]);let i=0,cmd=null,x=0,y=0,sx=0,sy=0,lc=null,lq=null;const pts=[];const num=()=>{if(i>=toks.length||toks[i][1]==null)throw 0;const v=parseFloat(toks[i][1]);i++;return v};
+ const cubic=(p0,p1,p2,p3)=>{for(let k=1;k<=14;k++){const t=k/14,u=1-t;pts.push([u*u*u*p0[0]+3*u*u*t*p1[0]+3*u*t*t*p2[0]+t*t*t*p3[0],u*u*u*p0[1]+3*u*u*t*p1[1]+3*u*t*t*p2[1]+t*t*t*p3[1]])}};
+ const quad=(p0,p1,p2)=>{for(let k=1;k<=10;k++){const t=k/10,u=1-t;pts.push([u*u*p0[0]+2*u*t*p1[0]+t*t*p2[0],u*u*p0[1]+2*u*t*p1[1]+t*t*p2[1]])}};
+ while(i<toks.length){if(toks[i][0]){cmd=toks[i][0];i++;if(cmd==='Z'||cmd==='z'){x=sx;y=sy;continue}}if(!cmd)throw 0;const rel=cmd===cmd.toLowerCase(),c=cmd.toUpperCase();
+  if(c==='M'){let nx=num(),ny=num();if(rel){nx+=x;ny+=y}x=nx;y=ny;sx=x;sy=y;pts.push([x,y]);cmd=rel?'l':'L';lc=lq=null}
+  else if(c==='L'){let nx=num(),ny=num();if(rel){nx+=x;ny+=y}x=nx;y=ny;pts.push([x,y]);lc=lq=null}
+  else if(c==='H'){const nx=num();x=rel?nx+x:nx;pts.push([x,y]);lc=lq=null}
+  else if(c==='V'){const ny=num();y=rel?ny+y:ny;pts.push([x,y]);lc=lq=null}
+  else if(c==='C'){let a=[num(),num(),num(),num(),num(),num()];if(rel)a=[a[0]+x,a[1]+y,a[2]+x,a[3]+y,a[4]+x,a[5]+y];cubic([x,y],[a[0],a[1]],[a[2],a[3]],[a[4],a[5]]);lc=[a[2],a[3]];x=a[4];y=a[5];lq=null}
+  else if(c==='S'){let a=[num(),num(),num(),num()];if(rel)a=[a[0]+x,a[1]+y,a[2]+x,a[3]+y];const c1=lc?[2*x-lc[0],2*y-lc[1]]:[x,y];cubic([x,y],c1,[a[0],a[1]],[a[2],a[3]]);lc=[a[0],a[1]];x=a[2];y=a[3];lq=null}
+  else if(c==='Q'){let a=[num(),num(),num(),num()];if(rel)a=[a[0]+x,a[1]+y,a[2]+x,a[3]+y];quad([x,y],[a[0],a[1]],[a[2],a[3]]);lq=[a[0],a[1]];x=a[2];y=a[3];lc=null}
+  else if(c==='T'){let a=[num(),num()];if(rel)a=[a[0]+x,a[1]+y];const c1=lq?[2*x-lq[0],2*y-lq[1]]:[x,y];quad([x,y],c1,[a[0],a[1]]);lq=c1;x=a[0];y=a[1];lc=null}
+  else i++}
+ return pts}
+function kvResample(pts,n){const L=[0];for(let i=1;i<pts.length;i++)L.push(L[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));const tot=L[L.length-1];if(!(tot>0))return[pts[0],pts[0]];const out=[];let j=0;for(let k=0;k<n;k++){const t=tot*k/(n-1);while(j<L.length-2&&L[j+1]<t)j++;const seg=(L[j+1]-L[j])||1,r=(t-L[j])/seg;out.push([pts[j][0]+(pts[j+1][0]-pts[j][0])*r,pts[j][1]+(pts[j+1][1]-pts[j][1])*r])}return out}
+function kvStroke(d){let pts;try{pts=kvSample(d)}catch(e){return null}if(pts.length<2)return null;let len=0;for(let i=1;i<pts.length;i++)len+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);len/=109;const n=Math.max(5,Math.min(14,Math.floor(len*16)+4));return kvResample(pts,n).flatMap(p=>[+(p[0]/109).toFixed(3),+(p[1]/109).toFixed(3)])}
+function kvFromEl(el){return Array.from(el.getElementsByTagName('path')).map(p=>p.getAttribute('d')).filter(Boolean).map(kvStroke).filter(Boolean)}
+async function kvConvert(files,want){const g={};let n=0;const add=(hex,el)=>{let ch;try{ch=String.fromCodePoint(parseInt(hex,16))}catch(e){return}if(want&&!want.has(ch)||g[ch])return;const st=kvFromEl(el);if(st.length){g[ch]=st;n++}};
+ for(const f of files){if(f.size>120e6)throw new Error(f.name+'：ファイルが大きすぎます(120MBまで)');const t=await f.text(),doc=new DOMParser().parseFromString(t,'text/xml');if(doc.getElementsByTagName('parsererror').length)throw new Error(f.name+'：XMLとして読めません');
+  const ks=doc.getElementsByTagName('kanji');if(ks.length){for(const k of ks){const m=/kanji_([0-9a-fA-F]{4,5})$/.exec(k.getAttribute('id')||'');if(m)add(m[1],k)}}
+  else{const m=/([0-9a-fA-F]{4,5})\.svg$/i.exec(f.name);if(m)add(m[1],doc.documentElement)}
+  await new Promise(r=>setTimeout(r,0))}return g}
+function kvOpen(){const o=document.getElementById('pkm');if(!o)return;o.innerHTML=`<div class="mbox" style="max-width:460px"><h2>🔄 KanjiVGから変換して読み込む</h2><p class="stat">KanjiVG の <b>kanjivg.xml</b>（または、1字ごとのSVGファイル）を選ぶと、ブラウザの中で手書きデータに変換します。変換用のスクリプトは、不要です。</p>
+<div class="btns"><button class="main" onclick="document.getElementById('kvf').click()">📂 ファイルを選ぶ</button></div><input type="file" id="kvf" accept=".xml,.svg,text/xml,image/svg+xml" multiple style="display:none" onchange="kvPick(this.files)"><div id="kvn" class="stat">未選択</div>
+<h3>変換する漢字</h3><textarea id="kvc" rows="3" style="width:100%;font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px" placeholder="空欄＝すべての漢字（約6000字。多いと重くなります）。絞るときは、漢字を並べて貼り付けてください（例：森林明回国…）"></textarea>
+<div class="stat">KanjiVG は CC BY-SA 3.0 のデータです。変換したデータにも、ライセンスと出典が付きます。</div><div id="kvm" class="stat" style="white-space:pre-wrap"></div>
+<div class="btns"><button class="main" id="kvg" onclick="kvGo()" disabled>変換する</button><button class="main off" onclick="pkView()">もどる</button></div></div>`}
+var KVF=[];function kvPick(fs){KVF=Array.from(fs);document.getElementById('kvn').textContent=KVF.length+'個のファイルを選びました：'+KVF.slice(0,3).map(f=>f.name).join('、')+(KVF.length>3?'…':'');document.getElementById('kvg').disabled=!KVF.length}
+async function kvGo(){const m=document.getElementById('kvm'),b=document.getElementById('kvg');if(!KVF.length)return;b.disabled=true;m.textContent='変換中…（大きいファイルは、数十秒かかります）';const w=Array.from(document.getElementById('kvc').value.replace(/\s/g,''));
+ try{await new Promise(r=>setTimeout(r,30));const g=await kvConvert(KVF,w.length?new Set(w):null),r=pkValidateGlyphs({glyphs:g});if(!r.n){m.textContent='変換できる漢字がありませんでした\n'+r.err.slice(0,5).join('\n');b.disabled=false;return}
+  HWPEND={name:'KanjiVG 手書きデータ',license:'CC BY-SA 3.0 (KanjiVG)',source:'https://kanjivg.tagaini.net/',glyphs:r.glyphs,n:r.n,bad:r.err.length,file:'kanjivg'};pkWarn('')}
+ catch(e){m.textContent='変換できませんでした：'+(e&&e.message||e);b.disabled=false}}
+{const _v=pkView;pkView=function(){_v.apply(this,arguments);try{const m=document.querySelector('#pkm .mbox');if(m&&!document.getElementById('kvb')){const hs=[...m.querySelectorAll('h3')].find(h=>h.textContent.includes('手書きデータパック'));if(hs){const d=hs.nextElementSibling;const e=document.createElement('div');e.id='kvb';e.className='btns';e.innerHTML='<button class="main" onclick="kvOpen()">🔄 KanjiVGから変換して読み込む</button>';(d||hs).insertAdjacentElement('afterend',e)}}}catch(e){}}}
 
 newGame();
 </script>
