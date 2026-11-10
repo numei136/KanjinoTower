@@ -1841,13 +1841,13 @@ function optBody(){
 })();
 
 /* v4.8 title: play button */
-var TM=0;
-document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
-function titleGo(){TM=1;selectView()}
-function titleBack(){TM=0;selectView()}
+var TM=0;const VER='5.10';
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.tw{position:relative;display:inline-block}.ver{position:absolute;right:0;top:100%;margin-top:-2px;font-size:clamp(9px,2vw,13px);opacity:.65;letter-spacing:.05em;font-weight:700}.ttsub{display:inline-block;animation:ttbob 2.8s ease-in-out infinite}@keyframes ttbob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}@media (prefers-reduced-motion:reduce){.ttsub{animation:none}}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
+function titleGo(){TM=1;render()}
+function titleBack(){TM=0;render()}
 function selectView(){
  const top=`<button id="tutbtn" onclick="tutStart()">❓ チュートリアル</button><a id="infolink" href="info.html" target="_blank" rel="noopener">ℹ 調整点・利用上の注意</a>`;
- if(!TM){$('#app').innerHTML=`<div class="overlay">${top}<div class="ttwrap"><h1 class="bigtitle">漢字の塔</h1><div class="ttsub">KANJI TOWER</div>${contHtml()}<p><button class="main playbtn" onclick="titleGo()">▶ プレイ</button></p><p><button class="main off" onclick="achOpen()">🏆 実績・倒した敵の一覧</button></p></div></div>`;return}
+ if(!TM){$('#app').innerHTML=`<div class="overlay">${top}<div class="ttwrap"><div class="tw"><h1 class="bigtitle">漢字の塔</h1><span class="ver">Ver.${VER}</span></div><div class="ttsub">KANJI TOWER</div>${contHtml()}<p><button class="main playbtn" onclick="titleGo()">▶ プレイ</button></p><p><button class="main off" onclick="achOpen()">🏆 実績・倒した敵の一覧</button></p></div></div>`;return}
  $('#app').innerHTML=`<div class="overlay">${top}<h2>漢字の塔</h2>${contHtml()}<p><button class="main off" onclick="customOpen()">🛠 カスタムモード（実績は解除されない）</button></p><p>戦う漢字を選ぶ</p><div class="hand">${CHARS.map((c,i)=>`<button class="card sk chr" onclick="choose(${i})"><div class="k">${c.k}</div><div class="n">${c.name}</div><div class="d">HP${c.hp}<br>能力「${c.ab}」<br>${c.d}</div></button>`).join('')}</div><p><button class="main off" onclick="titleBack()">← タイトルへ</button> <button class="main" onclick="achOpen()">🏆 実績・倒した敵の一覧</button></p></div>`}
 
 {const _ng=newGame;newGame=function(){TM=0;return _ng()}}
