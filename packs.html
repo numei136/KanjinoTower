@@ -49,6 +49,8 @@
   .note{background:var(--panel);border-radius:6px;padding:10px 12px;font-size:13px}
   footer{text-align:center;margin-top:44px;font-size:13px}
   code{background:#2a251d;border-radius:3px;padding:1px 5px;font-size:12px}
+  pre{background:#0f0d0a;border:1px solid #3a352d;border-radius:6px;padding:10px 12px;overflow-x:auto;margin:8px 0}
+  pre code{background:none;padding:0;font-size:12px;line-height:1.7;white-space:pre}
 </style>
 </head>
 <body>
@@ -73,6 +75,36 @@
   <h2>自分で作る</h2>
   <p>テンプレートや、AIに問題を作らせるプロンプトを使うと、自分のパックを作れます。</p>
   <div id="tools"></div>
+  <h3 id="handwriting">手書きデータ(KanjiVG)のパックを作る</h3>
+  <p>「手書きデータ」のパックは、<strong>どんな漢字でも、手書き問題にできる</strong>ようにするためのものです。ゲームは、書いた字を、お手本の「線のデータ」と比べて、判定します。そのお手本を、<a href="https://kanjivg.tagaini.net/" target="_blank" rel="noopener">KanjiVG</a>から作るのが、この変換スクリプト(<code>kanjivg_to_pack.py</code>)です。</p>
+  <p class="row"><a class="btn" href="tools/kanjivg_to_pack.py" download>kanjivg_to_pack.py をダウンロード</a>
+  <span class="sub">Python 3 用 / 追加のインストールは不要</span></p>
+
+  <h3>作り方</h3>
+  <ol class="steps">
+    <li><strong>Python 3 を入れます。</strong>(無料)すでに入っている場合は、飛ばしてかまいません。</li>
+    <li><strong>KanjiVGのデータを、ダウンロードします。</strong>配布サイト(上のリンク)から、XMLの1ファイル、またはSVGのフォルダを、取得してください。配布の形は、サイトで確認してください。</li>
+    <li><strong>スクリプトを、KanjiVGのファイルと、同じ場所に置きます。</strong></li>
+    <li><strong>コマンドを、実行します。</strong>字を絞るのが、おすすめです(下の例)。</li>
+    <li><strong>できた <code>.json</code> を、ゲームに読み込みます。</strong>オプション →「📦 拡張パック」から、読み込みます。</li>
+  </ol>
+
+<pre><code># 字を指定して作る(おすすめ)
+python3 kanjivg_to_pack.py kanjivg.xml -o kanjivg-pack.json --chars "森林明回"
+
+# 字の一覧を書いたテキストファイルで作る
+python3 kanjivg_to_pack.py kanjivg.xml -o kanjivg-pack.json --chars-file joyo.txt
+
+# SVGのフォルダから作る
+python3 kanjivg_to_pack.py kanjivg_svg_folder -o kanjivg-pack.json --chars "森林明回"</code></pre>
+  <ul>
+    <li>Windowsでは、<code>python3</code> が通らないとき、<code>python</code> または <code>py</code> と打ってください。</li>
+    <li>字を絞らずに、全部の漢字を書き出すと、ファイルが、大きくなります。ゲームで使う字だけに、絞ってください。</li>
+    <li>できたファイルには、「KanjiVG / CC BY-SA 3.0」の表示が、自動で入ります。</li>
+    <li>読み込むと、ゲームの手書きの判定の仕組みが、変わります(読み込み時に、注意が出ます)。</li>
+    <li>ダウンロードしたスクリプトは、自分のパソコンで、実行されます。中身を確認してから、実行するのが、安心です。</li>
+  </ul>
+
   <div class="note">
     AIが作った問題には、読みや意味の間違いが、混ざることがあります。配る前に、必ず、人の目で確認してください。
   </div>
