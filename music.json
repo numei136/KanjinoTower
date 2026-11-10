@@ -4,6 +4,28 @@
   "boss": ["半目の猛攻.mp3"],
   "finalboss": [],
   "title": ["静かな扉.mp3"],
-  "map":["map1.mp3"],
-  "se": {}
+  "map": ["map1.mp3"],
+
+  "_ここからはSE(効果音)": "↓の se が効果音です。ファイルは audio/se/名前/ファイル に置きます(例: audio/se/hit/hit1.mp3)。[] は合成音のまま",
+  "se": {
+    "play": [],
+    "hit": [],
+    "block": [],
+    "heal": [],
+    "summon": [],
+    "ok": [],
+    "ng": [],
+    "evolve": [],
+    "phase": [],
+    "big": [],
+    "fire": [],
+    "bite": [],
+    "pop": [],
+    "final": [],
+    "win": [],
+    "bossdown": [],
+    "elitedown": [],
+    "finaldown": [],
+    "lose": []
+  }
 }

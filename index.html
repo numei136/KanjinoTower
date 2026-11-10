@@ -674,7 +674,7 @@ ${relHtml()}<div class="enemy t-${curAct(e).t}">
 <div class="stat">${e.blk?` ／ 🛡${e.blk}`:''}${e.poi?` ／ ☠毒${e.poi}`:''}${e.str?` ／ 筋力+${e.str}`:''}</div>
 <div class="intent">次の行動: ${intent()}</div><div class="log">${G.log}</div>${minsHtml()}<button class="main off dkb" onclick="showDeck('deck')">📚 デッキ確認 (山札${G.draw.length} ／ 捨て札${G.disc.length} ／ 保留${holdN()})</button>
 </div>
-<div class="row2">${sumsHtml()}</div>${secHtml()}
+<div class="row2">${sumsHtml()}${secHtml()}</div>
 <div class="hbar">${potsHtml()}<button class="main off sbtn" onclick="sortHand()">↕ 並び替え：${['なし','コスト順','種類順'][G.sm||0]}</button></div><div class="hw"><div class="hand bh">${G.hand.map((id,i)=>cardEl(id,i,`play(${i})`)).join('')}</div><span class="ar l">◀</span><span class="ar r">▶</span></div>
 <div class="me">
 <div>${enHtml()}<div class="bar p${G.blk?' sh':''}" style="margin:0;width:220px;height:20px">${barS(G.tpP||(G.tpP={}),G.hp,G.max,G.blk)}<em class="shn">${G.blk?'🛡'+G.blk:''}</em><b class="hpn">${G.hp}/${G.max}</b></div>
@@ -1808,15 +1808,17 @@ SFX.block=[['n',0,.035,'hi',.16],[2600,0,.05,'square',.05],[3400,.01,.04,'square
  window.addEventListener('pagehide',away);window.addEventListener('pageshow',back);
  // タイトルの時点で、一覧の曲と効果音をすべて読み込む(ページが落ち着いてから、2つずつ)
  function loadAll(){loadList().then(()=>{const L=[];['title','battle','elite','boss','finalboss','map'].forEach(c=>files(c).forEach(f=>L.push(url(c,f))));
-   const se=(LIST.se&&typeof LIST.se==='object')?LIST.se:{};Object.keys(se).forEach(k=>(Array.isArray(se[k])?se[k]:[]).forEach(f=>{if(typeof f==='string'&&f)L.push('audio/se/'+encodeURIComponent(f))}));
+   const se=(LIST.se&&typeof LIST.se==='object')?LIST.se:{};Object.keys(se).forEach(k=>(Array.isArray(se[k])?se[k]:[]).forEach(f=>{if(typeof f==='string'&&f)L.push(seU(k,f))}));
    TOT=[...new Set(L)];if(!TOT.length)return;barUpdate();let i=0;const next=()=>{if(i>=TOT.length)return;const u=TOT[i++];getRaw(u).then(next)};next();next()})}
  const kick=()=>setTimeout(loadAll,300);
  if(document.readyState==='complete')kick();else window.addEventListener('load',kick);
  // 効果音: 一覧(music.json の "se")にあるものはファイルで、無いものはこれまでの合成音で鳴らす
- function seUrls(n){const se=LIST&&LIST.se&&typeof LIST.se==='object'?LIST.se:null;return se&&Array.isArray(se[n])?se[n].filter(f=>typeof f==='string'&&f).map(f=>'audio/se/'+encodeURIComponent(f)):[]}
- function decodeSE(){if(!LIST||!AU.ctx)return;const se=LIST.se&&typeof LIST.se==='object'?LIST.se:{};Object.keys(se).forEach(n=>{if(SEB[n])return;SEB[n]=[];seUrls(n).forEach(u=>getRaw(u).then(ab=>{if(!ab)return;const ok=b=>SEB[n].push(b);try{const r=AU.ctx.decodeAudioData(ab.slice(0),ok,()=>{});if(r&&r.then)r.then(ok,()=>{})}catch(e){}}))})}
+ function seP(f){return f.split('/').map(encodeURIComponent).join('/')}
+ function seU(n,f){return f.indexOf('/')>=0?'audio/se/'+seP(f):'audio/se/'+encodeURIComponent(n)+'/'+encodeURIComponent(f)}
+ function seUrls(n){const se=LIST&&LIST.se&&typeof LIST.se==='object'?LIST.se:null;return se&&Array.isArray(se[n])?se[n].filter(f=>typeof f==='string'&&f).map(f=>[seU(n,f),'audio/se/'+seP(f)]):[]}
+ function decodeSE(){if(!LIST||!AU.ctx)return;const se=LIST.se&&typeof LIST.se==='object'?LIST.se:{};Object.keys(se).forEach(n=>{if(SEB[n])return;SEB[n]=[];seUrls(n).forEach(u=>getRaw(u[0]).then(ab=>ab||(u[1]!==u[0]?getRaw(u[1]):null)).then(ab=>{if(!ab)return;const ok=b=>SEB[n].push(b);try{const r=AU.ctx.decodeAudioData(ab.slice(0),ok,()=>{});if(r&&r.then)r.then(ok,()=>{})}catch(e){}}))})}
  document.addEventListener('pointerdown',()=>{loadList().then(()=>setTimeout(decodeSE,400))},{once:true});
- const _sfx=sfx;sfx=function(n,o){if(n==='block')window.blkT=Date.now();const a=SEB[n];if(a&&a.length&&AU.on&&auCtx()){try{const c=AU.ctx,s=c.createBufferSource();s.buffer=a[Math.floor(Math.random()*a.length)];AU.ch='se';s.connect(outN());s.start(c.currentTime+(o||0));return}catch(e){}}return _sfx.apply(this,arguments)};
+ const _sfx=sfx;sfx=function(n,o){if(n==='win'&&window._dn)n=window._dn;if(n==='block')window.blkT=Date.now();const a=window._seSrc==='synth'?null:SEB[n];if(a&&a.length&&AU.on&&auCtx()){try{const c=AU.ctx,s=c.createBufferSource();s.buffer=a[Math.floor(Math.random()*a.length)];AU.ch='se';s.connect(outN());s.start(c.currentTime+(o||0));return}catch(e){}}return _sfx.apply(this,arguments)};
  window.noSyn=()=>NOSYN;
  window.bgmSrc=()=>SRC;
  window.setBgmSrc=function(v){SRC=v;try{localStorage.setItem('kanjiBgmSrc',v)}catch(e){}seq++;stopSynth();stopFile(.3);mode=null;curU=null;curCat=null;lastE=null;if(AU.run)sync();optMenu()};
@@ -1868,6 +1870,16 @@ setInterval(()=>{const e=document.getElementById('bgminfo');if(e&&typeof bgmInfo
  setInterval(chk,400);window.addEventListener('resize',()=>{if(cv)size()});
  window.snowOn=()=>ON;window.togSnow=function(){ON=!ON;try{localStorage.setItem('kanjiSnow',ON?'1':'0')}catch(e){}chk();optMenu()};
 })();
+
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.row2 .secs{grid-column:3;justify-self:start;align-self:center;justify-content:flex-start;flex-wrap:nowrap}@media (max-width:560px){.row2{position:relative}.row2 .secs{position:absolute;right:2px;top:0;flex-direction:row;flex-wrap:nowrap;gap:2px;z-index:2}.row2 .secs .sec{padding:2px 4px;font-size:12px;line-height:1.1;white-space:nowrap}.row2 .secs .sec small{display:none}}'}));
+/* v5.11 ボス撃破SE(bossdown/elitedown/finaldown) */
+Object.assign(SFX,{bossdown:[[392,0,.14,'triangle'],[523,.14,.14,'triangle'],[659,.28,.14,'triangle'],[784,.42,.14,'triangle'],[1047,.56,.55,'triangle'],['b',0],['b',.56]],elitedown:[[440,0,.12,'triangle'],[587,.12,.12,'triangle'],[740,.24,.3,'triangle'],['b',0]],finaldown:[[262,0,.16,'triangle'],[330,.16,.16,'triangle'],[392,.32,.16,'triangle'],[523,.48,.16,'triangle'],[659,.64,.16,'triangle'],[784,.8,.16,'triangle'],[1047,.96,.9,'triangle'],['b',0],['b',.48],['b',.96]]});
+{const _w=win;win=function(){const t=G&&G.node&&G.node.t,big=G&&G.e&&typeof BIG!=='undefined'&&BIG.some(b=>b.k===G.e.k);window._dn=big?'finaldown':t==='boss'?'bossdown':t==='elite'?'elitedown':null;try{return _w.apply(this,arguments)}finally{window._dn=null}}}
+
+/* v5.12 効果音もフォルダ/デフォルト選択 */
+window._seSrc='folder';try{window._seSrc=localStorage.getItem('kanjiSeSrc')==='synth'?'synth':'folder'}catch(e){}
+window.setSeSrc=function(v){window._seSrc=v;try{localStorage.setItem('kanjiSeSrc',v)}catch(e){}optMenu();try{sfx('block')}catch(e){}};
+{const _ob=optBody;optBody=function(){let h=_ob.apply(this,arguments);const a=`<div class="btns" style="flex-direction:row;gap:6px"><button class="main ${window._seSrc==='folder'?'':'off'}" onclick="setSeSrc('folder')">フォルダの効果音</button><button class="main ${window._seSrc==='synth'?'':'off'}" onclick="setSeSrc('synth')">デフォルト効果音</button></div>`;const m=h.indexOf('onclick="togAu(\'bgm\')"');if(OT!=='vol'||m<0)return h;const b=h.lastIndexOf('<button',m);return h.slice(0,b)+a+h.slice(b)}}
 
 newGame();
 </script>

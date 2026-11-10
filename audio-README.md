@@ -9,13 +9,18 @@
 {"battle":["battle1.mp3","battle2.mp3"],"elite":[],"boss":["boss1.mp3"],"finalboss":[],"title":["title1.mp3"],"map":["map1.mp3"]}
 ```
 
-## 効果音を差し替えるとき(あとで)
-- ファイルは `audio/se/` に置き、`music.json` の `"se"` に、効果音の名前ごとに書きます。書いていない効果音は、これまでの合成音のままです。
+## 効果音を差し替える
+- 効果音の名前ごとに、フォルダを作って置きます: `audio/se/<名前>/ファイル` 。たとえば攻撃なら `audio/se/hit/hit1.mp3`、ボス撃破なら `audio/se/bossdown/clear1.mp3` 。
+- `music.json` の `"se"` に、名前ごとのファイル名を書きます(フォルダ名は書かなくてOK)。書いていない効果音は、これまでの合成音のままです。
 ```json
-"se":{"hit":["hit1.mp3","hit2.mp3"],"block":["block1.mp3"]}
+"se":{"hit":["hit1.mp3","hit2.mp3"],"block":["block1.mp3"],"bossdown":["clear1.mp3"]}
 ```
-- 効果音の名前: `play`(カードを使う) `hit`(攻撃) `block`(盾) `heal`(回復) `summon`(召喚) `ok`(成功) `ng`(失敗) `evolve`(進化) `win` `lose` `phase`(ボスの変化) `big`(敵の強攻撃) `fire` `bite` `final` `pop`、ほか `s_fire` `s_big` `s_bite` `s_block` `s_heal` `s_play`
-- 複数書くと、鳴らすたびにランダムで選ばれます。短い曲(1〜2秒以内)にしてください。
+- `audio/se/` の直下に置いたファイルも読めます(フォルダなしでも動きます)。フォルダ分けしたいときだけ、名前のフォルダに入れてください。別のフォルダ名を使いたいときは、`"hit":["attack/a1.mp3"]` のように、`audio/se/` からの道筋で書きます。
+- 効果音の名前:
+  - 戦闘: `play`(カードを使う) `hit`(攻撃) `block`(盾) `heal`(回復) `summon`(召喚) `ok`(成功) `ng`(失敗) `evolve`(進化) `phase`(ボスの変化) `big`(敵の強攻撃) `fire` `bite` `pop`
+  - 撃破: `final`(敵が砕けるとき) `win`(撃破) `bossdown`(**ボス撃破**) `elitedown`(強敵撃破) `finaldown`(大ボス撃破) ※ボス・強敵・大ボスを倒したときは、`win` の代わりに、それぞれの名前が鳴ります
+  - その他: `lose` `s_fire` `s_big` `s_bite` `s_block` `s_heal` `s_play`
+- 複数書くと、鳴らすたびにランダムで選ばれます。短い音(1〜2秒以内)にしてください。ボス撃破は、4秒くらいまでの長めでも大丈夫です。
 
 ## 読み込み
 - 一覧にある曲と効果音は、タイトル画面の時点で、すべて読み込みます。画面の一番上の細いバーが、読み込みの進み具合です。
