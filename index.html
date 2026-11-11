@@ -1847,7 +1847,7 @@ function optBody(){
 })();
 
 /* v4.8 title: play button */
-var TM=0;const VER='6.04';
+var TM=0;const VER='6.05';
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.tw{position:relative;display:inline-block}.ver{position:absolute;right:0;top:100%;margin-top:-2px;font-size:clamp(9px,2vw,13px);opacity:.65;letter-spacing:.05em;font-weight:700}.ttsub{display:inline-block;animation:ttbob 2.8s ease-in-out infinite}@keyframes ttbob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}@media (prefers-reduced-motion:reduce){.ttsub{animation:none}}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
 function titleGo(){TM=1;render()}
 function titleBack(){TM=0;render()}
@@ -1995,7 +1995,7 @@ function shareImgGo(){if(!SHC)return;const t=`漢字の塔を全クリア！\n�
 /* v5.10.06 タイトルのオプションに宣伝スペース(promo.json / promo/ フォルダ) */
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.promo{display:block;position:relative;width:min(100%,170px);aspect-ratio:1/1;margin:10px auto 0;border:2px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card);color:inherit;text-decoration:none}.promo img{width:100%;height:100%;object-fit:cover;display:block}.promo.empty{display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:700;opacity:.45;border-style:dashed}.promo .pr{position:absolute;right:4px;top:4px;font-size:10px;background:rgba(0,0,0,.55);color:#fff;border-radius:6px;padding:0 5px;line-height:1.5}.promo .pt2{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:3px 6px;text-align:center}'}));
 let PROMO=null;/* null=未読込 / {items:[],show:true} */
-function promoLoad(){if(PROMO)return Promise.resolve(PROMO);return fetch('promo.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(j=>{const it=Array.isArray(j&&j.items)?j.items.filter(x=>x&&typeof x.image==='string'&&x.image):[];PROMO={items:it,show:!(j&&j.show===false)}}).catch(()=>{PROMO={items:[],show:true}}).then(()=>PROMO)}
+function promoLoad(){if(PROMO)return Promise.resolve(PROMO);return fetch('promo.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(j=>{const it=Array.isArray(j&&j.items)?j.items.filter(x=>x&&typeof x.image==='string'&&x.image):[];PROMO={items:it,show:!(j&&j.show===false),iv:(j&&Number.isFinite(+j.interval)&&j.interval!==null)?Math.max(0,+j.interval):6}}).catch(()=>{PROMO={items:[],show:true}}).then(()=>PROMO)}
 function promoCands(f){if(/^https?:\/\//i.test(f))return [f];const e=f.split('/').map(encodeURIComponent).join('/');return ['promo/'+e,'Promo/'+e,e,'promo/'+e.toLowerCase()]}
 function promoErr(im){const c=JSON.parse(im.dataset.c),i=+im.dataset.i+1;if(i<c.length){im.dataset.i=i;im.src=c[i];return}const p=im.parentNode;p.className='promo empty';p.removeAttribute('href');p.innerHTML='？<small style="position:absolute;left:4px;right:4px;bottom:4px;font-size:10px;font-weight:400;opacity:1;line-height:1.3;word-break:break-all">画像が読めません：'+c[0].replace(/</g,'')+'</small>'}
 function promoHtml(){const P=PROMO;if(P&&!P.show)return '';
@@ -2851,6 +2851,21 @@ function fukuChk(x,n){const A=s=>Array.from(String(s==null?'':s)),I=Number.isInt
   g.querySelectorAll('.fs').forEach(b=>{const i=+b.dataset.s,fr=p.fr[i];if(!fr)return;const w=fr.w*cell+(fr.w-1)*gap,h=fr.h*cell+(fr.h-1)*gap,len=Array.from(f.slot[i]?f.slot[i].c:'＋').length,sz=Math.round(Math.min(w,h)*.62/(len>1?1.7:1));
    b.style.cssText=`grid-column:${fr.x+1}/span ${fr.w};grid-row:${fr.y+1}/span ${fr.h};width:${w}px;height:${h}px;font-size:${Math.min(sz,120)}px;line-height:1`});
   if(p.hint){const st=document.querySelector('#modal .stat');if(st)st.insertAdjacentHTML('afterend','<p class="stat" style="margin:2px 0">ヒント：'+p.hint+'</p>')}}catch(e){}}}
+
+/* v6.05 promo: swipe / arrows / auto-advance between several items */
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.promo{touch-action:pan-y;user-select:none;-webkit-user-select:none}.promo,.promo *{-webkit-user-drag:none;user-drag:none}.promo .pd{position:absolute;left:0;right:0;top:4px;text-align:center;font-size:9px;letter-spacing:2px;color:#fff;text-shadow:0 0 3px #000;pointer-events:none}.promo .pa{position:absolute;top:50%;transform:translateY(-50%);width:24px;height:38px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4);color:#fff;font-size:22px;cursor:pointer}.promo .pa.l{left:0;border-radius:0 8px 8px 0}.promo .pa.r{right:0;border-radius:8px 0 0 8px}.promo.pin{animation:pin .25s}@keyframes pin{from{opacity:.2}to{opacity:1}}'}));
+{const _ph=promoHtml;promoHtml=function(){const h=_ph.apply(this,arguments),P=PROMO;if(!h||!P||!P.items||P.items.length<2||!P.show||/promo empty/.test(h.slice(0,80)))return h;
+ const i=Math.max(0,P.items.indexOf(P.pick)),dots='<span class="pd">'+P.items.map((_,k)=>k===i?'●':'○').join('')+'</span><span class="pa l" data-d="-1">‹</span><span class="pa r" data-d="1">›</span>';
+ return h.replace('<a id="promo"','<a id="promo" draggable="false"').replace(/<\/(a|div)>$/,dots+'</$1>')}}
+let PRSW=null,PRSX=0,PRLAST=Date.now();
+function promoStep(d){const P=PROMO,e=document.getElementById('promo');if(!P||!P.items||P.items.length<2||!e)return;const n=P.items.length,i=Math.max(0,P.items.indexOf(P.pick));P.pick=P.items[(i+d+n)%n];PRLAST=Date.now();
+ const t=document.createElement('div');t.innerHTML=promoHtml();const ne=t.firstChild;if(!ne)return;e.replaceWith(ne);ne.classList.add('pin')}
+document.addEventListener('pointerdown',e=>{const p=e.target.closest&&e.target.closest('#promo');if(p&&!e.target.closest('.pa'))PRSW={x:e.clientX,y:e.clientY}},true);
+function prFin(e){if(!PRSW)return;const dx=e.clientX-PRSW.x,dy=e.clientY-PRSW.y;PRSW=null;if(Math.abs(dx)>30&&Math.abs(dx)>Math.abs(dy)*1.5){window._pSup=Date.now();promoStep(dx<0?1:-1)}}
+document.addEventListener('pointerup',prFin,true);document.addEventListener('pointercancel',prFin,true);
+document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('.pa');if(a){e.preventDefault();e.stopPropagation();promoStep(+a.dataset.d);return}if(window._pSup&&Date.now()-window._pSup<500&&e.target.closest&&e.target.closest('#promo')){e.preventDefault();e.stopPropagation()}},true);
+document.addEventListener('dragstart',e=>{if(e.target.closest&&e.target.closest('#promo'))e.preventDefault()},true);
+setInterval(()=>{try{const P=PROMO;if(!P||!P.show||!P.items||P.items.length<2||!document.getElementById('promo')||document.hidden)return;const iv=P.iv===undefined?6:P.iv;if(iv>0&&Date.now()-PRLAST>=iv*1000)promoStep(1)}catch(e){}},1000);
 
 newGame();
 </script>
