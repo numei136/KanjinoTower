@@ -1847,7 +1847,7 @@ function optBody(){
 })();
 
 /* v4.8 title: play button */
-var TM=0;const VER='6.02';
+var TM=0;const VER='6.03';
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.tw{position:relative;display:inline-block}.ver{position:absolute;right:0;top:100%;margin-top:-2px;font-size:clamp(9px,2vw,13px);opacity:.65;letter-spacing:.05em;font-weight:700}.ttsub{display:inline-block;animation:ttbob 2.8s ease-in-out infinite}@keyframes ttbob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}@media (prefers-reduced-motion:reduce){.ttsub{animation:none}}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
 function titleGo(){TM=1;render()}
 function titleBack(){TM=0;render()}
@@ -2805,6 +2805,13 @@ function asmRwText(q){return (q.rewards||[]).map(r=>r.type==='relic'?'レリッ�
 
 /* v6.02 link to the question-maker page (change the URL here) */
 const PKMAKE='sakumon.html';
+
+/* v6.03 paste JSON into the pack screen + accept sakumon.html format (4択/手書き) */
+function pkNormQ(x){try{if(x&&x.type==='4択'&&Array.isArray(x.choices))return{type:'choice',q:x.question,options:x.choices,answer:typeof x.answer==='string'?x.choices.indexOf(x.answer):x.answer};
+ if(x&&x.type==='手書き'&&typeof x.answer==='string')return{type:'hw',kanji:x.answer,hint:x.hint||x.reading||x.question||'この漢字'}}catch(e){}return x}
+{const _pv=pkValidate;pkValidate=function(o){if(o&&Array.isArray(o.questions))o=Object.assign({},o,{questions:o.questions.map(pkNormQ)});return _pv.call(this,o)}}
+function pkPaste(){const t=document.getElementById('pkpaste'),v=t&&t.value.trim();if(!v){toast('JSONを貼り付けてください');return}pkLoad([new File([v],'貼り付け.json')])}
+{const _pvw=pkView;pkView=function(){_pvw.apply(this,arguments);try{const f=document.getElementById('pkf');if(!f||document.getElementById('pkpaste'))return;f.insertAdjacentHTML('afterend','<div style="margin:8px 0;text-align:left"><label class="stat" for="pkpaste" style="display:block">または、JSONをここに貼り付け（作問ツールの「コピー」で出したもの）</label><textarea id="pkpaste" rows="3" placeholder=\'{"format":"kanjitower-pack", …}\' style="width:100%;box-sizing:border-box;font-size:12px;font-family:monospace"></textarea><div class="btns"><button class="main" onclick="pkPaste()">📋 貼り付けた内容を読み込む</button></div></div>')}catch(e){}}}
 
 newGame();
 </script>
