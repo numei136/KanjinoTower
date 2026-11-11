@@ -1,2 +1,8 @@
-{ "show": true,
-  "items": [ { "image": "Tower.png", "url": "https://numei136.github.io/KanjinoTower/", "alt": "説明", "title": "たわぁｗ" } ] }
+{
+  "show": true,
+  "interval": 6,
+  "items": [
+    { "image": "Tower.png", "url": "https://numei136.github.io/KanjinoTower/", "alt": "説明", "title": "たわぁｗ" },
+    { "image": "sakumon.png", "url": "https://numei136.github.io/KanjinoTower/sakumon.html", "alt": "説明", "title": "作問ツールうおw" }
+  ]
+}
