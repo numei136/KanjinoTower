@@ -76,8 +76,8 @@
       <li>枠をドラッグして動かします。右下の三角をドラッグすると、大きくできます(スマホでは、下の「幅」「高さ」のボタンでも変えられます)。</li>
       <li>枠を選んで、パーツ(例: 氵)を入力します。いらない枠は、「この枠を消す」で消せます。</li>
       <li>漢字・読み・ヒントを入力して、「ダウンロード」でJSONを保存します。</li>
-      <li>【手書き】「＋ 手書き」で問題を作り、読みと、答えの漢字を入力します。問題文は、読みから自動で入れられます。</li>
-      <li>【4択】「＋ 4択」で問題を作り、問題文と、4つの選択肢を入力します。正解の○を、選びます。</li>
+      <li>【手書き】「＋ 手書き」で問題を作り、書かせる漢字と、ヒント(読みなど)を入力します。</li>
+      <li>【4択】「＋ 4択」で問題を作り、問題文と、選択肢(2〜6個)を入力します。正解の○を、選びます。</li>
       <li>すでにあるパックは、「読み込み」で開いて、直せます(福笑い・4択・手書き以外の問題は、そのまま残ります)。</li>
     </ol>
   </details>
@@ -103,6 +103,8 @@
         <button id="q-add" class="pri">＋ 福笑い</button>
         <button id="q-addc" class="pri">＋ 4択</button>
         <button id="q-addw" class="pri">＋ 手書き</button>
+        <button id="q-addr" class="pri">＋ 読み</button>
+        <button id="q-addd" class="pri">＋ 部首</button>
         <button id="q-dup">複製</button>
         <button id="q-up" aria-label="上へ">↑</button>
         <button id="q-down" aria-label="下へ">↓</button>
@@ -115,24 +117,33 @@
     <section class="panel" id="editor">
       <h2>問題を作る</h2>
       <label for="q-type" style="margin-top:0">問題のタイプ</label>
-      <select id="q-type"><option value="fuku">福笑い</option><option value="choice">4択</option><option value="write">手書き</option></select>
+      <select id="q-type"><option value="fuku">福笑い</option><option value="choice">4択</option><option value="write">手書き</option><option value="read">読み</option><option value="rad">部首</option></select>
       <div id="ed-choice" style="display:none">
-        <label for="c-q">問題文</label><textarea id="c-q" rows="2" maxlength="120" style="font-family:inherit;font-size:14px" placeholder="例)「休」の読みは?"></textarea>
-        <label>選択肢(正解の○を、選んでください)</label>
+        <label for="c-q">問題文</label><textarea id="c-q" rows="2" maxlength="120" style="font-family:inherit;font-size:14px" placeholder="例)「海」の部首はどれ?"></textarea>
+        <label>選択肢(2〜6個。正解の○を、選んでください)</label>
         <div id="c-list"></div>
-        <label for="c-expl">解説(答えのあとに出す説明)</label><input id="c-expl" maxlength="100">
+        <div class="row"><button id="c-add" type="button">＋ 選択肢を足す</button></div>
+        <label for="c-cat">クイズカードでの種類(省略できます)</label>
+        <select id="c-cat"><option value="">指定なし</option><option value="read">read(読み)</option><option value="rad">rad(部首)</option><option value="ord">ord</option></select>
+        <p class="sub">read・rad・ord を選ぶと、その種類のクイズカードで、優先して出ます。</p>
       </div>
       <div id="ed-write" style="display:none">
-        <label for="w-q">問題文</label>
-        <input id="w-q" maxlength="80" placeholder="例)「かん」を、漢字で書きなさい">
-        <div class="row" style="margin-top:4px"><button id="w-auto" type="button">読みから、問題文を自動で入れる</button></div>
         <div class="grid2">
-          <div><label for="w-read">読み(問題に出す字)</label><input id="w-read" maxlength="30" placeholder="例)かん"></div>
-          <div><label for="w-ans">答えの漢字</label><input id="w-ans" maxlength="4" style="font-size:20px" placeholder="例)漢"></div>
+          <div><label for="w-ans">書かせる漢字(1文字)</label><input id="w-ans" maxlength="1" style="font-size:24px" placeholder="例)漢"></div>
+          <div><label for="w-hint">ヒント(読みなど)</label><input id="w-hint" maxlength="60" placeholder="例)かん(かんじ の かん)"></div>
         </div>
-        <label for="w-hint">ヒント(例: 使う言葉)</label><input id="w-hint" maxlength="60" placeholder="例)かんじ の かん">
-        <label for="w-expl">解説</label><input id="w-expl" maxlength="100">
-        <p class="sub">答えの漢字は、ゲームの「手書きデータ」に入っている字だけ、判定できます(KanjiVGのパックなど)。</p>
+        <p class="sub" id="w-stat"></p>
+        <p class="sub">ゲームの手書きは、ヒントを見て、字を書きます。問題文は、ゲームが出します。お手本の線が、ゲームの中にない字は、「手書きデータ」(KanjiVGのパックなど)が、必要です。</p>
+      </div>
+      <div id="ed-rr" style="display:none">
+        <label for="r-kanji" id="r-l1">読みを問う語</label>
+        <input id="r-kanji" maxlength="12" style="font-size:20px" placeholder="例)憂鬱">
+        <label for="r-ans" id="r-l2">正しい読み</label>
+        <input id="r-ans" maxlength="30" placeholder="例)ゆううつ">
+        <label>まちがいの選択肢(0〜5個。省略できます)</label>
+        <div id="r-list"></div>
+        <div class="row"><button id="r-add" type="button">＋ まちがいを足す</button></div>
+        <p class="sub" id="r-note"></p>
       </div>
       <div id="ed-fuku">
         <div class="grid2">
@@ -214,7 +225,9 @@ var $=function(id){return document.getElementById(id);};
 var S=null, shuffleSeed=1, showAns=false;
 
 /* ---------- 状態 ---------- */
-function newQ(kind){return {kind:kind||"fuku",kanji:"",reading:"",hint:"",cols:3,rows:3,frames:[],decoys:"",raw:null,qtext:"",ch:["","","",""],ans:0,expl:""};}
+function newQ(kind){return {kind:kind||"fuku",kanji:"",reading:"",hint:"",cols:3,rows:3,frames:[],decoys:"",raw:null,qtext:"",ch:["","","",""],ans:0,cat:"",strokes:null,answer:"",wrong:[]};}
+var LET=["A","B","C","D","E","F"];
+var BUILTIN="一二三十人入八大小山川口日土上下木水火中林森品晶明男回国困田古石町同玉月炎朋岩凶";
 function newState(){return {meta:{name:"",author:"",license:"CC0",source:"自作",description:""},extra:{},qs:[newQ()],cur:0,sel:-1};}
 function Q(){return S.qs[S.cur];}
 
@@ -266,14 +279,14 @@ function renderAll(){
   var ul=$("qlist");ul.textContent="";
   S.qs.forEach(function(x,i){
     var li=document.createElement("li");li.className=(i===S.cur?"on ":"")+(x.kind==="raw"?"raw":"");
-    var k=document.createElement("span");k.className="k";k.textContent=x.kind==="raw"?"他":(x.kind==="choice"?"選":(x.kind==="write"?"書":(x.kanji||"？")));
+    var k=document.createElement("span");k.className="k";k.textContent=x.kind==="raw"?"他":(x.kind==="choice"?"選":(x.kind==="write"?(x.kanji||"書"):(x.kind==="read"||x.kind==="rad")?(Array.from(x.kanji||"？").slice(0,2).join("")):(x.kanji||"？")));
     var t=document.createElement("span");t.className="t";
-    t.textContent=x.kind==="raw"?("そのまま("+(x.raw&&x.raw.type?String(x.raw.type).slice(0,10):"不明")+")"):(x.kind==="choice"?("4択 "+(x.qtext||"(問題文なし)")):x.kind==="write"?("手書き "+(x.qtext||"(問題文なし)")):((x.reading||"(読み未入力)")+" ・枠"+x.frames.length));
+    t.textContent=x.kind==="raw"?("そのまま("+(x.raw&&x.raw.type?String(x.raw.type).slice(0,10):"不明")+")"):(x.kind==="choice"?("4択 "+(x.qtext||"(問題文なし)")):x.kind==="write"?("手書き "+(x.hint||"")):x.kind==="read"?("読み "+(x.answer||"")):x.kind==="rad"?("部首 "+(x.answer||"")):((x.reading||"(読み未入力)")+" ・枠"+x.frames.length));
     li.appendChild(k);li.appendChild(t);
     li.addEventListener("click",function(){S.cur=i;S.sel=-1;renderAll();});
     ul.appendChild(li);
   });
-  $("qcount").textContent=S.qs.length+"問(福笑い "+S.qs.filter(function(x){return x.kind==="fuku";}).length+"・4択 "+S.qs.filter(function(x){return x.kind==="choice";}).length+"・手書き "+S.qs.filter(function(x){return x.kind==="write";}).length+")";
+  $("qcount").textContent=S.qs.length+"問(福笑い "+S.qs.filter(function(x){return x.kind==="fuku";}).length+"・4択 "+S.qs.filter(function(x){return x.kind==="choice";}).length+"・手書き "+S.qs.filter(function(x){return x.kind==="write";}).length+"・読み "+S.qs.filter(function(x){return x.kind==="read";}).length+"・部首 "+S.qs.filter(function(x){return x.kind==="rad";}).length+")";
   $("q-up").disabled=S.cur===0;$("q-down").disabled=S.cur===S.qs.length-1;
   // メタ
   $("m-name").value=S.meta.name;$("m-author").value=S.meta.author;$("m-source").value=S.meta.source;$("m-desc").value=S.meta.description;
@@ -281,14 +294,15 @@ function renderAll(){
   if(!found){var o=document.createElement("option");o.textContent=S.meta.license;o.value=S.meta.license;lic.appendChild(o);}
   lic.value=S.meta.license;
   // エディタ
-  var isRaw=q.kind==="raw",isCh=q.kind==="choice",isW=q.kind==="write";
+  var isRaw=q.kind==="raw",isCh=q.kind==="choice",isW=q.kind==="write",isR=(q.kind==="read"||q.kind==="rad");
   $("q-type").parentNode.style.display="";
   $("q-type").style.display=isRaw?"none":"";document.querySelector('label[for="q-type"]').style.display=isRaw?"none":"";
   if(!isRaw)$("q-type").value=q.kind;
-  $("ed-write").style.display=isW?"":"none";$("ed-fuku").style.display=(isRaw||isCh||isW)?"none":"";$("ed-raw").style.display=isRaw?"":"none";$("ed-choice").style.display=isCh?"":"none";
+  $("ed-write").style.display=isW?"":"none";$("ed-rr").style.display=isR?"":"none";$("ed-fuku").style.display=(isRaw||isCh||isW||isR)?"none":"";$("ed-raw").style.display=isRaw?"":"none";$("ed-choice").style.display=isCh?"":"none";
   if(isRaw){$("raw-view").value=JSON.stringify(q.raw,null,1);}
   else if(isCh){renderChoiceEd(q);}
-  else if(isW){$("w-q").value=q.qtext;$("w-read").value=q.reading;$("w-ans").value=q.kanji;$("w-hint").value=q.hint;$("w-expl").value=q.expl;}
+  else if(isR){renderRR(q);}
+  else if(isW){$("w-ans").value=q.kanji;$("w-hint").value=q.hint;updateWstat(q);}
   else{
     $("q-kanji").value=q.kanji;$("q-reading").value=q.reading;$("q-hint").value=q.hint;
     $("q-cols").value=q.cols;$("q-rows").value=q.rows;$("q-decoys").value=q.decoys;
@@ -316,20 +330,31 @@ function renderPreview(){
     var h=document.createElement("p");h.style.cssText="font-size:16px;margin:8px 0";h.textContent=q.qtext||"(問題文を入れてください)";cp.appendChild(h);
     q.ch.forEach(function(t,i){var b=document.createElement("div");b.style.cssText="border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:6px 0;background:var(--panel2)";
       if(showAns&&i===q.ans){b.style.borderColor="var(--ok)";b.style.background="rgba(120,200,130,.2)";}
-      b.textContent=["A","B","C","D"][i]+"  "+(t||"(未入力)");cp.appendChild(b);});
-    if(showAns&&q.expl){var e=document.createElement("p");e.className="sub";e.textContent="解説: "+q.expl;cp.appendChild(e);}
+      b.textContent=LET[i]+"  "+(t||"(未入力)");cp.appendChild(b);});
+    if(q.cat){var e=document.createElement("p");e.className="sub";e.textContent="種類: "+q.cat;cp.appendChild(e);}
     $("pv-ans").textContent=showAns?"答えをかくす":"答えを見せる";$("pv-shuf").style.display="none";$("pv-info").textContent="";return;
+  }
+  if(q.kind==="read"||q.kind==="rad"){
+    pb.parentNode.style.display="none";tray.style.display="none";cp.style.display="";
+    var rh=document.createElement("p");rh.style.cssText="font-size:16px;margin:8px 0";
+    rh.textContent=q.kind==="read"?("「"+(q.kanji||"?")+"」の読みは?"):("「"+(q.kanji||"?")+"」の部首は?");cp.appendChild(rh);
+    var opts=[q.answer||"(正解)"].concat(q.wrong.filter(function(w){return w;}));
+    var sh=seeded(opts);
+    sh.forEach(function(t){var b=document.createElement("div");b.style.cssText="border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:6px 0;background:var(--panel2)";
+      if(showAns&&t===(q.answer||"(正解)")){b.style.borderColor="var(--ok)";b.style.background="rgba(120,200,130,.2)";}b.textContent=t;cp.appendChild(b);});
+    var ex=document.createElement("p");ex.className="sub";ex.textContent=(opts.length<4?"選択肢が足りない分は、ゲームが、自動で補います。":"");cp.appendChild(ex);
+    $("pv-ans").textContent=showAns?"答えをかくす":"答えを見せる";$("pv-shuf").style.display="";$("pv-info").textContent="";return;
   }
   if(q.kind==="write"){
     pb.parentNode.style.display="none";tray.style.display="none";cp.style.display="";
-    var wh=document.createElement("p");wh.style.cssText="font-size:16px;margin:8px 0";wh.textContent=q.qtext||"(問題文を入れてください)";cp.appendChild(wh);
+    var wh=document.createElement("p");wh.style.cssText="font-size:16px;margin:8px 0";wh.textContent="ヒント: "+(q.hint||"(なし)");cp.appendChild(wh);
     var bx=document.createElement("div");bx.style.cssText="width:200px;height:200px;margin:8px auto;border:2px solid var(--line);border-radius:6px;position:relative;background:#100d09;display:flex;align-items:center;justify-content:center";
     var gl=document.createElementNS("http://www.w3.org/2000/svg","svg");gl.setAttribute("width","100%");gl.setAttribute("height","100%");gl.style.cssText="position:absolute;inset:0";
     [["0","50%","100%","50%"],["50%","0","50%","100%"]].forEach(function(a){var l=document.createElementNS("http://www.w3.org/2000/svg","line");l.setAttribute("x1",a[0]);l.setAttribute("y1",a[1]);l.setAttribute("x2",a[2]);l.setAttribute("y2",a[3]);l.setAttribute("stroke","#3a352d");l.setAttribute("stroke-dasharray","4 4");gl.appendChild(l);});
     bx.appendChild(gl);
     if(showAns){var an=document.createElement("span");an.style.cssText="font-size:120px;line-height:1;color:var(--ok);opacity:.9;position:relative";an.textContent=q.kanji||"?";bx.appendChild(an);}
     cp.appendChild(bx);
-    var inf=[];if(q.reading)inf.push("読み: "+q.reading);if(q.hint)inf.push("ヒント: "+q.hint);if(showAns&&q.expl)inf.push("解説: "+q.expl);
+    var inf=["この字を、書いてください"];
     $("pv-ans").textContent=showAns?"答えをかくす":"答えを見せる";$("pv-shuf").style.display="none";
     $("pv-info").textContent=inf.join("  ");return;
   }
@@ -349,17 +374,27 @@ function validate(){
     if(q.kind==="choice"){
       var m="問題"+(i+1)+"(4択): ";
       if(!q.qtext)errs.push(m+"問題文が、空です。");
-      var seen={};q.ch.forEach(function(t,k){if(!t)errs.push(m+"選択肢"+["A","B","C","D"][k]+"が、空です。");else if(seen[t])errs.push(m+"同じ選択肢が、あります(「"+t+"」)。");seen[t]=1;});
-      if(/[<>&"]/.test(q.qtext+q.ch.join("")+q.expl))warns.push(m+"< > & \" は、使わないでください。");
+      var seen={};q.ch.forEach(function(t,k){if(!t)errs.push(m+"選択肢"+LET[k]+"が、空です。");else if(seen[t])errs.push(m+"同じ選択肢が、あります(「"+t+"」)。");seen[t]=1;});
+      if(/[<>&"]/.test(q.qtext+q.ch.join("")))warns.push(m+"< > & \" は、使わないでください。");
+      return;
+    }
+    if(q.kind==="read"||q.kind==="rad"){
+      var r="問題"+(i+1)+(q.kind==="read"?"(読み): ":"(部首): ");
+      if(!q.kanji)errs.push(r+(q.kind==="read"?"読みを問う語が、空です。":"部首を問う漢字が、空です。"));
+      if(!q.answer)errs.push(r+(q.kind==="read"?"正しい読みが、空です。":"正しい部首名が、空です。"));
+      if(q.kind==="rad"&&Array.from(q.kanji).length>1)warns.push(r+"部首を問うのは、1文字の漢字が、基本です。");
+      var wr=q.wrong.filter(function(t){return t;}),sn={};
+      wr.forEach(function(t){if(t===q.answer)errs.push(r+"まちがいの選択肢に、正解と同じものが、入っています(「"+t+"」)。");else if(sn[t])warns.push(r+"同じまちがいが、2回あります(「"+t+"」)。");sn[t]=1;});
+      if(/[<>&"]/.test(q.kanji+q.answer+wr.join("")))warns.push(r+"< > & \" は、使わないでください。");
       return;
     }
     if(q.kind==="write"){
       var w="問題"+(i+1)+"(手書き): ";
-      if(!q.qtext)errs.push(w+"問題文が、空です。");
-      if(!q.kanji)errs.push(w+"答えの漢字が、空です。");
-      else if(q.kanji.length>1)warns.push(w+"答えが、2文字以上です(手書きは、1字が基本です)。");
-      if(!q.reading)warns.push(w+"読みが、空です。");
-      if(/[<>&"]/.test(q.qtext+q.reading+q.kanji+q.hint+q.expl))warns.push(w+"< > & \" は、使わないでください。");
+      if(!q.kanji)errs.push(w+"書かせる漢字が、空です。");
+      else if(Array.from(q.kanji).length>1)errs.push(w+"漢字は、1文字にしてください。");
+      else if(BUILTIN.indexOf(q.kanji)<0&&!q.strokes)warns.push(w+"「"+q.kanji+"」は、ゲーム内のお手本が、ありません。手書きデータ(KanjiVGなど)のパックを、いっしょに読み込む必要があります。");
+      if(!q.hint)warns.push(w+"ヒントが、空です(読みなどを入れると、親切です)。");
+      if(/[<>&"]/.test(q.kanji+q.hint))warns.push(w+"< > & \" は、使わないでください。");
       return;
     }
     if(q.kind!=="fuku")return;
@@ -384,9 +419,10 @@ function build(){
   o.name=S.meta.name;o.author=S.meta.author;o.license=S.meta.license;o.source=S.meta.source;o.description=S.meta.description;
   o.questions=S.qs.map(function(q){
     if(q.kind==="raw")return q.raw;
-    if(q.kind==="write")return {type:"手書き",question:q.qtext,reading:q.reading,answer:q.kanji,hint:q.hint,explanation:q.expl};
-    if(q.kind==="choice")return {type:"4択",question:q.qtext,choices:q.ch.slice(),answer:q.ans,explanation:q.expl};
-    return {type:"福笑い",kanji:q.kanji,reading:q.reading,hint:q.hint,
+    if(q.kind==="read"||q.kind==="rad"){var o3={type:q.kind,kanji:q.kanji,answer:q.answer};var wr2=q.wrong.filter(function(t){return t;});if(wr2.length)o3.wrong=wr2;return o3;}
+    if(q.kind==="write"){var o1={type:"hw",kanji:q.kanji,hint:q.hint};if(q.strokes)o1.strokes=q.strokes;return o1;}
+    if(q.kind==="choice"){var o2={type:"choice",q:q.qtext,options:q.ch.slice(),answer:q.ans};if(q.cat)o2.cat=q.cat;return o2;}
+    return {type:"fuku",kanji:q.kanji,reading:q.reading,hint:q.hint,
       grid:{cols:q.cols,rows:q.rows},
       frames:q.frames.map(function(f){return {part:f.part,x:f.x,y:f.y,w:f.w,h:f.h};}),
       decoys:parseParts(q.decoys)};
@@ -490,7 +526,8 @@ $("chip").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "
 function bind(id,fn){$(id).addEventListener("input",function(){fn(this.value);save();renderAfterInput();});}
 function renderAfterInput(){ // 入力中にフォーカスを失わないよう、一部だけ描画
   var q=Q();
-  if(q.kind==="write"){renderPreview();var lw=$("qlist").children[S.cur];if(lw){lw.children[1].textContent="手書き "+(q.qtext||"(問題文なし)");}}
+  if(q.kind==="read"||q.kind==="rad"){renderPreview();var lr=$("qlist").children[S.cur];if(lr){lr.children[0].textContent=Array.from(q.kanji||"？").slice(0,2).join("");lr.children[1].textContent=(q.kind==="read"?"読み ":"部首 ")+(q.answer||"");}}
+  if(q.kind==="write"){renderPreview();var lw=$("qlist").children[S.cur];if(lw){lw.children[0].textContent=q.kanji||"書";lw.children[1].textContent="手書き "+(q.hint||"");updateWstat(q);}}
   if(q.kind==="choice"){renderPreview();var li=$("qlist").children[S.cur];if(li){li.children[1].textContent="4択 "+(q.qtext||"(問題文なし)");}}
   if(q.kind==="fuku"){updatePcount();renderPreview();var ul=$("qlist").children[S.cur];if(ul){ul.children[0].textContent=q.kanji||"？";ul.children[1].textContent=(q.reading||"(読み未入力)")+" ・枠"+q.frames.length;}}
   renderOut();
@@ -530,24 +567,58 @@ document.addEventListener("keydown",function(e){
 $("q-add").addEventListener("click",function(){S.qs.push(newQ("fuku"));S.cur=S.qs.length-1;S.sel=-1;renderAll();});
 $("q-addc").addEventListener("click",function(){S.qs.push(newQ("choice"));S.cur=S.qs.length-1;S.sel=-1;renderAll();});
 $("q-addw").addEventListener("click",function(){S.qs.push(newQ("write"));S.cur=S.qs.length-1;S.sel=-1;renderAll();});
-bind("w-q",function(v){Q().qtext=v.trim();});bind("w-read",function(v){Q().reading=v.trim();});bind("w-ans",function(v){Q().kanji=v.trim();});
-bind("w-hint",function(v){Q().hint=v.trim();});bind("w-expl",function(v){Q().expl=v.trim();});
-$("w-auto").addEventListener("click",function(){var q=Q();if(!q.reading){toast("先に、読みを入れてください");return;}q.qtext="「"+q.reading+"」を、漢字で書きなさい";renderAll();});
+bind("w-ans",function(v){Q().kanji=Array.from(v.trim())[0]||"";});bind("w-hint",function(v){Q().hint=v.trim();});
+function updateWstat(q){
+  var t="";
+  if(q.kanji){
+    if(q.strokes)t="お手本の線: この問題に、付いています(そのまま残ります)。";
+    else if(BUILTIN.indexOf(q.kanji)>=0)t="お手本の線: ゲーム内に、あります。";
+    else t="お手本の線: ゲーム内には、ありません。手書きデータのパックが、必要です。";
+  }
+  $("w-stat").textContent=t;
+}
+$("q-addr").addEventListener("click",function(){S.qs.push(newQ("read"));S.cur=S.qs.length-1;S.sel=-1;renderAll();});
+$("q-addd").addEventListener("click",function(){S.qs.push(newQ("rad"));S.cur=S.qs.length-1;S.sel=-1;renderAll();});
+bind("r-kanji",function(v){Q().kanji=v.trim();});bind("r-ans",function(v){Q().answer=v.trim();});
+$("r-add").addEventListener("click",function(){var q=Q();if(q.wrong.length<5){q.wrong.push("");renderAll();}});
+function renderRR(q){
+  var rd=q.kind==="read";
+  $("r-l1").textContent=rd?"読みを問う語":"部首を問う漢字";$("r-l2").textContent=rd?"正しい読み":"正しい部首名";
+  $("r-kanji").placeholder=rd?"例)憂鬱":"例)潮";$("r-ans").placeholder=rd?"例)ゆううつ":"例)さんずい";
+  $("r-kanji").value=q.kanji;$("r-ans").value=q.answer;
+  var box=$("r-list");box.textContent="";
+  q.wrong.forEach(function(w,i){
+    var row=document.createElement("div");row.className="row";row.style.cssText="margin:4px 0;flex-wrap:nowrap";
+    var t=document.createElement("input");t.type="text";t.maxLength=30;t.style.cssText="flex:1;width:auto;min-width:0";t.value=w;t.setAttribute("aria-label","まちがいの選択肢"+(i+1));
+    t.addEventListener("input",function(){q.wrong[i]=t.value.trim();save();renderAfterInput();});
+    var d=document.createElement("button");d.type="button";d.textContent="×";d.setAttribute("aria-label","まちがい"+(i+1)+"を消す");
+    d.addEventListener("click",function(){q.wrong.splice(i,1);renderAll();});
+    row.appendChild(t);row.appendChild(d);box.appendChild(row);
+  });
+  $("r-add").style.display=q.wrong.length>=5?"none":"";
+  $("r-note").textContent=(rd?"同じ語の、別の読み(音読み・訓読み)を、まちがいに入れないでください。":"")+"まちがいを入れなくても、足りない分は、ゲームが自動で補います。";
+}
 $("q-type").addEventListener("change",function(){var q=Q();if(q.kind==="raw")return;q.kind=this.value;S.sel=-1;renderAll();});
 function renderChoiceEd(q){
-  $("c-q").value=q.qtext;$("c-expl").value=q.expl;
+  $("c-q").value=q.qtext;$("c-cat").value=q.cat||"";
   var box=$("c-list");box.textContent="";
-  for(var i=0;i<4;i++){(function(i){
-    var row=document.createElement("div");row.className="row";row.style.margin="4px 0";
-    var r=document.createElement("input");r.type="radio";r.name="c-ans";r.style.cssText="width:auto";r.checked=q.ans===i;r.setAttribute("aria-label","選択肢"+["A","B","C","D"][i]+"を正解にする");
+  for(var i=0;i<q.ch.length;i++){(function(i){
+    var row=document.createElement("div");row.className="row";row.style.margin="4px 0";row.style.flexWrap="nowrap";
+    var r=document.createElement("input");r.type="radio";r.name="c-ans";r.style.cssText="width:auto";r.checked=q.ans===i;r.setAttribute("aria-label","選択肢"+LET[i]+"を正解にする");
     r.addEventListener("change",function(){q.ans=i;save();renderAfterInput();});
-    var l=document.createElement("span");l.textContent=["A","B","C","D"][i];l.style.cssText="width:1.2em;text-align:center;color:var(--accent)";
-    var t=document.createElement("input");t.type="text";t.maxLength=40;t.style.cssText="flex:1;width:auto;min-width:0";t.value=q.ch[i];t.setAttribute("aria-label","選択肢"+["A","B","C","D"][i]);
+    var l=document.createElement("span");l.textContent=LET[i];l.style.cssText="width:1.2em;text-align:center;color:var(--accent)";
+    var t=document.createElement("input");t.type="text";t.maxLength=40;t.style.cssText="flex:1;width:auto;min-width:0";t.value=q.ch[i];t.setAttribute("aria-label","選択肢"+LET[i]);
     t.addEventListener("input",function(){q.ch[i]=t.value.trim();save();renderAfterInput();});
-    row.appendChild(r);row.appendChild(l);row.appendChild(t);box.appendChild(row);
+    row.appendChild(r);row.appendChild(l);row.appendChild(t);
+    if(q.ch.length>2){var d=document.createElement("button");d.type="button";d.textContent="×";d.setAttribute("aria-label","選択肢"+LET[i]+"を消す");
+      d.addEventListener("click",function(){q.ch.splice(i,1);if(q.ans===i)q.ans=0;else if(q.ans>i)q.ans--;renderAll();});row.appendChild(d);}
+    box.appendChild(row);
   })(i);}
+  $("c-add").style.display=q.ch.length>=6?"none":"";
 }
-bind("c-q",function(v){Q().qtext=v.trim();});bind("c-expl",function(v){Q().expl=v.trim();});
+bind("c-q",function(v){Q().qtext=v.trim();});
+$("c-add").addEventListener("click",function(){var q=Q();if(q.ch.length<6){q.ch.push("");renderAll();}});
+$("c-cat").addEventListener("change",function(){Q().cat=this.value;save();renderAfterInput();});
 $("q-dup").addEventListener("click",function(){var c=JSON.parse(JSON.stringify(Q()));S.qs.splice(S.cur+1,0,c);S.cur++;S.sel=-1;renderAll();});
 /* 2回押して消す(confirmが使えない環境でも動くように) */
 function twoStep(id,label,fn){
@@ -583,7 +654,7 @@ $("cp").addEventListener("click",function(){
   catch(e){try{document.execCommand("copy");toast("コピーしました");}catch(_){toast("コピーできませんでした");}}
 });
 function isFuku(x){
-  return x&&typeof x==="object"&&x.type==="福笑い"&&Array.isArray(x.frames)&&typeof x.kanji==="string";
+  return x&&typeof x==="object"&&(x.type==="fuku"||x.type==="福笑い")&&Array.isArray(x.frames)&&typeof x.kanji==="string";
 }
 function isChoice(x){return x&&typeof x==="object"&&x.type==="4択"&&typeof x.question==="string"&&Array.isArray(x.choices)&&x.choices.length>=2&&x.choices.length<=4;}
 function importData(data){
@@ -605,14 +676,26 @@ function importData(data){
       });
       q.decoys=(Array.isArray(x.decoys)?x.decoys:[]).map(function(s){return String(s).slice(0,2);}).join(" ");
       st.qs.push(q);
-    }else if(x&&typeof x==="object"&&x.type==="手書き"&&typeof x.answer==="string"&&typeof x.question==="string"){
-      var qw=newQ("write");qw.qtext=x.question.slice(0,80);qw.reading=String(x.reading||"").slice(0,30);qw.kanji=x.answer.slice(0,4);
-      qw.hint=String(x.hint||"").slice(0,60);qw.expl=String(x.explanation||"").slice(0,100);st.qs.push(qw);
+    }else if(x&&typeof x==="object"&&(x.type==="read"||x.type==="rad")&&typeof x.kanji==="string"&&typeof x.answer==="string"){
+      var qr=newQ(x.type);qr.kanji=x.kanji.slice(0,12);qr.answer=x.answer.slice(0,30);
+      qr.wrong=(Array.isArray(x.wrong)?x.wrong:[]).slice(0,5).map(function(t){return String(t).slice(0,30);});
+      st.qs.push(qr);
+    }else if(x&&typeof x==="object"&&(x.type==="hw"||x.type==="手書き")&&(typeof x.kanji==="string"||typeof x.answer==="string")){
+      var qw=newQ("write");qw.kanji=Array.from(String(x.kanji||x.answer))[0]||"";
+      qw.hint=String(x.hint||x.reading||"").slice(0,60);
+      if(Array.isArray(x.strokes)&&x.strokes.length&&x.strokes.length<60)qw.strokes=x.strokes;
+      st.qs.push(qw);
+    }else if(x&&typeof x==="object"&&x.type==="choice"&&typeof x.q==="string"&&Array.isArray(x.options)&&x.options.length>=2&&x.options.length<=6){
+      var qc=newQ("choice");qc.qtext=x.q.slice(0,120);
+      qc.ch=x.options.map(function(t){return String(t).slice(0,40);});
+      qc.ans=clamp(Math.floor(+x.answer)||0,0,qc.ch.length-1);
+      qc.cat=(x.cat==="read"||x.cat==="rad"||x.cat==="ord")?x.cat:"";
+      st.qs.push(qc);
     }else if(isChoice(x)){
-      var qc=newQ("choice");qc.qtext=String(x.question).slice(0,120);
-      qc.ch=x.choices.slice(0,4).map(function(t){return String(t).slice(0,40);});while(qc.ch.length<4)qc.ch.push("");
-      var a=x.answer;if(typeof a==="string"){var ix=qc.ch.indexOf(a);a=ix>=0?ix:0;}
-      qc.ans=clamp(Math.floor(+a)||0,0,3);qc.expl=String(x.explanation||"").slice(0,100);st.qs.push(qc);
+      var qd=newQ("choice");qd.qtext=String(x.question).slice(0,120);
+      qd.ch=x.choices.slice(0,6).map(function(t){return String(t).slice(0,40);});
+      var a=x.answer;if(typeof a==="string"){var ix=qd.ch.indexOf(a);a=ix>=0?ix:0;}
+      qd.ans=clamp(Math.floor(+a)||0,0,qd.ch.length-1);st.qs.push(qd);
     }else{var q2=newQ();q2.kind="raw";q2.raw=x;st.qs.push(q2);}
   });
   if(!st.qs.length)st.qs.push(newQ());

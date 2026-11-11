@@ -1847,7 +1847,7 @@ function optBody(){
 })();
 
 /* v4.8 title: play button */
-var TM=0;const VER='6.03';
+var TM=0;const VER='6.04';
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.tw{position:relative;display:inline-block}.ver{position:absolute;right:0;top:100%;margin-top:-2px;font-size:clamp(9px,2vw,13px);opacity:.65;letter-spacing:.05em;font-weight:700}.ttsub{display:inline-block;animation:ttbob 2.8s ease-in-out infinite}@keyframes ttbob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}@media (prefers-reduced-motion:reduce){.ttsub{animation:none}}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
 function titleGo(){TM=1;render()}
 function titleBack(){TM=0;render()}
@@ -2531,7 +2531,7 @@ RELICS['倍']={name:'博識の印',d:'問題に正解した攻撃カードが、
 
 /* v5.10.35 attack-only quiz, pack-only setting, load check, learn-on-wrong, merged learning menu */
 var PKONLY=false;try{PKONLY=localStorage.getItem('kanjiPkOnly')==='1'}catch(e){}
-function pkAnyQ(){const l=[];PK.filter(p=>p.on).forEach(p=>p.qs.forEach(q=>{if(q.t!=='hw')l.push(q)}));return l}
+function pkAnyQ(){const l=[];PK.filter(p=>p.on).forEach(p=>p.qs.forEach(q=>{if(q.t!=='hw'&&q.t!=='fuku')l.push(q)}));return l}
 function hqKeys(){return(PKONLY&&PKADD.length)?PKADD.slice():Object.keys(HQ3)}
 function chKinds(){const base=chOn('hand')?['hw']:['read','rad','ord','hw'];if(!PKONLY)return base;const k=[];if(!chOn('hand')&&pkAnyQ().length)k.push('read');if(PKADD.length)k.push('hw');return k.length?k:base}
 [['mkQuiz','ord'],['mkRead','read'],['mkRad','rad']].forEach(([fn,cat])=>{const orig=window[fn];if(typeof orig!=='function')return;window[fn]=function(){try{if(PKONLY){const a=pkAnyQ();if(a.length){const l=pkPick(cat),q=l.length?l[rnd(l.length)]:a[rnd(a.length)];return pkMake(q,q.t==='choice'?'ord':q.t)}}}catch(e){}return orig.apply(this,arguments)}});
@@ -2812,6 +2812,45 @@ function pkNormQ(x){try{if(x&&x.type==='4択'&&Array.isArray(x.choices))return{t
 {const _pv=pkValidate;pkValidate=function(o){if(o&&Array.isArray(o.questions))o=Object.assign({},o,{questions:o.questions.map(pkNormQ)});return _pv.call(this,o)}}
 function pkPaste(){const t=document.getElementById('pkpaste'),v=t&&t.value.trim();if(!v){toast('JSONを貼り付けてください');return}pkLoad([new File([v],'貼り付け.json')])}
 {const _pvw=pkView;pkView=function(){_pvw.apply(this,arguments);try{const f=document.getElementById('pkf');if(!f||document.getElementById('pkpaste'))return;f.insertAdjacentHTML('afterend','<div style="margin:8px 0;text-align:left"><label class="stat" for="pkpaste" style="display:block">または、JSONをここに貼り付け（作問ツールの「コピー」で出したもの）</label><textarea id="pkpaste" rows="3" placeholder=\'{"format":"kanjitower-pack", …}\' style="width:100%;box-sizing:border-box;font-size:12px;font-family:monospace"></textarea><div class="btns"><button class="main" onclick="pkPaste()">📋 貼り付けた内容を読み込む</button></div></div>')}catch(e){}}}
+
+/* v6.04 expansion-pack question type "fuku" (福笑い): free frames on a 2-4 grid */
+{const _pv=pkValidate;pkValidate=function(o){
+ if(!o||typeof o!=='object'||Array.isArray(o)||!Array.isArray(o.questions))return _pv.apply(this,arguments);
+ if(o.questions.length>500)return{err:['問題が多すぎます(最大500問)'],qs:[]};
+ const err=[],qs=[];
+ o.questions.forEach((x,i)=>{const n='問'+(i+1)+'：';
+  if(x&&typeof x==='object'&&(x.type==='fuku'||x.type==='福笑い')){const r=fukuChk(x,n);if(r.e)err.push(r.e);else qs.push(r.q);return}
+  const r=_pv.call(this,{questions:[x]});r.qs.forEach(q=>qs.push(q));r.err.forEach(e=>{if(e!=='使える問題が1つもありません')err.push(e.replace(/^問1：/,n))})});
+ if(!qs.length)err.push('使える問題が1つもありません');return{err,qs}}}
+function fukuChk(x,n){const A=s=>Array.from(String(s==null?'':s)),I=Number.isInteger;
+ const kj=A(x.kanji);if(kj.length<1||kj.length>4)return{e:n+'fuku の kanji は1〜4文字です'};
+ const g=x.grid||{cols:3,rows:3},cols=g.cols===undefined?3:g.cols,rows=g.rows===undefined?3:g.rows;
+ if(!I(cols)||!I(rows)||cols<2||cols>4||rows<2||rows>4)return{e:n+'「'+x.kanji+'」grid の cols・rows は2〜4の整数です'};
+ if(!Array.isArray(x.frames)||!x.frames.length)return{e:n+'「'+x.kanji+'」frames が空です'};
+ if(x.frames.length>cols*rows)return{e:n+'「'+x.kanji+'」frames が多すぎます'};
+ const fr=[];
+ for(let i=0;i<x.frames.length;i++){const f=x.frames[i],m='「'+x.kanji+'」枠'+(i+1)+'が';
+  if(!f||typeof f!=='object')return{e:n+m+'おかしい形です'};
+  const pt=A(f.part).join('').trim();if(!pt)return{e:n+m+'空です（part がありません）'};if(A(pt).length>2)return{e:n+m+'長すぎます（part は1〜2文字）'};
+  if(![f.x,f.y,f.w,f.h].every(I)||f.x<0||f.y<0||f.w<1||f.h<1)return{e:n+m+'おかしい数字です（x,y は0以上、w,h は1以上の整数）'};
+  if(f.x+f.w>cols||f.y+f.h>rows)return{e:n+m+'盤面からはみ出しています'};
+  for(let j=0;j<fr.length;j++){const o=fr[j];if(f.x<o.x+o.w&&o.x<f.x+f.w&&f.y<o.y+o.h&&o.y<f.y+f.h)return{e:n+'「'+x.kanji+'」枠'+(j+1)+'と枠'+(i+1)+'が重なっています'}}
+  fr.push({c:pkEsc(pt),x:f.x,y:f.y,w:f.w,h:f.h})}
+ const dec=(Array.isArray(x.decoys)?x.decoys:[]).map(s=>A(s).slice(0,2).join('').trim()).filter(Boolean).slice(0,10).map(pkEsc);
+ return{q:{t:'fuku',k:pkEsc(kj.join('')),r:pkEsc(x.reading||''),hint:pkEsc(x.hint||''),cols,rows,fr,dec,lv:[1,2,3].includes(x.lv)?x.lv:0}}}
+{const _m=mkFuku;mkFuku=function(lv){try{
+  const all=[];PK.filter(p=>p.on).forEach(p=>p.qs.forEach(q=>{if(q.t==='fuku')all.push(q)}));
+  if(all.length){const lvOf=q=>q.lv||(q.fr.length>=3?2:1),L=all.filter(q=>lvOf(q)===lv),src=L.length?L:all;
+   if(PKONLY||Math.random()<.5){const q=src[rnd(src.length)];if(FR[q.k]===undefined&&q.r)FR[q.k]=q.r;
+    const parts=q.fr.map(f=>f.c);return{p:{k:q.k,l:'pk',p:parts,fr:q.fr,cols:q.cols,rows:q.rows,r:q.r,hint:q.hint},lv,t:{1:45,2:35,3:25}[lv]||35,bank:sh([...parts,...q.dec].map(c=>({c,u:0}))),slot:Array(parts.length).fill(null)}}}
+ }catch(e){}return _m.apply(this,arguments)}}
+{const _fv=fukuView;fukuView=function(){const f=G.fk,p=f&&f.p;if(!p||!p.fr)return _fv.apply(this,arguments);
+ const old=FR[p.k];FR[p.k]=p.r||old||'';try{_fv.apply(this,arguments)}finally{if(old===undefined)delete FR[p.k];else FR[p.k]=old}
+ try{const g=document.querySelector('#modal .fg');if(!g)return;const cell=p.cols>3||p.rows>3?64:72,gap=6;
+  g.className='fg';g.style.cssText=`display:grid;gap:${gap}px;justify-content:center;grid-template-columns:repeat(${p.cols},${cell}px);grid-template-rows:repeat(${p.rows},${cell}px)`;
+  g.querySelectorAll('.fs').forEach(b=>{const i=+b.dataset.s,fr=p.fr[i];if(!fr)return;const w=fr.w*cell+(fr.w-1)*gap,h=fr.h*cell+(fr.h-1)*gap,len=Array.from(f.slot[i]?f.slot[i].c:'＋').length,sz=Math.round(Math.min(w,h)*.62/(len>1?1.7:1));
+   b.style.cssText=`grid-column:${fr.x+1}/span ${fr.w};grid-row:${fr.y+1}/span ${fr.h};width:${w}px;height:${h}px;font-size:${Math.min(sz,120)}px;line-height:1`});
+  if(p.hint){const st=document.querySelector('#modal .stat');if(st)st.insertAdjacentHTML('afterend','<p class="stat" style="margin:2px 0">ヒント：'+p.hint+'</p>')}}catch(e){}}}
 
 newGame();
 </script>
