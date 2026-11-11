@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>漢字の塔 作問ツール</title>
+<style>
+  :root{--bg:#15120e;--fg:#f2eee6;--muted:#b9b2a5;--line:#5a554c;--panel:#1d1913;--panel2:#26211a;--accent:#ffe9a8;--bad:#ff8d7d;--ok:#9fe3a8;color-scheme:dark}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:"Hiragino Sans","Yu Gothic","Meiryo",system-ui,sans-serif;line-height:1.7;font-size:14px}
+  main{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+  h1{font-size:22px;margin:4px 0 4px;letter-spacing:.06em;text-align:center}
+  .lead{text-align:center;color:var(--muted);font-size:12px;margin:0 0 16px}
+  h2{font-size:15px;margin:0 0 8px;color:var(--accent)}
+  a{color:var(--accent)}
+  button,input,select,textarea{font:inherit;color:var(--fg)}
+  input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 8px;width:100%}
+  textarea{resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+  label{display:block;font-size:12px;color:var(--muted);margin:8px 0 2px}
+  button,.btn{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:6px 12px;cursor:pointer;font-size:13px}
+  button:hover{border-color:var(--accent)}
+  button.pri{background:#fff;color:#15120e;font-weight:700;border-color:#fff}
+  button.pri:hover{background:var(--accent)}
+  button.danger{color:var(--bad)}
+  button:disabled{opacity:.4;cursor:default}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .panel{background:var(--panel);border:1px solid #3a352d;border-radius:8px;padding:12px;margin-bottom:12px}
+  details.panel>summary{cursor:pointer;font-weight:700;color:var(--accent)}
+  .cols{display:grid;grid-template-columns:230px minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+  @media(max-width:900px){.cols{grid-template-columns:1fr}}
+  .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .sub{font-size:12px;color:var(--muted)}
+  /* 問題リスト */
+  #qlist{list-style:none;margin:0 0 8px;padding:0;max-height:340px;overflow:auto}
+  #qlist li{display:flex;gap:6px;align-items:center;padding:6px 8px;border:1px solid transparent;border-radius:4px;cursor:pointer}
+  #qlist li.on{background:var(--panel2);border-color:var(--accent)}
+  #qlist .k{font-size:20px;min-width:28px;text-align:center}
+  #qlist .t{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #qlist .raw .k{color:var(--muted)}
+  /* 盤面 */
+  .boardwrap{display:flex;justify-content:center;margin:8px 0}
+  .board{position:relative;width:100%;max-width:360px;border:2px solid var(--line);border-radius:6px;background:#100d09;
+    touch-action:pan-y;user-select:none;-webkit-user-select:none}
+  .board .gl{position:absolute;inset:0;pointer-events:none}
+  .frame{position:absolute;border:2px solid;border-radius:6px;display:flex;align-items:center;justify-content:center;
+    touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;overflow:hidden}
+  .frame.sel{outline:3px solid var(--accent);outline-offset:-3px;z-index:3}
+  .frame.bad{background:rgba(255,100,80,.35)!important;border-color:var(--bad)!important}
+  .frame .p{pointer-events:none;line-height:1}
+  .frame .h{position:absolute;right:0;bottom:0;width:26px;height:26px;cursor:nwse-resize;touch-action:none;
+    background:linear-gradient(135deg,transparent 50%,var(--accent) 50%);opacity:.85;border-bottom-right-radius:4px}
+  .chip{display:inline-flex;align-items:center;gap:6px;border:2px dashed var(--accent);color:var(--accent);border-radius:6px;
+    padding:8px 14px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;font-weight:700}
+  .ghost{position:fixed;pointer-events:none;z-index:99;border:2px solid var(--accent);background:rgba(255,233,168,.25);border-radius:6px;
+    width:56px;height:56px;margin:-28px 0 0 -28px}
+  .tray{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0}
+  .tray span{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);font-size:24px}
+  .msg{font-size:12px;margin:6px 0}
+  .msg.err{color:var(--bad)} .msg.warn{color:var(--accent)} .msg.ok{color:var(--ok)}
+  #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#fff;color:#15120e;padding:8px 16px;border-radius:6px;
+    font-weight:700;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:100;max-width:90vw}
+  #toast.on{opacity:1}
+  .steps{margin:0;padding-left:1.3em}
+</style>
+</head>
+<body>
+<main>
+  <h1>作問ツール</h1>
+  <p class="lead">「福笑い」「4択」「手書き」の問題を作ります。1枚のHTMLで、スマホでも使えます。</p>
+
+  <details class="panel">
+    <summary>使い方</summary>
+    <ol class="steps">
+      <li>【福笑い】「＋ 福笑い」で問題を作り、「＋ 枠」を、盤面にドラッグします(押すだけでも、空いているマスに増えます)。</li>
+      <li>枠をドラッグして動かします。右下の三角をドラッグすると、大きくできます(スマホでは、下の「幅」「高さ」のボタンでも変えられます)。</li>
+      <li>枠を選んで、パーツ(例: 氵)を入力します。いらない枠は、「この枠を消す」で消せます。</li>
+      <li>漢字・読み・ヒントを入力して、「ダウンロード」でJSONを保存します。</li>
+      <li>【手書き】「＋ 手書き」で問題を作り、読みと、答えの漢字を入力します。問題文は、読みから自動で入れられます。</li>
+      <li>【4択】「＋ 4択」で問題を作り、問題文と、4つの選択肢を入力します。正解の○を、選びます。</li>
+      <li>すでにあるパックは、「読み込み」で開いて、直せます(福笑い・4択・手書き以外の問題は、そのまま残ります)。</li>
+    </ol>
+  </details>
+
+  <details class="panel">
+    <summary>パックの情報(名前・作者・ライセンス)</summary>
+    <div class="grid2">
+      <div><label for="m-name">パックの名前</label><input id="m-name" maxlength="60" placeholder="例)福笑い 30問"></div>
+      <div><label for="m-author">作者の表示名</label><input id="m-author" maxlength="40"></div>
+      <div><label for="m-license">ライセンス</label>
+        <select id="m-license"><option>CC0</option><option>CC BY 4.0</option><option>CC BY-SA 4.0</option><option>その他</option></select></div>
+      <div><label for="m-source">出典</label><input id="m-source" maxlength="80" placeholder="自作"></div>
+    </div>
+    <label for="m-desc">説明</label><textarea id="m-desc" rows="2" maxlength="300"></textarea>
+  </details>
+
+  <div class="cols">
+    <!-- 左: 問題リスト -->
+    <section class="panel">
+      <h2>問題</h2>
+      <ul id="qlist"></ul>
+      <div class="row">
+        <button id="q-add" class="pri">＋ 福笑い</button>
+        <button id="q-addc" class="pri">＋ 4択</button>
+        <button id="q-addw" class="pri">＋ 手書き</button>
+        <button id="q-dup">複製</button>
+        <button id="q-up" aria-label="上へ">↑</button>
+        <button id="q-down" aria-label="下へ">↓</button>
+        <button id="q-del" class="danger">削除</button>
+      </div>
+      <p class="sub" id="qcount"></p>
+    </section>
+
+    <!-- 中: エディタ -->
+    <section class="panel" id="editor">
+      <h2>問題を作る</h2>
+      <label for="q-type" style="margin-top:0">問題のタイプ</label>
+      <select id="q-type"><option value="fuku">福笑い</option><option value="choice">4択</option><option value="write">手書き</option></select>
+      <div id="ed-choice" style="display:none">
+        <label for="c-q">問題文</label><textarea id="c-q" rows="2" maxlength="120" style="font-family:inherit;font-size:14px" placeholder="例)「休」の読みは?"></textarea>
+        <label>選択肢(正解の○を、選んでください)</label>
+        <div id="c-list"></div>
+        <label for="c-expl">解説(答えのあとに出す説明)</label><input id="c-expl" maxlength="100">
+      </div>
+      <div id="ed-write" style="display:none">
+        <label for="w-q">問題文</label>
+        <input id="w-q" maxlength="80" placeholder="例)「かん」を、漢字で書きなさい">
+        <div class="row" style="margin-top:4px"><button id="w-auto" type="button">読みから、問題文を自動で入れる</button></div>
+        <div class="grid2">
+          <div><label for="w-read">読み(問題に出す字)</label><input id="w-read" maxlength="30" placeholder="例)かん"></div>
+          <div><label for="w-ans">答えの漢字</label><input id="w-ans" maxlength="4" style="font-size:20px" placeholder="例)漢"></div>
+        </div>
+        <label for="w-hint">ヒント(例: 使う言葉)</label><input id="w-hint" maxlength="60" placeholder="例)かんじ の かん">
+        <label for="w-expl">解説</label><input id="w-expl" maxlength="100">
+        <p class="sub">答えの漢字は、ゲームの「手書きデータ」に入っている字だけ、判定できます(KanjiVGのパックなど)。</p>
+      </div>
+      <div id="ed-fuku">
+        <div class="grid2">
+          <div><label for="q-kanji">漢字(答え)</label><input id="q-kanji" maxlength="4" style="font-size:20px"></div>
+          <div><label for="q-reading">読み</label><input id="q-reading" maxlength="30" placeholder="例)きゅう"></div>
+        </div>
+        <label for="q-hint">ヒント</label><input id="q-hint" maxlength="60">
+        <div class="grid2">
+          <div><label for="q-cols">盤面: 横のマス</label><select id="q-cols"><option>2</option><option selected>3</option><option>4</option></select></div>
+          <div><label for="q-rows">盤面: 縦のマス</label><select id="q-rows"><option>2</option><option selected>3</option><option>4</option></select></div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <span class="chip" id="chip" role="button" tabindex="0" aria-label="枠を追加(ドラッグか、押す)">＋ 枠</span>
+          <span class="sub">盤面へドラッグ(または押す)</span>
+        </div>
+        <div class="boardwrap"><div class="board" id="board"></div></div>
+
+        <div id="fsel" class="panel" style="display:none;background:var(--panel2)">
+          <div class="row">
+            <label for="f-part" style="margin:0">パーツ</label>
+            <input id="f-part" maxlength="2" style="width:80px;font-size:20px" placeholder="氵">
+            <button id="f-del" class="danger">この枠を消す</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <span class="sub">幅</span><button id="w-" aria-label="幅を減らす">−</button><button id="w+" aria-label="幅を増やす">＋</button>
+            <span class="sub" style="margin-left:8px">高さ</span><button id="h-" aria-label="高さを減らす">−</button><button id="h+" aria-label="高さを増やす">＋</button>
+            <span class="sub" id="fpos"></span>
+          </div>
+        </div>
+
+        <label for="q-decoys">おとりのパーツ(いらないパーツ)</label>
+        <input id="q-decoys" placeholder="スペースか、「、」で区切る 例)日 口 火">
+        <p class="sub" id="pcount"></p>
+      </div>
+      <div id="ed-raw" style="display:none">
+        <p class="sub">この問題は、福笑いではないので、このツールでは直せません。保存するときは、そのまま残ります。</p>
+        <textarea id="raw-view" rows="8" readonly></textarea>
+      </div>
+    </section>
+
+    <!-- 右: プレビュー・出力 -->
+    <section>
+      <div class="panel">
+        <h2>プレビュー</h2>
+        <div class="row"><button id="pv-ans">答えを見せる</button><button id="pv-shuf">パーツを混ぜる</button></div>
+        <div class="boardwrap"><div class="board" id="pboard" style="touch-action:auto"></div></div>
+        <div class="tray" id="tray"></div>
+        <div id="cprev" style="display:none"></div>
+        <p class="sub" style="text-align:center" id="pv-info"></p>
+      </div>
+      <div class="panel">
+        <h2>保存・読み込み</h2>
+        <div id="check"></div>
+        <div class="row">
+          <button id="dl" class="pri">ダウンロード(.json)</button>
+          <button id="cp">コピー</button>
+        </div>
+        <label for="json-out">できあがりのJSON</label>
+        <textarea id="json-out" rows="6" readonly></textarea>
+        <label for="file-in">既存のパックを読み込む(.json)</label>
+        <input type="file" id="file-in" accept=".json,application/json">
+        <label for="json-in">または、JSONを貼り付けて読み込む</label>
+        <textarea id="json-in" rows="3"></textarea>
+        <div class="row" style="margin-top:6px"><button id="ld">貼り付けたJSONを読み込む</button>
+          <button id="reset" class="danger">全部消して、新しく始める</button></div>
+        <p class="sub">作業中の内容は、このブラウザに自動で保存されます。</p>
+      </div>
+    </section>
+  </div>
+</main>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+var LS_KEY="kanjitower_sakumon_draft_v1";
+var $=function(id){return document.getElementById(id);};
+var S=null, shuffleSeed=1, showAns=false;
+
+/* ---------- 状態 ---------- */
+function newQ(kind){return {kind:kind||"fuku",kanji:"",reading:"",hint:"",cols:3,rows:3,frames:[],decoys:"",raw:null,qtext:"",ch:["","","",""],ans:0,expl:""};}
+function newState(){return {meta:{name:"",author:"",license:"CC0",source:"自作",description:""},extra:{},qs:[newQ()],cur:0,sel:-1};}
+function Q(){return S.qs[S.cur];}
+
+/* ---------- 補助 ---------- */
+var toastT;
+function toast(m){var t=$("toast");t.textContent=m;t.className="on";clearTimeout(toastT);toastT=setTimeout(function(){t.className="";},2200);}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function hit(a,b){return a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h;}
+function free(q,r,skip){for(var i=0;i<q.frames.length;i++){if(i!==skip&&hit(r,q.frames[i]))return false;}return true;}
+function color(i){var h=(i*53+20)%360;return {bg:"hsl("+h+" 40% 22%)",bd:"hsl("+h+" 55% 55%)"};}
+function parseParts(s){return String(s||"").split(/[\s,、，]+/).filter(function(x){return x.length>0;});}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S));}catch(e){}}
+
+/* ---------- 盤面の描画 ---------- */
+function drawBoard(el,q,opt){
+  el.textContent="";
+  el.style.aspectRatio=q.cols+" / "+q.rows;
+  var W=el.clientWidth||300, cw=W/q.cols;
+  var svgNS="http://www.w3.org/2000/svg";
+  var svg=document.createElementNS(svgNS,"svg");svg.setAttribute("class","gl");svg.setAttribute("width","100%");svg.setAttribute("height","100%");
+  for(var i=1;i<q.cols;i++){var l=document.createElementNS(svgNS,"line");l.setAttribute("x1",(i/q.cols*100)+"%");l.setAttribute("x2",(i/q.cols*100)+"%");l.setAttribute("y1","0");l.setAttribute("y2","100%");l.setAttribute("stroke","#3a352d");l.setAttribute("stroke-dasharray","4 4");svg.appendChild(l);}
+  for(var j=1;j<q.rows;j++){var m=document.createElementNS(svgNS,"line");m.setAttribute("y1",(j/q.rows*100)+"%");m.setAttribute("y2",(j/q.rows*100)+"%");m.setAttribute("x1","0");m.setAttribute("x2","100%");m.setAttribute("stroke","#3a352d");m.setAttribute("stroke-dasharray","4 4");svg.appendChild(m);}
+  el.appendChild(svg);
+  q.frames.forEach(function(f,idx){
+    var d=document.createElement("div");d.className="frame"+(opt.edit&&S.sel===idx?" sel":"");
+    var c=color(idx);d.style.background=c.bg;d.style.borderColor=c.bd;
+    d.style.left=(f.x/q.cols*100)+"%";d.style.top=(f.y/q.rows*100)+"%";
+    d.style.width=(f.w/q.cols*100)+"%";d.style.height=(f.h/q.rows*100)+"%";
+    if(!opt.edit)d.style.cursor="default";
+    var showP=opt.edit||opt.showParts;
+    var p=document.createElement("span");p.className="p";
+    p.textContent=showP?(f.part||"?"):"";
+    p.style.fontSize=Math.max(12,Math.min(f.w,f.h)*cw*0.62)+"px";
+    if(showP&&!f.part)p.style.opacity=".4";
+    d.appendChild(p);
+    if(opt.edit){
+      d.dataset.i=idx;
+      d.addEventListener("pointerdown",onFramePointerDown);
+      if(S.sel===idx){var h=document.createElement("div");h.className="h";h.addEventListener("pointerdown",onHandleDown);d.appendChild(h);}
+    }
+    el.appendChild(d);
+  });
+}
+
+/* ---------- 全体の描画 ---------- */
+function renderAll(){
+  var q=Q();
+  // リスト
+  var ul=$("qlist");ul.textContent="";
+  S.qs.forEach(function(x,i){
+    var li=document.createElement("li");li.className=(i===S.cur?"on ":"")+(x.kind==="raw"?"raw":"");
+    var k=document.createElement("span");k.className="k";k.textContent=x.kind==="raw"?"他":(x.kind==="choice"?"選":(x.kind==="write"?"書":(x.kanji||"？")));
+    var t=document.createElement("span");t.className="t";
+    t.textContent=x.kind==="raw"?("そのまま("+(x.raw&&x.raw.type?String(x.raw.type).slice(0,10):"不明")+")"):(x.kind==="choice"?("4択 "+(x.qtext||"(問題文なし)")):x.kind==="write"?("手書き "+(x.qtext||"(問題文なし)")):((x.reading||"(読み未入力)")+" ・枠"+x.frames.length));
+    li.appendChild(k);li.appendChild(t);
+    li.addEventListener("click",function(){S.cur=i;S.sel=-1;renderAll();});
+    ul.appendChild(li);
+  });
+  $("qcount").textContent=S.qs.length+"問(福笑い "+S.qs.filter(function(x){return x.kind==="fuku";}).length+"・4択 "+S.qs.filter(function(x){return x.kind==="choice";}).length+"・手書き "+S.qs.filter(function(x){return x.kind==="write";}).length+")";
+  $("q-up").disabled=S.cur===0;$("q-down").disabled=S.cur===S.qs.length-1;
+  // メタ
+  $("m-name").value=S.meta.name;$("m-author").value=S.meta.author;$("m-source").value=S.meta.source;$("m-desc").value=S.meta.description;
+  var lic=$("m-license");var found=false;for(var i=0;i<lic.options.length;i++){if(lic.options[i].value===S.meta.license){found=true;}}
+  if(!found){var o=document.createElement("option");o.textContent=S.meta.license;o.value=S.meta.license;lic.appendChild(o);}
+  lic.value=S.meta.license;
+  // エディタ
+  var isRaw=q.kind==="raw",isCh=q.kind==="choice",isW=q.kind==="write";
+  $("q-type").parentNode.style.display="";
+  $("q-type").style.display=isRaw?"none":"";document.querySelector('label[for="q-type"]').style.display=isRaw?"none":"";
+  if(!isRaw)$("q-type").value=q.kind;
+  $("ed-write").style.display=isW?"":"none";$("ed-fuku").style.display=(isRaw||isCh||isW)?"none":"";$("ed-raw").style.display=isRaw?"":"none";$("ed-choice").style.display=isCh?"":"none";
+  if(isRaw){$("raw-view").value=JSON.stringify(q.raw,null,1);}
+  else if(isCh){renderChoiceEd(q);}
+  else if(isW){$("w-q").value=q.qtext;$("w-read").value=q.reading;$("w-ans").value=q.kanji;$("w-hint").value=q.hint;$("w-expl").value=q.expl;}
+  else{
+    $("q-kanji").value=q.kanji;$("q-reading").value=q.reading;$("q-hint").value=q.hint;
+    $("q-cols").value=q.cols;$("q-rows").value=q.rows;$("q-decoys").value=q.decoys;
+    drawBoard($("board"),q,{edit:true});
+    var fs=$("fsel");
+    if(S.sel>=0&&q.frames[S.sel]){
+      var f=q.frames[S.sel];fs.style.display="";$("f-part").value=f.part;
+      $("fpos").textContent="  位置("+(f.x+1)+","+(f.y+1)+") 大きさ "+f.w+"×"+f.h;
+    }else fs.style.display="none";
+    updatePcount();
+  }
+  renderPreview();renderOut();save();
+}
+function updatePcount(){
+  var q=Q();if(q.kind!=="fuku")return;
+  var n=q.frames.length,d=parseParts(q.decoys).length;
+  $("pcount").textContent="パーツの数: 枠 "+n+" + おとり "+d+" = "+(n+d)+"個(ゲームの福笑いは、10個くらいが目安です)";
+}
+function seeded(arr){var a=arr.slice(),s=shuffleSeed*9301+49297;for(var i=a.length-1;i>0;i--){s=(s*9301+49297)%233280;var j=Math.floor(s/233280*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function renderPreview(){
+  var q=Q();var tray=$("tray");tray.textContent="";var pb=$("pboard");
+  var cp=$("cprev");cp.textContent="";
+  if(q.kind==="choice"){
+    pb.parentNode.style.display="none";tray.style.display="none";cp.style.display="";
+    var h=document.createElement("p");h.style.cssText="font-size:16px;margin:8px 0";h.textContent=q.qtext||"(問題文を入れてください)";cp.appendChild(h);
+    q.ch.forEach(function(t,i){var b=document.createElement("div");b.style.cssText="border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:6px 0;background:var(--panel2)";
+      if(showAns&&i===q.ans){b.style.borderColor="var(--ok)";b.style.background="rgba(120,200,130,.2)";}
+      b.textContent=["A","B","C","D"][i]+"  "+(t||"(未入力)");cp.appendChild(b);});
+    if(showAns&&q.expl){var e=document.createElement("p");e.className="sub";e.textContent="解説: "+q.expl;cp.appendChild(e);}
+    $("pv-ans").textContent=showAns?"答えをかくす":"答えを見せる";$("pv-shuf").style.display="none";$("pv-info").textContent="";return;
+  }
+  if(q.kind==="write"){
+    pb.parentNode.style.display="none";tray.style.display="none";cp.style.display="";
+    var wh=document.createElement("p");wh.style.cssText="font-size:16px;margin:8px 0";wh.textContent=q.qtext||"(問題文を入れてください)";cp.appendChild(wh);
+    var bx=document.createElement("div");bx.style.cssText="width:200px;height:200px;margin:8px auto;border:2px solid var(--line);border-radius:6px;position:relative;background:#100d09;display:flex;align-items:center;justify-content:center";
+    var gl=document.createElementNS("http://www.w3.org/2000/svg","svg");gl.setAttribute("width","100%");gl.setAttribute("height","100%");gl.style.cssText="position:absolute;inset:0";
+    [["0","50%","100%","50%"],["50%","0","50%","100%"]].forEach(function(a){var l=document.createElementNS("http://www.w3.org/2000/svg","line");l.setAttribute("x1",a[0]);l.setAttribute("y1",a[1]);l.setAttribute("x2",a[2]);l.setAttribute("y2",a[3]);l.setAttribute("stroke","#3a352d");l.setAttribute("stroke-dasharray","4 4");gl.appendChild(l);});
+    bx.appendChild(gl);
+    if(showAns){var an=document.createElement("span");an.style.cssText="font-size:120px;line-height:1;color:var(--ok);opacity:.9;position:relative";an.textContent=q.kanji||"?";bx.appendChild(an);}
+    cp.appendChild(bx);
+    var inf=[];if(q.reading)inf.push("読み: "+q.reading);if(q.hint)inf.push("ヒント: "+q.hint);if(showAns&&q.expl)inf.push("解説: "+q.expl);
+    $("pv-ans").textContent=showAns?"答えをかくす":"答えを見せる";$("pv-shuf").style.display="none";
+    $("pv-info").textContent=inf.join("  ");return;
+  }
+  pb.parentNode.style.display="";tray.style.display="";cp.style.display="none";$("pv-shuf").style.display="";
+  if(q.kind!=="fuku"){pb.textContent="";pb.style.aspectRatio="1 / 1";$("pv-info").textContent="このツールでは、直せない問題です。";return;}
+  drawBoard(pb,q,{edit:false,showParts:showAns});
+  var parts=q.frames.map(function(f){return f.part||"?";}).concat(parseParts(q.decoys));
+  seeded(parts).forEach(function(p){var s=document.createElement("span");s.textContent=p;tray.appendChild(s);});
+  $("pv-ans").textContent=showAns?"答えをかくす":"答えを見せる";
+  $("pv-info").textContent=(q.reading?"よみ: "+q.reading:"")+(q.hint?"  ヒント: "+q.hint:"");
+}
+
+/* ---------- 出力 ---------- */
+function validate(){
+  var errs=[],warns=[];
+  S.qs.forEach(function(q,i){
+    if(q.kind==="choice"){
+      var m="問題"+(i+1)+"(4択): ";
+      if(!q.qtext)errs.push(m+"問題文が、空です。");
+      var seen={};q.ch.forEach(function(t,k){if(!t)errs.push(m+"選択肢"+["A","B","C","D"][k]+"が、空です。");else if(seen[t])errs.push(m+"同じ選択肢が、あります(「"+t+"」)。");seen[t]=1;});
+      if(/[<>&"]/.test(q.qtext+q.ch.join("")+q.expl))warns.push(m+"< > & \" は、使わないでください。");
+      return;
+    }
+    if(q.kind==="write"){
+      var w="問題"+(i+1)+"(手書き): ";
+      if(!q.qtext)errs.push(w+"問題文が、空です。");
+      if(!q.kanji)errs.push(w+"答えの漢字が、空です。");
+      else if(q.kanji.length>1)warns.push(w+"答えが、2文字以上です(手書きは、1字が基本です)。");
+      if(!q.reading)warns.push(w+"読みが、空です。");
+      if(/[<>&"]/.test(q.qtext+q.reading+q.kanji+q.hint+q.expl))warns.push(w+"< > & \" は、使わないでください。");
+      return;
+    }
+    if(q.kind!=="fuku")return;
+    var n="問題"+(i+1)+(q.kanji?"("+q.kanji+")":"")+": ";
+    if(!q.kanji)errs.push(n+"漢字が、空です。");
+    if(!q.reading)errs.push(n+"読みが、空です。");
+    if(!q.frames.length)errs.push(n+"枠が、1つもありません。");
+    q.frames.forEach(function(f,k){if(!f.part)errs.push(n+"枠"+(k+1)+"に、パーツが入っていません。");});
+    var ps=q.frames.map(function(f){return f.part;});
+    parseParts(q.decoys).forEach(function(p){if(p.length>2)warns.push(n+"おとり「"+p+"」が、長いです。");if(ps.indexOf(p)>=0)warns.push(n+"おとり「"+p+"」が、答えのパーツと、同じです。");});
+    var tot=q.frames.length+parseParts(q.decoys).length;
+    if(tot>10)warns.push(n+"パーツが、"+tot+"個あります(10個くらいが目安)。");
+    if(/[<>&"]/.test(q.kanji+q.reading+q.hint))warns.push(n+"< > & \" は、使わないでください。");
+  });
+  if(!S.meta.name)warns.push("パックの名前が、空です。");
+  if(!S.meta.author)warns.push("作者の表示名が、空です。");
+  return {errs:errs,warns:warns};
+}
+function build(){
+  var o={};Object.keys(S.extra).forEach(function(k){o[k]=S.extra[k];});
+  o.format=o.format||"kanjitower-pack";o.version=o.version||1;
+  o.name=S.meta.name;o.author=S.meta.author;o.license=S.meta.license;o.source=S.meta.source;o.description=S.meta.description;
+  o.questions=S.qs.map(function(q){
+    if(q.kind==="raw")return q.raw;
+    if(q.kind==="write")return {type:"手書き",question:q.qtext,reading:q.reading,answer:q.kanji,hint:q.hint,explanation:q.expl};
+    if(q.kind==="choice")return {type:"4択",question:q.qtext,choices:q.ch.slice(),answer:q.ans,explanation:q.expl};
+    return {type:"福笑い",kanji:q.kanji,reading:q.reading,hint:q.hint,
+      grid:{cols:q.cols,rows:q.rows},
+      frames:q.frames.map(function(f){return {part:f.part,x:f.x,y:f.y,w:f.w,h:f.h};}),
+      decoys:parseParts(q.decoys)};
+  });
+  return o;
+}
+function renderOut(){
+  var v=validate(),c=$("check");c.textContent="";
+  function add(cls,t){var p=document.createElement("p");p.className="msg "+cls;p.textContent=t;c.appendChild(p);}
+  v.errs.forEach(function(e){add("err","✕ "+e);});v.warns.forEach(function(e){add("warn","△ "+e);});
+  if(!v.errs.length&&!v.warns.length)add("ok","✓ チェックOK");
+  $("dl").disabled=v.errs.length>0;
+  $("json-out").value=JSON.stringify(build(),null,1);
+}
+
+/* ---------- ドラッグ(枠を動かす) ---------- */
+var drag=null;
+function boardMetrics(){var r=$("board").getBoundingClientRect(),q=Q();return {r:r,cw:r.width/q.cols,ch:r.height/q.rows};}
+function onFramePointerDown(e){
+  e.preventDefault();
+  var i=+e.currentTarget.dataset.i,q=Q(),f=q.frames[i],bm=boardMetrics();
+  S.sel=i;
+  drag={mode:"move",i:i,sx:e.clientX,sy:e.clientY,ox:f.x,oy:f.y,bm:bm,moved:false,cand:{x:f.x,y:f.y,w:f.w,h:f.h},el:e.currentTarget};
+  e.currentTarget.setPointerCapture(e.pointerId);
+  e.currentTarget.addEventListener("pointermove",onDragMove);e.currentTarget.addEventListener("pointerup",onDragUp);e.currentTarget.addEventListener("pointercancel",onDragCancel);
+  document.querySelectorAll("#board .frame").forEach(function(el){el.classList.toggle("sel",+el.dataset.i===i);});
+  syncSel();
+}
+function onHandleDown(e){
+  e.preventDefault();e.stopPropagation();
+  var fe=e.currentTarget.parentNode,i=+fe.dataset.i,q=Q(),f=q.frames[i],bm=boardMetrics();
+  drag={mode:"size",i:i,sx:e.clientX,sy:e.clientY,ow:f.w,oh:f.h,bm:bm,moved:false,cand:{x:f.x,y:f.y,w:f.w,h:f.h},el:fe};
+  e.currentTarget.setPointerCapture(e.pointerId);
+  var h=e.currentTarget;h.addEventListener("pointermove",onDragMove);h.addEventListener("pointerup",onDragUp);h.addEventListener("pointercancel",onDragCancel);
+  drag.h=h;
+}
+function onDragMove(e){
+  if(!drag)return;var q=Q(),f=q.frames[drag.i],dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
+  if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;if(!drag.moved)return;
+  var c;
+  if(drag.mode==="move"){
+    c={x:clamp(Math.round(drag.ox+dx/drag.bm.cw),0,q.cols-f.w),y:clamp(Math.round(drag.oy+dy/drag.bm.ch),0,q.rows-f.h),w:f.w,h:f.h};
+  }else{
+    c={x:f.x,y:f.y,w:clamp(Math.round(drag.ow+dx/drag.bm.cw),1,q.cols-f.x),h:clamp(Math.round(drag.oh+dy/drag.bm.ch),1,q.rows-f.y)};
+  }
+  drag.cand=c;
+  var el=drag.el;el.style.left=(c.x/q.cols*100)+"%";el.style.top=(c.y/q.rows*100)+"%";el.style.width=(c.w/q.cols*100)+"%";el.style.height=(c.h/q.rows*100)+"%";
+  el.classList.toggle("bad",!free(q,c,drag.i));
+}
+function endDrag(){
+  var el=drag&&drag.el;
+  if(drag){var t=drag.mode==="size"?drag.h:el;t.removeEventListener("pointermove",onDragMove);t.removeEventListener("pointerup",onDragUp);t.removeEventListener("pointercancel",onDragCancel);}
+  drag=null;
+}
+function onDragUp(){
+  if(!drag)return;var q=Q(),f=q.frames[drag.i],c=drag.cand,moved=drag.moved;
+  if(moved){
+    if(free(q,c,drag.i)){f.x=c.x;f.y=c.y;f.w=c.w;f.h=c.h;}else toast("ほかの枠と、重なるので、もとに戻しました");
+  }
+  endDrag();renderAll();
+}
+function onDragCancel(){endDrag();renderAll();}
+function syncSel(){
+  var q=Q();if(S.sel>=0&&q.frames[S.sel]){var f=q.frames[S.sel];$("fsel").style.display="";$("f-part").value=f.part;$("fpos").textContent="  位置("+(f.x+1)+","+(f.y+1)+") 大きさ "+f.w+"×"+f.h;}
+}
+
+/* ---------- 枠の追加(チップ) ---------- */
+function firstFree(q){for(var y=0;y<q.rows;y++)for(var x=0;x<q.cols;x++){if(free(q,{x:x,y:y,w:1,h:1},-1))return {x:x,y:y};}return null;}
+function addFrame(x,y){
+  var q=Q();if(q.kind!=="fuku")return;
+  var pos=(x==null)?firstFree(q):{x:x,y:y};
+  if(!pos||!free(q,{x:pos.x,y:pos.y,w:1,h:1},-1)){toast(pos?"そのマスは、使われています":"空いているマスが、ありません");return false;}
+  q.frames.push({part:"",x:pos.x,y:pos.y,w:1,h:1});S.sel=q.frames.length-1;renderAll();
+  setTimeout(function(){var fp=$("f-part");if(fp&&fp.offsetParent&&matchMedia("(pointer:fine)").matches)fp.focus();},0);
+  return true;
+}
+var cd=null,ghost=null;
+$("chip").addEventListener("pointerdown",function(e){
+  e.preventDefault();cd={sx:e.clientX,sy:e.clientY,moved:false};
+  this.setPointerCapture(e.pointerId);
+});
+$("chip").addEventListener("pointermove",function(e){
+  if(!cd)return;
+  if(Math.abs(e.clientX-cd.sx)+Math.abs(e.clientY-cd.sy)>6)cd.moved=true;
+  if(cd.moved){if(!ghost){ghost=document.createElement("div");ghost.className="ghost";document.body.appendChild(ghost);}ghost.style.left=e.clientX+"px";ghost.style.top=e.clientY+"px";}
+});
+function chipEnd(e,cancel){
+  if(!cd)return;var m=cd.moved;cd=null;if(ghost){ghost.remove();ghost=null;}
+  if(cancel)return;
+  if(!m){addFrame();return;}
+  var q=Q();if(q.kind!=="fuku")return;
+  var r=$("board").getBoundingClientRect();
+  if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){toast("盤面の上で、はなしてください");return;}
+  addFrame(clamp(Math.floor((e.clientX-r.left)/(r.width/q.cols)),0,q.cols-1),clamp(Math.floor((e.clientY-r.top)/(r.height/q.rows)),0,q.rows-1));
+}
+$("chip").addEventListener("pointerup",function(e){chipEnd(e,false);});
+$("chip").addEventListener("pointercancel",function(e){chipEnd(e,true);});
+$("chip").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();addFrame();}});
+
+/* ---------- 入力欄 ---------- */
+function bind(id,fn){$(id).addEventListener("input",function(){fn(this.value);save();renderAfterInput();});}
+function renderAfterInput(){ // 入力中にフォーカスを失わないよう、一部だけ描画
+  var q=Q();
+  if(q.kind==="write"){renderPreview();var lw=$("qlist").children[S.cur];if(lw){lw.children[1].textContent="手書き "+(q.qtext||"(問題文なし)");}}
+  if(q.kind==="choice"){renderPreview();var li=$("qlist").children[S.cur];if(li){li.children[1].textContent="4択 "+(q.qtext||"(問題文なし)");}}
+  if(q.kind==="fuku"){updatePcount();renderPreview();var ul=$("qlist").children[S.cur];if(ul){ul.children[0].textContent=q.kanji||"？";ul.children[1].textContent=(q.reading||"(読み未入力)")+" ・枠"+q.frames.length;}}
+  renderOut();
+}
+bind("m-name",function(v){S.meta.name=v;});bind("m-author",function(v){S.meta.author=v;});
+bind("m-source",function(v){S.meta.source=v;});bind("m-desc",function(v){S.meta.description=v;});
+$("m-license").addEventListener("change",function(){S.meta.license=this.value;save();renderOut();});
+bind("q-kanji",function(v){Q().kanji=v.trim();});bind("q-reading",function(v){Q().reading=v.trim();});
+bind("q-hint",function(v){Q().hint=v.trim();});bind("q-decoys",function(v){Q().decoys=v;});
+bind("f-part",function(v){var q=Q();if(S.sel>=0&&q.frames[S.sel]){q.frames[S.sel].part=v.trim();
+  var el=document.querySelector('#board .frame[data-i="'+S.sel+'"] .p');if(el){el.textContent=v.trim()||"?";el.style.opacity=v.trim()?"1":".4";}}});
+function setGrid(){
+  var q=Q(),c=+$("q-cols").value,r=+$("q-rows").value;
+  var ok=q.frames.every(function(f){return f.x+f.w<=c&&f.y+f.h<=r;});
+  if(!ok){toast("はみ出す枠があるので、先に小さくするか、消してください");$("q-cols").value=q.cols;$("q-rows").value=q.rows;return;}
+  q.cols=c;q.rows=r;renderAll();
+}
+$("q-cols").addEventListener("change",setGrid);$("q-rows").addEventListener("change",setGrid);
+
+/* ---------- 枠の大きさボタン・削除 ---------- */
+function resizeSel(dw,dh){
+  var q=Q(),f=q.frames[S.sel];if(!f)return;
+  var c={x:f.x,y:f.y,w:f.w+dw,h:f.h+dh};
+  if(c.w<1||c.h<1||c.x+c.w>q.cols||c.y+c.h>q.rows){toast("これ以上、変えられません");return;}
+  if(!free(q,c,S.sel)){toast("ほかの枠と、重なります");return;}
+  f.w=c.w;f.h=c.h;renderAll();
+}
+$("w-").addEventListener("click",function(){resizeSel(-1,0);});$("w+").addEventListener("click",function(){resizeSel(1,0);});
+$("h-").addEventListener("click",function(){resizeSel(0,-1);});$("h+").addEventListener("click",function(){resizeSel(0,1);});
+$("f-del").addEventListener("click",function(){var q=Q();if(S.sel>=0){q.frames.splice(S.sel,1);S.sel=-1;renderAll();}});
+document.addEventListener("keydown",function(e){
+  var t=e.target.tagName;if(t==="INPUT"||t==="TEXTAREA"||t==="SELECT")return;
+  if((e.key==="Delete"||e.key==="Backspace")&&S.sel>=0&&Q().kind==="fuku"){e.preventDefault();Q().frames.splice(S.sel,1);S.sel=-1;renderAll();}
+});
+
+/* ---------- 問題リスト操作 ---------- */
+$("q-add").addEventListener("click",function(){S.qs.push(newQ("fuku"));S.cur=S.qs.length-1;S.sel=-1;renderAll();});
+$("q-addc").addEventListener("click",function(){S.qs.push(newQ("choice"));S.cur=S.qs.length-1;S.sel=-1;renderAll();});
+$("q-addw").addEventListener("click",function(){S.qs.push(newQ("write"));S.cur=S.qs.length-1;S.sel=-1;renderAll();});
+bind("w-q",function(v){Q().qtext=v.trim();});bind("w-read",function(v){Q().reading=v.trim();});bind("w-ans",function(v){Q().kanji=v.trim();});
+bind("w-hint",function(v){Q().hint=v.trim();});bind("w-expl",function(v){Q().expl=v.trim();});
+$("w-auto").addEventListener("click",function(){var q=Q();if(!q.reading){toast("先に、読みを入れてください");return;}q.qtext="「"+q.reading+"」を、漢字で書きなさい";renderAll();});
+$("q-type").addEventListener("change",function(){var q=Q();if(q.kind==="raw")return;q.kind=this.value;S.sel=-1;renderAll();});
+function renderChoiceEd(q){
+  $("c-q").value=q.qtext;$("c-expl").value=q.expl;
+  var box=$("c-list");box.textContent="";
+  for(var i=0;i<4;i++){(function(i){
+    var row=document.createElement("div");row.className="row";row.style.margin="4px 0";
+    var r=document.createElement("input");r.type="radio";r.name="c-ans";r.style.cssText="width:auto";r.checked=q.ans===i;r.setAttribute("aria-label","選択肢"+["A","B","C","D"][i]+"を正解にする");
+    r.addEventListener("change",function(){q.ans=i;save();renderAfterInput();});
+    var l=document.createElement("span");l.textContent=["A","B","C","D"][i];l.style.cssText="width:1.2em;text-align:center;color:var(--accent)";
+    var t=document.createElement("input");t.type="text";t.maxLength=40;t.style.cssText="flex:1;width:auto;min-width:0";t.value=q.ch[i];t.setAttribute("aria-label","選択肢"+["A","B","C","D"][i]);
+    t.addEventListener("input",function(){q.ch[i]=t.value.trim();save();renderAfterInput();});
+    row.appendChild(r);row.appendChild(l);row.appendChild(t);box.appendChild(row);
+  })(i);}
+}
+bind("c-q",function(v){Q().qtext=v.trim();});bind("c-expl",function(v){Q().expl=v.trim();});
+$("q-dup").addEventListener("click",function(){var c=JSON.parse(JSON.stringify(Q()));S.qs.splice(S.cur+1,0,c);S.cur++;S.sel=-1;renderAll();});
+/* 2回押して消す(confirmが使えない環境でも動くように) */
+function twoStep(id,label,fn){
+  var b=$(id),t=null;
+  b.addEventListener("click",function(){
+    if(b.dataset.arm==="1"){clearTimeout(t);b.dataset.arm="";b.textContent=label;fn();return;}
+    b.dataset.arm="1";b.textContent="もう一度押すと消す";
+    t=setTimeout(function(){b.dataset.arm="";b.textContent=label;},3000);
+  });
+}
+twoStep("q-del","削除",function(){
+  if(S.qs.length<=1){S.qs=[newQ(Q().kind==="raw"?"fuku":Q().kind)];S.cur=0;}
+  else{S.qs.splice(S.cur,1);S.cur=Math.min(S.cur,S.qs.length-1);}
+  S.sel=-1;renderAll();toast("消しました");
+});
+$("q-up").addEventListener("click",function(){if(S.cur>0){var t=S.qs[S.cur];S.qs[S.cur]=S.qs[S.cur-1];S.qs[S.cur-1]=t;S.cur--;renderAll();}});
+$("q-down").addEventListener("click",function(){if(S.cur<S.qs.length-1){var t=S.qs[S.cur];S.qs[S.cur]=S.qs[S.cur+1];S.qs[S.cur+1]=t;S.cur++;renderAll();}});
+
+/* ---------- プレビュー ---------- */
+$("pv-ans").addEventListener("click",function(){showAns=!showAns;renderPreview();});
+$("pv-shuf").addEventListener("click",function(){shuffleSeed++;renderPreview();});
+
+/* ---------- 保存・読み込み ---------- */
+function fname(){var n=(S.meta.name||"pack").replace(/[^\w぀-ヿ一-鿿\-]+/g,"_").slice(0,30);return "kanjitower_"+n+".json";}
+$("dl").addEventListener("click",function(){
+  var b=new Blob([JSON.stringify(build(),null,1)],{type:"application/json"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fname();document.body.appendChild(a);a.click();a.remove();
+  setTimeout(function(){URL.revokeObjectURL(a.href);},1000);toast("保存しました");
+});
+$("cp").addEventListener("click",function(){
+  var t=$("json-out");t.select();
+  try{(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t.value):Promise.reject()).then(function(){toast("コピーしました");},function(){document.execCommand("copy");toast("コピーしました");});}
+  catch(e){try{document.execCommand("copy");toast("コピーしました");}catch(_){toast("コピーできませんでした");}}
+});
+function isFuku(x){
+  return x&&typeof x==="object"&&x.type==="福笑い"&&Array.isArray(x.frames)&&typeof x.kanji==="string";
+}
+function isChoice(x){return x&&typeof x==="object"&&x.type==="4択"&&typeof x.question==="string"&&Array.isArray(x.choices)&&x.choices.length>=2&&x.choices.length<=4;}
+function importData(data){
+  var root,list;
+  if(Array.isArray(data)){root={};list=data;}else if(data&&typeof data==="object"&&Array.isArray(data.questions)){root=data;list=data.questions;}
+  else{toast("読み込めません(questions が、ありません)");return;}
+  var st=newState();st.qs=[];st.extra={};
+  Object.keys(root).forEach(function(k){if(k!=="questions")st.extra[k]=root[k];});
+  ["name","author","license","source","description"].forEach(function(k){if(typeof root[k]==="string")st.meta[k]=root[k].slice(0,300);});
+  list.slice(0,500).forEach(function(x){
+    if(isFuku(x)){
+      var g=x.grid||{},cols=clamp(+g.cols||3,2,4),rows=clamp(+g.rows||3,2,4),q=newQ();
+      q.kanji=String(x.kanji).slice(0,4);q.reading=String(x.reading||"").slice(0,30);q.hint=String(x.hint||"").slice(0,60);q.cols=cols;q.rows=rows;
+      (x.frames||[]).forEach(function(f){
+        if(!f||typeof f!=="object")return;
+        var r={part:String(f.part||"").slice(0,2),x:Math.floor(+f.x),y:Math.floor(+f.y),w:Math.floor(+f.w||1),h:Math.floor(+f.h||1)};
+        if(!(r.x>=0&&r.y>=0&&r.w>=1&&r.h>=1&&r.x+r.w<=cols&&r.y+r.h<=rows))return;
+        if(!free(q,r,-1))return;q.frames.push(r);
+      });
+      q.decoys=(Array.isArray(x.decoys)?x.decoys:[]).map(function(s){return String(s).slice(0,2);}).join(" ");
+      st.qs.push(q);
+    }else if(x&&typeof x==="object"&&x.type==="手書き"&&typeof x.answer==="string"&&typeof x.question==="string"){
+      var qw=newQ("write");qw.qtext=x.question.slice(0,80);qw.reading=String(x.reading||"").slice(0,30);qw.kanji=x.answer.slice(0,4);
+      qw.hint=String(x.hint||"").slice(0,60);qw.expl=String(x.explanation||"").slice(0,100);st.qs.push(qw);
+    }else if(isChoice(x)){
+      var qc=newQ("choice");qc.qtext=String(x.question).slice(0,120);
+      qc.ch=x.choices.slice(0,4).map(function(t){return String(t).slice(0,40);});while(qc.ch.length<4)qc.ch.push("");
+      var a=x.answer;if(typeof a==="string"){var ix=qc.ch.indexOf(a);a=ix>=0?ix:0;}
+      qc.ans=clamp(Math.floor(+a)||0,0,3);qc.expl=String(x.explanation||"").slice(0,100);st.qs.push(qc);
+    }else{var q2=newQ();q2.kind="raw";q2.raw=x;st.qs.push(q2);}
+  });
+  if(!st.qs.length)st.qs.push(newQ());
+  S=st;showAns=false;renderAll();
+  toast(list.length+"問を、読み込みました");
+}
+function readText(t){var d;try{d=JSON.parse(t);}catch(e){toast("JSONとして、読めません");return;}importData(d);}
+$("file-in").addEventListener("change",function(){
+  var f=this.files&&this.files[0];if(!f)return;
+  if(f.size>10*1024*1024){toast("ファイルが、大きすぎます(10MBまで)");return;}
+  var r=new FileReader();r.onload=function(){readText(String(r.result));};r.readAsText(f,"utf-8");this.value="";
+});
+$("ld").addEventListener("click",function(){var v=$("json-in").value.trim();if(!v){toast("JSONを、貼り付けてください");return;}readText(v);});
+twoStep("reset","全部消して、新しく始める",function(){S=newState();showAns=false;renderAll();toast("新しく始めました");});
+
+window.addEventListener("resize",function(){if(!drag){drawBoard($("board"),Q().kind==="fuku"?Q():newQ(),{edit:true});renderPreview();}});
+
+/* ---------- 起動 ---------- */
+try{var raw=localStorage.getItem(LS_KEY);if(raw){var d=JSON.parse(raw);if(d&&Array.isArray(d.qs)&&d.qs.length&&d.meta){S=d;S.sel=-1;S.cur=clamp(+S.cur||0,0,S.qs.length-1);}}}catch(e){}
+if(!S)S=newState();
+renderAll();
+})();
+</script>
+</body>
+</html>

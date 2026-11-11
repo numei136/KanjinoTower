@@ -279,6 +279,7 @@ body.sc .enemy{padding-top:6px}
 .fg.bt{grid-template-columns:repeat(2,72px)}
 .fg.bt .fs:nth-child(3){grid-column:1/-1;justify-self:center}
 .fg.lr3{grid-template-columns:repeat(3,72px)}
+.fg.ltb{grid-template-columns:repeat(2,72px);grid-template-rows:repeat(2,72px)}.fg.ltb .fs:first-child{grid-row:1/3;height:auto}
 .sm{position:relative}
 .sm .lv{position:absolute;top:-6px;right:-4px;font-style:normal;font-size:10px;background:#e6a800;color:#000;border-radius:8px;padding:0 5px;font-weight:700}
 .sm.k城 b{color:#2a7bd9}
@@ -1074,7 +1075,7 @@ nd+=`<button class="node ${n.t}${G.row===r&&G.col===i?' ok':''}${n.vis?' vis':''
 return`<div class="mapw" style="height:${H}px"><svg viewBox="0 0 400 ${H}" preserveAspectRatio="none">${ln}</svg>${nd}</div>`}
 function mapPeek(){if(!G.map)return;$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="text-align:center"><h2>🗺 マップ（${G.row+1}段目）</h2>${mapHtml()}<p class="stat">戦=敵／強=強敵／？=イベント／店／休=焺き火／最上段=ボス</p><button class="main" onclick="closeDeck()">閉じる</button></div></div>`}
 Object.assign(FR,{体:'からだ',泳:'およぐ',細:'ほそい',絵:'え',理:'り',銀:'ぎん',吹:'ふく',鳴:'なく',助:'たすける',早:'はやい',晶:'しょう',持:'もつ',待:'まつ',詩:'し',湖:'みずうみ',想:'そう',街:'まち',緑:'みどり',轟:'とどろく'});
-FUKU.push({k:'体',l:'lr',p:['亻','本']},{k:'泳',l:'lr',p:['氵','永']},{k:'細',l:'lr',p:['糸','田']},{k:'絵',l:'lr',p:['糸','会']},{k:'理',l:'lr',p:['王','里']},{k:'銀',l:'lr',p:['金','艮']},{k:'吹',l:'lr',p:['口','欠']},{k:'鳴',l:'lr',p:['口','鳥']},{k:'助',l:'lr',p:['且','力']},{k:'早',l:'tb',p:['日','十']},{k:'晶',l:'tri',p:['日','日','日']},{k:'持',l:'lr3',p:['扌','土','寸']},{k:'待',l:'lr3',p:['彳','土','寸']},{k:'詩',l:'lr3',p:['言','土','寸']},{k:'湖',l:'lr3',p:['氵','古','月']},{k:'想',l:'bt',p:['木','目','心'],lv:3},{k:'街',l:'lr3',p:['彳','圭','亠'],lv:3},{k:'緑',l:'lr3',p:['糸','彐','水'],lv:3},{k:'轟',l:'tri',p:['車','車','車'],lv:3});
+FUKU.push({k:'体',l:'lr',p:['亻','本']},{k:'泳',l:'lr',p:['氵','永']},{k:'細',l:'lr',p:['糸','田']},{k:'絵',l:'lr',p:['糸','会']},{k:'理',l:'lr',p:['王','里']},{k:'銀',l:'lr',p:['金','艮']},{k:'吹',l:'lr',p:['口','欠']},{k:'鳴',l:'lr',p:['口','鳥']},{k:'助',l:'lr',p:['且','力']},{k:'早',l:'tb',p:['日','十']},{k:'晶',l:'tri',p:['日','日','日']},{k:'持',l:'ltb',p:['扌','土','寸']},{k:'待',l:'ltb',p:['彳','土','寸']},{k:'詩',l:'ltb',p:['言','土','寸']},{k:'湖',l:'lr3',p:['氵','古','月']},{k:'想',l:'bt',p:['木','目','心'],lv:3},{k:'街',l:'lr3',p:['彳','圭','亠'],lv:3},{k:'緑',l:'ltb',p:['糸','彐','水'],lv:3},{k:'轟',l:'tri',p:['車','車','車'],lv:3});
 ['本','永','会','里','艮','欠','鳥','且','十','扌','彳','圭','亠','古','車','彐','水','目','土'].forEach(x=>{if(!PARTS.includes(x))PARTS.push(x)});
 let FT=null;
 function mkFuku(lv){const lvOf=p=>p.lv||(p.p.length>=3?2:1),L=FUKU.filter(p=>lvOf(p)===lv),src=L.length?L:FUKU,p=src[rnd(src.length)],size={1:8,2:10,3:12}[lv]||10,dec=sh(PARTS.filter(x=>!p.p.includes(x))).slice(0,size-p.p.length);return{p,lv,t:{1:45,2:35,3:25}[lv]||35,bank:sh([...p.p,...dec].map(c=>({c,u:0}))),slot:Array(p.p.length).fill(null)}}
@@ -1846,7 +1847,7 @@ function optBody(){
 })();
 
 /* v4.8 title: play button */
-var TM=0;const VER='6.00';
+var TM=0;const VER='6.02';
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.tw{position:relative;display:inline-block}.ver{position:absolute;right:0;top:100%;margin-top:-2px;font-size:clamp(9px,2vw,13px);opacity:.65;letter-spacing:.05em;font-weight:700}.ttsub{display:inline-block;animation:ttbob 2.8s ease-in-out infinite}@keyframes ttbob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}@media (prefers-reduced-motion:reduce){.ttsub{animation:none}}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
 function titleGo(){TM=1;render()}
 function titleBack(){TM=0;render()}
@@ -2441,6 +2442,7 @@ async function hwpDel(i){const n=HWP[i].name;HWP.splice(i,1);try{await hdbDel(n)
 pkView=function(msg){const o=document.getElementById('pkm');if(!o)return;const hwq=p=>p.qs.filter(q=>q.t==='hw'&&!q.st&&!THC[q.k]&&!HWDB.has(q.k)).length;
  o.innerHTML=`<div class="mbox" style="max-width:460px"><h2>📦 拡張パック</h2><p class="stat">JSONファイルを読み込むと、問題が追加されます。追加した問題は、必殺クイズ・チャレンジ・漢字テストに混ざって出ます。データはこのブラウザに保存されます。</p>
 <div class="btns"><button class="main" onclick="document.getElementById('pkf').click()">📂 ファイルを選んで読み込む</button><button class="main off" onclick="pkSampleDl()">見本をダウンロード</button></div>
+<div class="btns"><button class="main" onclick="window.open(PKMAKE,'_blank')">✏️ 問題を作る</button></div><p class="stat" style="font-size:.8em">別のページが開きます。作った問題はJSONで保存して、ここから読み込みます。</p>
 <div id="pkt"><div class="stat">テンプレートをダウンロード：</div><div class="btns">${Object.keys(PKT).map(k=>`<button class="main off cf" onclick="pkTplDl('${k}')">${PKT[k].label}</button>`).join('')}</div></div>
 <input type="file" id="pkf" accept=".json,application/json" multiple style="display:none" onchange="pkLoad(this.files)">
 ${msg?`<div class="stat" style="white-space:pre-wrap;color:var(--red);margin:6px 0">${msg}</div>`:''}
@@ -2579,7 +2581,7 @@ kanji:[
 {k:'独',parts:['犭','虫'],l:'lr',yomi:'ドク／ひとり',mean:'ひとり。ほかにない。',title:'孤高の旅人'},
 {k:'狂',parts:['犭','王'],l:'lr',yomi:'キョウ／くるう',mean:'ふつうでなくなる。くるう。',title:'狂気の求道者'},
 {k:'猪',parts:['犭','者'],l:'lr',yomi:'チョ／いのしし',mean:'とつ進する山の獣。いのしし。',title:'猪突猛進'},
-{k:'猫',parts:['犭','艹','田'],l:'lr3',yomi:'ビョウ／ねこ',mean:'しなやかな、ペットの動物。ねこ。',title:'気ままな猫'},
+{k:'猫',parts:['犭','艹','田'],l:'ltb',yomi:'ビョウ／ねこ',mean:'しなやかな、ペットの動物。ねこ。',title:'気ままな猫'},
 {k:'骸',parts:['骨','亥'],l:'lr',yomi:'ガイ／むくろ',mean:'死んだ体。ほね。',title:'骨の収集家'},
 {k:'滑',parts:['氵','骨'],l:'lr',yomi:'カツ／すべる',mean:'つるつると、すべる。',title:'氷上の名人'},
 {k:'苗',parts:['艹','田'],l:'tb',yomi:'ビョウ／なえ',mean:'育ちはじめの小さな植物。なえ。',title:'若き育て人'},
@@ -2631,7 +2633,7 @@ try{ASCFG=Object.assign(ASCFG,JSON.parse(localStorage.getItem('kanjiAsmCfg')||'{
 try{ASMPK=JSON.parse(localStorage.getItem('kanjiAsmPk')||'[]')||[];if(!Array.isArray(ASMPK))ASMPK=[]}catch(e){ASMPK=[]}
 function asmSave(){try{localStorage.setItem('kanjiAsmDone',JSON.stringify(ASMC))}catch(e){}}
 function asmSavePk(){try{localStorage.setItem('kanjiAsmPk',JSON.stringify(ASMPK))}catch(e){toast('保存できませんでした(容量不足)')}}
-const ASL=['lr','tb','tri','lr3','bt'],PERKS=['maxhp','str','draw','energy','foeVul','foeWk','startBlk'],NEEDS=['none','clear','bosses','wins','kanji'];
+const ASL=['lr','tb','tri','lr3','bt','ltb'],PERKS=['maxhp','str','draw','energy','foeVul','foeWk','startBlk'],NEEDS=['none','clear','bosses','wins','kanji'];
 function asmValid(o){const err=[];if(!o||typeof o!=='object'||o.format!=='kanjitower-assemble')return{err:['format が kanjitower-assemble ではありません']};
  const one=s=>typeof s==='string'&&Array.from(s).length===1,cl=(x,a,b,d)=>Math.max(a,Math.min(b,isFinite(+x)?+x:d)),E=(s,n)=>pkEsc(String(s==null?'':s)).slice(0,n);
  const out={name:E(o.name||'無題',40),on:true,kanji:[],idioms:[],commons:[],parts:{},unlocks:(Array.isArray(o.unlocks)?o.unlocks:[]).slice(0,20).map(u=>u&&(u.kind==='char'||u.kind==='relic')&&typeof u.id==='string'?{kind:u.kind,id:E(u.id,12),need:{type:NEEDS.includes((u.need||{}).type)?u.need.type:'none',n:cl((u.need||{}).n,0,9999,1)|0}}:null).filter(Boolean)};
@@ -2800,6 +2802,9 @@ function fangGold(e){const g=Math.max(1,Math.round((e.maxhp||0)*.1));G.gold+=g;t
 {const _he=hqEnd;hqEnd=function(ok,msg){try{if(ok&&HQ&&has('魂')&&G&&G.scr==='battle'&&G.e){const q=HQ,cb=q.cb;q.cb=(o,t)=>{cb(o,t);setTimeout(()=>{try{if(G&&G.scr==='battle'&&G.e&&G.e.cur>0){hitEnemy(3);toast('🖌 魂の筆：敵に3ダメージ');if(G.e.cur<=0)winSoon();else render()}}catch(e){}},80)}}}catch(e){}return _he.apply(this,arguments)}}
 /* idiom reward: relic option */
 function asmRwText(q){return (q.rewards||[]).map(r=>r.type==='relic'?'レリック「'+((RELICS[r.id]||{}).name||r.id)+'」':r.type==='card'?'カード':'永続効果').join('／')}
+
+/* v6.02 link to the question-maker page (change the URL here) */
+const PKMAKE='sakumon.html';
 
 newGame();
 </script>
