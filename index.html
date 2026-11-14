@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>漢字の塔</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#f4efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17140f" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="漢字の塔">
 <style>
 :root{--bg:#f4efe6;--fg:#1d1a16;--card:#fffaf0;--line:#c9bda8;--red:#b3261e;--blue:#2a5d9f;--green:#2f7d4f;--panel:#ebe3d3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17140f;--fg:#efe6d4;--card:#262017;--line:#4a4030;--red:#ff7b6e;--blue:#7fb2f0;--green:#6fcf97;--panel:#211b13}}
@@ -1847,7 +1856,7 @@ function optBody(){
 })();
 
 /* v4.8 title: play button */
-var TM=0;const VER='6.05';
+var TM=0;const VER='6.06';
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.bigtitle{font-size:clamp(64px,17vw,150px);line-height:1.1;margin:0;letter-spacing:.08em;font-weight:900;color:var(--fg);text-shadow:0 4px 24px rgba(200,150,50,.3)}.tw{position:relative;display:inline-block}.ver{position:absolute;right:0;top:100%;margin-top:-2px;font-size:clamp(9px,2vw,13px);opacity:.65;letter-spacing:.05em;font-weight:700}.ttsub{display:inline-block;animation:ttbob 2.8s ease-in-out infinite}@keyframes ttbob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}@media (prefers-reduced-motion:reduce){.ttsub{animation:none}}.ttsub{opacity:.6;letter-spacing:.4em;font-size:13px;margin:6px 0 28px}.playbtn{font-size:22px;padding:16px 56px;margin-top:8px}.ttwrap{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center}'}));
 function titleGo(){TM=1;render()}
 function titleBack(){TM=0;render()}
@@ -2866,6 +2875,124 @@ document.addEventListener('pointerup',prFin,true);document.addEventListener('poi
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('.pa');if(a){e.preventDefault();e.stopPropagation();promoStep(+a.dataset.d);return}if(window._pSup&&Date.now()-window._pSup<500&&e.target.closest&&e.target.closest('#promo')){e.preventDefault();e.stopPropagation()}},true);
 document.addEventListener('dragstart',e=>{if(e.target.closest&&e.target.closest('#promo'))e.preventDefault()},true);
 setInterval(()=>{try{const P=PROMO;if(!P||!P.show||!P.items||P.items.length<2||!document.getElementById('promo')||document.hidden)return;const iv=P.iv===undefined?6:P.iv;if(iv>0&&Date.now()-PRLAST>=iv*1000)promoStep(1)}catch(e){}},1000);
+
+/* v6.06 スマホ対応: 画面いっぱいの戦闘画面・横画面・タップ操作・振動・アプリ化(PWA) */
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:`
+html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+:root{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+body{min-height:100vh;min-height:100dvh;overscroll-behavior-y:none}
+#app,#modal{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#app input,#app textarea,#modal input,#modal textarea,#hw textarea,#hw input{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+#optbtn{left:calc(8px + env(safe-area-inset-left,0px))}
+@media (hover:none){
+ .hand.bh .card:hover:not(.sel){transform:none;box-shadow:none;z-index:auto}
+ .node.ok:hover{transform:translate(-50%,-50%)}
+ .sm:hover{border-color:var(--line)}
+}
+@media (max-width:560px){
+ #app.hd{padding-top:6px}
+ #app.hd>.top{padding-left:calc(50px / var(--z,1));min-height:44px;align-items:center;gap:4px}
+ #app.hd>.top .gold{font-size:16px;padding:1px 9px}
+ #app.bt>.top>span:first-child{font-size:12px;overflow:hidden;text-overflow:ellipsis;min-width:0}
+ #app.mp>.top,#app.mp>.top:has(#asmb){flex-wrap:wrap;justify-content:flex-start;align-items:center;row-gap:6px;column-gap:6px}
+ #app.mp>.top>span:first-child{font-size:13px}
+ #app.mp>.top .main{padding:5px 8px;font-size:12px;min-height:0}
+ #app.bt .enemy{flex:1 0 auto;display:flex;flex-direction:column;justify-content:center}
+ #app.bt>.row2.e{display:none}
+}
+@media (orientation:landscape) and (max-height:520px){
+ #app.bt{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);grid-template-rows:auto auto auto 1fr auto;column-gap:10px;row-gap:4px;padding:4px 8px}
+ #app.bt>.top{grid-column:1/-1;grid-row:1;padding-left:50px;min-height:44px;align-items:center;gap:10px;justify-content:flex-start;flex-wrap:nowrap;white-space:nowrap;font-size:13px}
+ #app.bt>.top .gold{font-size:16px;padding:1px 10px}
+ #app.bt>.top .main{padding:5px 9px;font-size:12px;min-height:0}
+ #app.bt>.top>span:last-child{margin-left:auto}
+ #app.bt>.top .rels{flex:0 1 auto;flex-wrap:nowrap;overflow-x:auto;min-width:0}
+ #app.bt>.top .rl{width:30px;height:30px;font-size:16px;flex:0 0 30px}
+ #app.bt>.enemy{grid-column:1;grid-row:2/6;position:relative;top:auto;display:flex;flex-direction:column;justify-content:center;padding:6px 6px 30px;min-height:0}
+ #app.bt>.enemy .kanji{font-size:clamp(56px,24vh,110px)}
+ #app.bt>.enemy .erow.multi .ecol .kanji{font-size:clamp(44px,17vh,80px)}
+ #app.bt>.enemy .bar{height:14px}
+ #app.bt>.enemy .intent{font-size:13px}
+ #app.bt>.enemy .intent span{padding:3px 10px}
+ #app.bt>.enemy button.dkb{font-size:10px;padding:2px 6px}
+ #app.bt>.enemy .mn{flex:0 0 72px}#app.bt>.enemy .mn .kanji{font-size:32px}
+ #app.bt>.row2{grid-column:2;grid-row:2;gap:6px}
+ #app.bt>.row2.e{display:none}
+ #app.bt>.row2 .sums{min-height:0}
+ #app.bt .sm b{font-size:20px}#app.bt .sm small{font-size:9px}
+ #app.bt>.hbar{grid-column:2;grid-row:3}
+ #app.bt>.hw{grid-column:2;grid-row:4;min-height:0;align-self:end}
+ #app.bt>.me{grid-column:2;grid-row:5;gap:4px}
+ #app.bt .me button.main{min-height:42px;padding:4px 6px;font-size:14px}
+ #app.bt .me .ab small{font-size:9px}
+ #app.bt .me .en{min-height:42px;min-width:70px}
+ #app.bt .me .bar.p{height:16px!important}
+ #app.bt .hand.bh{padding-top:16px;padding-bottom:4px}
+ #app.bt .hand.bh .card{height:128px;width:74px;flex:0 0 74px;padding:4px 3px;margin-left:-22px}
+ #app.bt .hand.bh .card:first-child{margin-left:0}
+ #app.bt .hand.bh .card .k{font-size:28px}
+ #app.bt .hand.bh .card .n{font-size:11px}
+ #app.bt .hand.bh .card .d{font-size:9px;min-height:0}
+ #app.bt .hand.bh .card .c{font-size:10px;margin-top:12px}
+ #app.bt .hand.bh .card:hover,#app.bt .hand.bh .card.sel{transform:translateY(-6px) scale(1.12)}
+ body.hflat #app.bt .hand.bh .card{height:auto;max-height:134px;margin-left:0!important}
+ #app.hd{padding-top:6px}
+ #app.mp{max-width:none}
+ .bigtitle{font-size:clamp(44px,18vh,110px)!important}
+ .ttsub{margin:2px 0 10px!important}
+ .ttwrap{min-height:0!important;padding-top:28px}
+ .playbtn{padding:10px 48px!important;font-size:20px!important}
+ #app.mp>.top,#app.mp>.top:has(#asmb){padding-left:50px;min-height:44px;align-items:center;justify-content:flex-start;gap:10px;flex-wrap:nowrap}
+ #app.mp>.top .main{padding:5px 9px;font-size:12px;min-height:0}
+ .mbox{max-height:92vh;max-height:92dvh}
+}
+.pwab{display:block;width:100%}
+.pwahow{text-align:left;font-size:14px;line-height:1.7}
+.pwahow ol{padding-left:1.3em;margin:6px 0}
+`}));
+
+/* --- 画面の種類をクラスで示す / 戦闘画面を画面いっぱいに --- */
+function mbFill(){try{
+ const ap=document.getElementById('app');if(!ap)return;
+ const bt=!!(G&&G.scr==='battle'&&ap.querySelector(':scope>.me'));
+ ap.classList.toggle('bt',bt);ap.classList.toggle('hd',!!ap.querySelector(':scope>.top'));ap.classList.toggle('mp',!!(G&&['map','shop','remove','rest','event'].includes(G.scr)&&ap.querySelector(':scope>.top')));
+ const land=matchMedia('(orientation:landscape) and (max-height:520px)').matches;
+ if(bt&&land){const r=ap.querySelector(':scope>.rels'),t=ap.querySelector(':scope>.top');if(r&&t)t.insertBefore(r,t.lastElementChild)}
+ if(bt){const r2=ap.querySelector(':scope>.row2'),sm=!!ap.querySelector('.hand .card[data-sm="1"]');if(r2)r2.classList.toggle('e',!sm&&[...r2.children].every(c=>!c.children.length&&!c.textContent.trim()))}
+ ap.style.minHeight='';
+ if(!bt||!(land||matchMedia('(max-width:560px)').matches))return;
+ if(typeof fitBattle==='function')fitBattle();
+ const z=parseFloat(ap.style.zoom)||1;ap.style.setProperty('--z',z);if(z<1)return;
+ const de=document.documentElement,rc=ap.getBoundingClientRect(),extra=window.innerHeight-(rc.bottom+window.scrollY)-(parseFloat(getComputedStyle(de).paddingBottom)||0);
+ if(extra>1)ap.style.minHeight=(rc.height+extra)+'px';
+}catch(x){}}
+{const _r=render;render=function(){const ap=document.getElementById('app');if(ap)ap.style.minHeight='';const r=_r.apply(this,arguments);mbFill();return r}}
+{let tm=0;const f=()=>{clearTimeout(tm);tm=setTimeout(mbFill,120)};window.addEventListener('resize',f);window.addEventListener('orientationchange',f);if(window.visualViewport)visualViewport.addEventListener('resize',f)}
+
+/* --- 振動フィードバック(Androidのみ。iPhoneのブラウザは振動に未対応) --- */
+var VIB=(()=>{try{return localStorage.getItem('kanjiVib')!=='0'}catch(e){return true}})();
+function vib(p){try{if(VIB&&navigator.vibrate)navigator.vibrate(p)}catch(e){}}
+function togVib(){VIB=!VIB;try{localStorage.setItem('kanjiVib',VIB?'1':'0')}catch(e){}if(VIB)vib(30);optMenu()}
+{const _p=play;play=function(i){const en=G&&G.en,h=G&&G.hand&&G.hand.length;const r=_p.apply(this,arguments);try{if(G&&(G.en!==en||(G.hand&&G.hand.length)!==h))vib(12)}catch(e){}return r}}
+{let lh=null,ls=null;const _r=render;render=function(){const r=_r.apply(this,arguments);try{if(G&&G.scr==='battle'){if(ls==='battle'&&lh!=null&&G.hp<lh)vib(G.hp<=0?[60,50,120]:[35,40,35]);lh=G.hp}else lh=null;ls=G&&G.scr}catch(e){}return r}}
+
+/* --- アプリ化(PWA): ホーム画面に追加 --- */
+var PWA={ev:null};
+function pwaStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}
+function pwaIOS(){return /iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();PWA.ev=e});
+window.addEventListener('appinstalled',()=>{PWA.ev=null;try{toast('ホーム画面に追加しました')}catch(e){}});
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+ window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
+}
+function pwaInstall(){
+ if(PWA.ev){const e=PWA.ev;PWA.ev=null;e.prompt();(e.userChoice||Promise.resolve()).then(()=>optMenu());return}
+ const https=location.protocol==='https:';
+ const body=!https?`<p>アプリとして追加するには、ゲームを <b>https://</b> で始まるURL（GitHub Pages など）で公開して、そのページから操作してください。ファイルを直接開いた状態では追加できません。</p>`
+ :pwaIOS()?`<div class="pwahow"><b>iPhone / iPad（Safari）</b><ol><li>画面下（iPadは上）の共有ボタン <b>⬆︎</b> をタップ</li><li>「<b>ホーム画面に追加</b>」をタップ</li><li>右上の「追加」をタップ</li></ol>ホーム画面のアイコンから開くと、全画面で遊べます。</div>`
+ :`<div class="pwahow"><b>Android（Chrome）</b><ol><li>右上の <b>︙</b> メニューを開く</li><li>「<b>アプリをインストール</b>」または「<b>ホーム画面に追加</b>」をタップ</li></ol>ホーム画面のアイコンから開くと、全画面で遊べます。</div>`;
+ $('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDeck()"><div class="mbox" style="max-width:360px;text-align:center"><h2>📲 ホーム画面に追加</h2>${body}<button class="main" onclick="optMenu()">戻る</button></div></div>`}
+{const _o=optBody;optBody=function(){let s=_o.apply(this,arguments);try{if(OT!=='vol'){const add=('vibrate' in navigator?`<button class="main off" onclick="togVib()">振動：${VIB?'ON':'OFF'}</button>`:'')+(pwaStandalone()?'':`<button class="main off pwab" onclick="pwaInstall()">📲 ホーム画面に追加（アプリ化）</button>`);const k='<div class="btns" style="flex-direction:column">',i=s.indexOf(k);if(i>=0)s=s.slice(0,i+k.length)+add+s.slice(i+k.length)}}catch(e){}return s}}
 
 newGame();
 </script>
